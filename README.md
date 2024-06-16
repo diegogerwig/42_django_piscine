@@ -1,7 +1,6 @@
 # 42_django_piscine
 
 
-
 ## Module 00
 
 
