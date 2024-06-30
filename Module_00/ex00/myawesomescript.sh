@@ -9,7 +9,6 @@ process_url() {
     url="https://$url"
   fi
 
-
   # Fetch headers of the URL and extract the value of the "Location" header if it exists
   # 	curl options:
   #   		-s: Silent mode
