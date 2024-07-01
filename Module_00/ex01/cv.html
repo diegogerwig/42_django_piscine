@@ -1,22 +1,29 @@
 <!DOCTYPE html>
 <html lang="en">
+
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ex01: Your resume in HTML</title>
+    <title>✨ PISCINE DJANGO 42 -> Module_00 ex01</title>
     <style>
       table {
         border-collapse: collapse;
       }
-      table, th, td {
+
+      table,
+      th,
+      td {
         border: 1px solid black;
       }
-      th, td {
+
+      th,
+      td {
         padding: 8px;
         text-align: left;
       }
     </style>
   </head>
+
   <body>
     <header>
       <h1>Resume</h1>
@@ -44,7 +51,7 @@
       </section>
       <section>
         <h2>Education</h2>
-        <table id="education-table">
+        <table>
           <thead>
             <tr>
               <th>Year</th>
@@ -62,19 +69,6 @@
         </table>
       </section>
     </main>
-    <script>
-      function adjustCellWidths() {
-        const table = document.getElementById('education-table');
-        const cells = table.getElementsByTagName('td');
-        const thCells = table.getElementsByTagName('th');
-        
-        // Ajustar anchos de las celdas de los encabezados (th)
-        for (let th of thCells) {
-          cell.style.whiteSpace = 'nowrap';
-        }
-      }
-
-      window.onload = adjustCellWidths;
-    </script>
   </body>
+
 </html>
