@@ -6,6 +6,15 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 		<title>✨ PISCINE DJANGO 42 -> Module_00 ex02</title>
 		<script src="./popup.js"></script>
+		    <title>Form with Spaced Genders</title>
+		<style>
+			.form-group {
+            	margin-bottom: 25px; 
+        	}
+			.gender-option {
+				margin-right: 20px;
+			}
+		</style>
 	</head>
 
 	<body>
@@ -14,33 +23,45 @@
 		</header>
 		<h2>Personal Information</h2>
 		<form>
-			<label for="firstname">Firstname:</label>
-			<input type="text" id="firstname" name="firstname">
-			<br>
-			<label for="name">Name:</label>
-			<input type="text" id="name" name="name">
-			<br>
-			<label for="age">Age:</label>
-			<input type="number" id="age" name="age">
-			<br>
-			<label for="phone">Phone:</label>
-			<input type="tel" id="phone" name="phone">
-			<br>
-			<label for="email">Email:</label>
-			<input type="email" id="email" name="email">
-			<br>
-			<label for="student">Student at 42?:</label>
-			<input type="checkbox" id="student" name="student" value="Student at 42?">
-			<br>
-			<label for="gender_male">Male</label>
-			<input type="radio" id="gender_male" name="gender" value="male">
-			<label for="gender_female">Female</label>
-			<input type="radio" id="gender_female" name="gender" value="female">
-			<label for="gender_other">Other</label>
-			<input type="radio" id="gender_other" name="gender" value="other">
-			<br>
-			<input type="button" value="Run that sexy Javascript!" onclick="displayFormContents()">
-		</form>
+			<div class="form-group">
+				<label for="firstname">Firstname:</label>
+				<input type="text" id="firstname" name="firstname">
+			</div>
+			<div class="form-group">
+				<label for="name">Name:</label>
+				<input type="text" id="name" name="name">
+			</div>
+			<div class="form-group">
+				<label for="phone">Phone:</label>
+				<input type="tel" id="phone" name="phone">
+			</div>
+			<div class="form-group">
+				<label for="age">Age:</label>
+				<input type="number" id="age" name="age">
+			</div>
+			<div class="form-group">
+				<label for="email">Email:</label>
+				<input type="email" id="email" name="email">
+			</div>
+			<div class="form-group">
+				<label class="gender-option" for="gender_male">
+					<input type="radio" id="gender_male" name="gender" value="male"> Male
+				</label>
+				<label class="gender-option" for="gender_female">
+					<input type="radio" id="gender_female" name="gender" value="female"> Female
+				</label>
+				<label class="gender-option" for="gender_other">
+					<input type="radio" id="gender_other" name="gender" value="other"> Other
+				</label>
+			</div>
+			<div class="form-group">
+				<label for="student">Student at 42?:</label>
+				<input type="checkbox" id="student" name="student" value="Student at 42?">
+			</div>
+			<div class="form-group">
+				<input type="button" value="Run that sexy Javascript!" onclick="displayFormContents()">
+			</div>
+    	</form>
 	</body>
 
 </html>
