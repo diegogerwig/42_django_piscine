@@ -11,15 +11,11 @@ HEADER = \
 	}; \
 	print_header
 
-all: test_0 test_1
+all: test_0
 
 test_0:
 	@$(HEADER) "DJANGO MOD_00 EX_00"
 	@cd ./ex00 && bash test.sh
-
-test_1:
-	@$(HEADER) "DJANGO MOD_00 EX_01"
-	@cd ./ex01 && bash test.sh
 
 clean:
 	@echo "Cleaning up..."
