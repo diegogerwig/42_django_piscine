@@ -1,19 +1,17 @@
-def print_val_and_type(val):
-    print("{0} est de type {1}".format(val, type(val)))
+def print_variable_types():
+    variables = [42,
+                 "42",
+                 "quarante-deux",
+                 42.0,
+                 True,
+                 [42],
+                 {42: 42},
+                 (42,),
+                 set()]
+
+    for variable in variables:
+        print(f"{variable} has a type {type(variable)}")
 
 
-def my_var():
-    """ function prints values and its' type """
-    print_val_and_type(42)
-    print_val_and_type("42")
-    print_val_and_type("quarante-deux")
-    print_val_and_type(42.0)
-    print_val_and_type(True)
-    print_val_and_type([42])
-    print_val_and_type({42: 42})
-    print_val_and_type((42,))
-    print_val_and_type(set())
-
-
-if __name__ == '__main__':
-    my_var()
+if __name__ == "__main__":
+    print_variable_types()
