@@ -1,4 +1,4 @@
-def convert_to_dict():
+def prepare_data():
     # List of tuples containing musician names and their birth years
     d = [
         ("Hendrix", "1942"),
@@ -31,6 +31,10 @@ def convert_to_dict():
     for value, key in d:
         to_dict[key] = value
 
+    return to_dict
+
+
+def print_dictionary(to_dict):
     # Print the dictionary in the specified format
     # Note: Starting from Python 3.7, dictionaries preserve insertion order,
     # so iterating over to_dict.items() will print items in the order they
@@ -38,6 +42,11 @@ def convert_to_dict():
     # versions of Python.
     for key, value in to_dict.items():
         print(f"{key} : {value}")
+
+
+def convert_to_dict():
+    to_dict = prepare_data()
+    print_dictionary(to_dict)
 
 
 if __name__ == "__main__":
