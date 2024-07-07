@@ -14,6 +14,7 @@ def print_capital(state):
         "NJ": "Trenton",
         "CO": "Denver",
     }
+
     if state in states:
         value = states[state]
         print(capital_cities[value])
