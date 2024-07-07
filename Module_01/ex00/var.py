@@ -13,5 +13,9 @@ def print_variable_types():
         print(f"{variable} has a type {type(variable)}")
 
 
-if __name__ == "__main__":
+def main():
     print_variable_types()
+
+
+if __name__ == "__main__":
+    main()
