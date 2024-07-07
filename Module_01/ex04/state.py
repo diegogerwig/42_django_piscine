@@ -15,7 +15,7 @@ def print_state(city):
         "CO": "Denver",
     }
     state_found = False
-	
+
     for city_key, city_value in capital_cities.items():
         if city == city_value:
             for state_key, state_value in states.items():
@@ -23,7 +23,7 @@ def print_state(city):
                     print(state_key)
                     state_found = True
                     break
-    if state_found == False:
+    if not state_found:
         print("Unknown capital city")
 
 
