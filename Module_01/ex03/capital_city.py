@@ -22,6 +22,10 @@ def print_capital(state):
         print("Unknown state")
 
 
-if __name__ == "__main__":
+def main():
     if len(sys.argv) == 2:
         print_capital(sys.argv[1])
+
+
+if __name__ == "__main__":
+    main()

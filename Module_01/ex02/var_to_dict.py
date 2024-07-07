@@ -49,5 +49,9 @@ def convert_to_dict():
     print_dictionary(to_dict)
 
 
-if __name__ == "__main__":
+def main():
     convert_to_dict()
+
+
+if __name__ == "__main__":
+    main()

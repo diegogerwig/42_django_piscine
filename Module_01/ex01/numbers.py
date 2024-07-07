@@ -11,5 +11,9 @@ def print_numbers(filename):
         print(f"❌ Error: {e}")
 
 
-if __name__ == "__main__":
+def main():
     print_numbers("numbers.txt")
+
+
+if __name__ == "__main__":
+    main()
