@@ -27,6 +27,10 @@ def print_state(city):
         print("Unknown capital city")
 
 
-if __name__ == "__main__":
+def main():
     if len(sys.argv) == 2:
         print_state(sys.argv[1])
+
+
+if __name__ == "__main__":
+    main()

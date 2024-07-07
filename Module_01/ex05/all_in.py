@@ -1,64 +1,49 @@
 import sys
 
 
-states = {
-	"Oregon": "OR",
-	"Alabama": "AL",
-	"New Jersey": "NJ",
-	"Colorado": "CO"
-}
-capital_cities = {
-	"OR": "Salem",
-	"AL": "Montgomery",
-	"NJ": "Trenton",
-	"CO": "Denver",
-}
+def normalize_args(arg_str):
+    arg_list = [item for item in arg_str.split(',')]
+    arg_list = [item.lstrip().rstrip() for item in arg_list if not item.isspace()]
+    return arg_list
 
-def print_capital_city(state, states=states, capital_cities=capital_cities):	
-    states = {"Oregon": "OR", "Alabama": "AL", "New Jersey": "NJ", "Colorado": "CO"}
+
+def reverse_dict(initial_dictionary):
+    return dict([[v, k] for k, v in initial_dictionary.items()])
+
+
+def all_in(*argv):
+    states = {
+        "Oregon": "OR",
+        "Alabama": "AL",
+        "New Jersey": "NJ",
+        "Colorado": "CO"
+    }
     capital_cities = {
         "OR": "Salem",
         "AL": "Montgomery",
         "NJ": "Trenton",
-        "CO": "Denver",
+        "CO": "Denver"
     }
-    found = False
-    for item in states.keys():
-        if state.lower() == item.lower():
-            print(state, "is a state")
-            found = True
-            break
-    if found == False:
-        return False
-    return True
+
+    if len(sys.argv) != 2:
+        sys.exit(1)
+    argument_str = normalize_args(sys.argv[1])
+
+    rev_states = reverse_dict(states)
+    rev_cities = reverse_dict(capital_cities)
+
+    for item in argument_str:
+        if item.title() in states:
+            print("{0} is the capital of {1}".format(capital_cities[states[item.title()]], item.title()))
+        elif item.title() in rev_cities:
+            print("{0} is the capital of {1}".format(item.title(), rev_states[rev_cities[item.title()]]))
+        else:
+            print("{0} is neither a capital city nor a state".format(item))
 
 
-def print_state(city):
-    states = {"Oregon": "OR", "Alabama": "AL", "New Jersey": "NJ", "Colorado": "CO"}
-    capital_cities = {
-        "OR": "Salem",
-        "AL": "Montgomery",
-        "NJ": "Trenton",
-        "CO": "Denver",
-    }
-    state_found = False
-
-    for city_key, city_value in capital_cities.items():
-        if city == city_value:
-            for state_key, state_value in states.items():
-                if city_key == state_value:
-                    print(city, "is the capital of", state_key)
-                    state_found = True
-                    break
-    if state_found == False:
-        return False
-    return True
+def main():
+    all_in(sys.argv)
 
 
-if __name__ == "__main__":
-    if len(sys.argv) == 2:
-        item_list = [item.strip() for item in sys.argv[1].split(",")]
-        item_list = [item for item in item_list if item]
-        for item in item_list:
-            if not (print_state(item) or print_capital_city(item)):
-                print(item, "is neither a capital city nor a state")
+if __name__ == '__main__':
+    main()

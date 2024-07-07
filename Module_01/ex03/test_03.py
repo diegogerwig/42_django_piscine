@@ -9,12 +9,12 @@ def print_header(title):
     print(border)
 
 
-def test_print_capital():
+def test_script():
     print_header("Testing with valid state 'Oregon'")
     subprocess.run(["python3", "capital_city.py", "Oregon"], check=True)
 
-    print_header("Testing with valid state 'Alabama'")
-    subprocess.run(["python3", "capital_city.py", "Alabama"], check=True)
+    print_header("Testing with invalid state 'alabama'")
+    subprocess.run(["python3", "capital_city.py", "alabama"], check=True)
 
     print_header("Testing with unknown state 'Bizkaia'")
     subprocess.run(["python3", "capital_city.py", "Bizkaia"], check=True)
@@ -31,7 +31,7 @@ def test_print_capital():
 
 
 def main():
-    test_print_capital()
+    test_script()
 
 
 if __name__ == '__main__':
