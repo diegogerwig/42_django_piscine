@@ -2,13 +2,11 @@ import sys
 
 
 def normalize_args(arg_str):
-    arg_list = [item for item in arg_str.split(',')]
-    arg_list = [item.lstrip().rstrip() for item in arg_list if not item.isspace()]
-    return arg_list
+    return [item.strip() for item in arg_str.split(',') if item.strip()]
 
 
 def reverse_dict(initial_dictionary):
-    return dict([[v, k] for k, v in initial_dictionary.items()])
+    return {v: k for k, v in initial_dictionary.items()}
 
 
 def all_in(*argv):

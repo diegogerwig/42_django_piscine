@@ -15,14 +15,14 @@ def test_script():
                     "New jersey, Tren ton, NewJersey, Trenton, toto,    ,      sAlem"],
                    check=True)
 
-    # print_header("Testing with invalid city 'denver'")
-    # subprocess.run(["python3", "all_in.py", "denver"], check=True)
+    print_header("Testing with invalid city 'denver'")
+    subprocess.run(["python3", "all_in.py", "denver"], check=True)
 
-    # print_header("Testing with unknown city 'Bilbao'")
-    # subprocess.run(["python3", "all_in.py", "Bilbao"], check=True)
+    print_header("Testing with unknown city 'Bilbao'")
+    subprocess.run(["python3", "all_in.py", "Bilbao"], check=True)
 
-    # print_header("Testing with empty string")
-    # subprocess.run(["python3", "all_in.py", ""], check=True)
+    print_header("Testing with empty string")
+    subprocess.run(["python3", "all_in.py", ""], check=True)
 
     print_header("Testing without any arguments")
     subprocess.run(["python3", "all_in.py"], check=True)

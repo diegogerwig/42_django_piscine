@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # Función para imprimir el encabezado
 print_header() {
@@ -9,16 +9,16 @@ print_header() {
 
 # Test case 1: No URL provided
 print_header "Test case 1: No URL provided"
-bash myawesomescript.sh
+./myawesomescript.sh
 
 # Test case 2: Single URL provided
 print_header "Test case 2: Single URL provided"
-bash myawesomescript.sh bit.ly/1O72s3U
+./myawesomescript.sh bit.ly/1O72s3U
 
 # Test case 3: Multiple URLs provided
 print_header "Test case 3: Multiple URLs provided"
-bash myawesomescript.sh bit.ly/1O72s3U bit.ly/3VNxdR6
+./myawesomescript.sh bit.ly/1O72s3U bit.ly/3VNxdR6
 
 # Test case 4: Invalid URL provided	
 print_header "Test case 4: Invalid URL provided"
-bash myawesomescript.sh bit.ly/1O72sXX bit.ly/3VNxdXX
+./myawesomescript.sh bit.ly/1O72sXX bit.ly/3VNxdXX

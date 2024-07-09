@@ -1,13 +1,13 @@
-#!/bin/bash
+#!/bin/sh
 
 # Function to process a URL and fetch its final redirect URL
 process_url() {
 	local url=$1
 
 	# Prepend "https://" if the URL does not start with "https://"
-	if [[ $url != https://* ]]; then
-		url="https://$url"
-	fi
+	# if [[ $url != https://* ]]; then
+	# 	url="https://$url"
+	# fi
 
 	# Fetch headers of the URL and extract the value of the "Location" header if it exists
 	# 	curl options:
