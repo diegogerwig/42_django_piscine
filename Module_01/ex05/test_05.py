@@ -24,12 +24,12 @@ def test_script():
     # print_header("Testing with empty string")
     # subprocess.run(["python3", "all_in.py", ""], check=True)
 
-    # print_header("Testing without any arguments")
-    # subprocess.run(["python3", "all_in.py"], check=True)
+    print_header("Testing without any arguments")
+    subprocess.run(["python3", "all_in.py"], check=True)
 
-    # print_header("Testing multiple arguments: 'Salem', 'Denver'")
-    # subprocess.run(["python3", "all_in.py",
-    #                 "Salem", "Denver"], check=True)
+    print_header("Testing multiple arguments: 'Salem', 'salem'")
+    subprocess.run(["python3", "all_in.py",
+                    "Salem", "salem"], check=True)
 
 
 def main():

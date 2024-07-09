@@ -25,8 +25,6 @@ def all_in(*argv):
         "CO": "Denver"
     }
 
-    if len(sys.argv) != 2:
-        sys.exit(1)
     argument_str = normalize_args(sys.argv[1])
 
     rev_states = reverse_dict(states)
@@ -42,7 +40,8 @@ def all_in(*argv):
 
 
 def main():
-    all_in(sys.argv)
+    if len(sys.argv) == 2:
+        all_in(sys.argv)
 
 
 if __name__ == '__main__':
