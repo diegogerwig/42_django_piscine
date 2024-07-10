@@ -1,9 +1,6 @@
 import subprocess
 
 
-
-
-
 def print_header(title):
     border = "*" * (len(title) + 10)
     print('\n')
