@@ -48,17 +48,27 @@ def write_to_html(data):
     with open(output_path, "w") as f:
         f.write("""\
                 \r<!DOCTYPE html>\
-                \r<html lang='en'>\
-                \r<head>\
-                    \r\t<meta charset='UTF-8'>\
-                    \r\t<meta name='viewport' content='width=device-width, initial-scale=1.0'>\
-                    \r\t<title>💥 Periodic table</title>\
-                    \r\t<link rel="stylesheet" href="periodic_table.css">\
-                \r</head>
+                \r<html lang='en'>\n\
+                \r\t<head>\
+                    \r\t\t<meta charset='UTF-8'>\
+                    \r\t\t<meta name='viewport' content='width=device-width, initial-scale=1.0'>\
+                    \r\t\t<title>💥 Periodic table</title>\
+                    \r\t\t<link rel="stylesheet" href="styles.css">\
+    #                 <script>
+    #     window.onload = function() {
+    #         var cells = document.querySelectorAll('td');
+    #         cells.forEach(function(cell) {
+    #             if (cell.textContent.trim() !== '') {
+    #                 cell.style.border = '1px solid red'; // Aplica borde solo si la celda tiene contenido visible
+    #             }
+    #         });
+    #     };
+    # </script>
+                \r\t</head>
             """)
-        f.write("\r<body>\n")
+        f.write("\r\t<body>\n")
         content(f, data)
-        f.write("</body>\n")
+        f.write("\t</body>\n")
         f.write("</html>\n")
 
     print(f"✅ HTML file created successfully at: {output_path}")
@@ -68,13 +78,13 @@ def write_to_css():
     code_to_write ="""
     body {font-size: 80%;}
     table { width: 100%; table-layout: fixed; border-collapse: collapse; }
-    td { border: 1px solid red; padding: 10px; }
-    h4 { text-align: center; }
+    td { padding: 10px; }
+    td:not(:empty):not(:only-child) { border: 1px solid red; }
+    h4 { text-align: center; color: red; }
     li { list-style: none; margin: 1em; margin-left: -23pt; text-align: left; }
     """
-    with open("periodic_table.css", "w") as f:
+    with open("styles.css", "w") as f:
         f.write(code_to_write)
-
 
 def generate_html():
     data = read_file()
