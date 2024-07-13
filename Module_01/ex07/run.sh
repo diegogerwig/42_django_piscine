@@ -19,3 +19,6 @@ html_filename=$(basename "$html_file")
 
 # Open the HTML file in Google Chrome
 xdg-open ~/Downloads/"$html_filename" &
+
+rm -rf periodic_table.html
+rm -rf styles.css

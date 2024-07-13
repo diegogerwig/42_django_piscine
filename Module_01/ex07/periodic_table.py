@@ -54,16 +54,6 @@ def write_to_html(data):
                     \r\t\t<meta name='viewport' content='width=device-width, initial-scale=1.0'>\
                     \r\t\t<title>💥 Periodic table</title>\
                     \r\t\t<link rel="stylesheet" href="styles.css">\
-    #                 <script>
-    #     window.onload = function() {
-    #         var cells = document.querySelectorAll('td');
-    #         cells.forEach(function(cell) {
-    #             if (cell.textContent.trim() !== '') {
-    #                 cell.style.border = '1px solid red'; // Aplica borde solo si la celda tiene contenido visible
-    #             }
-    #         });
-    #     };
-    # </script>
                 \r\t</head>
             """)
         f.write("\r\t<body>\n")

@@ -1,8 +1,0 @@
-
-    body {font-size: 80%;}
-    table { width: 100%; table-layout: fixed; border-collapse: collapse; }
-    td { padding: 10px; }
-    td:not(:empty):not(:only-child) { border: 1px solid red; }
-    h4 { text-align: center; color: red; }
-    li { list-style: none; margin: 1em; margin-left: -23pt; text-align: left; }
-    
