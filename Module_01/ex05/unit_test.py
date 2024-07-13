@@ -1,6 +1,7 @@
 import unittest
 from subprocess import run, PIPE
 
+
 class TestAllInScript(unittest.TestCase):
     def run_script(self, args):
         result = run(["python3", "all_in.py"] + args, stdout=PIPE, stderr=PIPE, text=True)
@@ -41,6 +42,7 @@ class TestAllInScript(unittest.TestCase):
         result = self.run_script(["Salem", "salem"])
         expected_output = ""
         self.assertEqual(result.stdout.strip(), expected_output)
+
 
 if __name__ == "__main__":
     unittest.main()
