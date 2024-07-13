@@ -30,6 +30,9 @@ def test_script():
     print_header("Testing multiple arguments: 'Salem', 'salem'")
     subprocess.run(["python3", "all_in.py",
                     "Salem", "salem"], check=True)
+    
+    print_header("Running unit_test.py")
+    subprocess.run(["python3", "unit_test.py"], check=True)
 
 
 def main():
