@@ -1,49 +1,49 @@
 def string_to_dict(line):
-    data_dict = dict()
-    list_name_of_elem__other_data = line.split("=")
-    data_dict['name'] = list_name_of_elem__other_data[0].strip(" ")
-    list_data = list_name_of_elem__other_data[1].split(",")
-    for data in list_data:
-        list_cat__data = data.split(":")
-        data_dict[list_cat__data[0].strip(" ")] = list_cat__data[1].strip(" \n")
+    data_dict = {}
+    try:
+        name, other_data = line.split("=", 1)
+        data_dict['name'] = name.strip()
+        data_pairs = (data.split(":") for data in other_data.split(","))
+        data_dict.update({key.strip(): value.strip() for key, value in data_pairs})
+    except ValueError as e:
+        print(f"❌ Skipping malformed line: {line.strip()} (Error: {e})")
     return data_dict
 
 
-def read_file():
-    with open("periodic_table.txt", "r") as f:
-        list_of_data_dict = []
+def read_file(file_path):
+    list_of_data_dict = []
+    with open(file_path, "r") as f:
         for line in f:
             data_dict = string_to_dict(line)
             list_of_data_dict.append(data_dict)
         return list_of_data_dict
 
 
-def content(f, list_of_data_dict):
-    prev = 0
-    cur = 0
-    s = "<table>"
+def format_html(f, list_of_data_dict):
+    prev_level = 0
+    curr_level = 0
+    body_cont = "\t\t<table>\n"
     for one_elem_dict in list_of_data_dict:
-        cur = int(one_elem_dict['position'])
-        if cur == 0:
-            s +="<tr>"
-        if cur - prev > 1:
-            s += "<td colspan='" + str(cur - prev - 1) + "'></td>"
-        # s += "<td style='border: 1px solid black; padding:10px'>\n<h4>" + one_elem_dict['name'] + "</h4>\n"
-        s += "<td>\n<h4>" + one_elem_dict['name'] + "</h4>\n"
-        s += "<ul><li>" + one_elem_dict['number'] +"</li>\n" \
-            "<li>" + one_elem_dict['small'] +"</li>\n" \
-            "<li>" + one_elem_dict['molar'] + "</li>\n" \
-            '<li>' + one_elem_dict['electron'] + "</li>\n" \
-            "</ul></td>"
-        if cur == 17:
-            s += "</tr>"
-            cur = 0
-        prev = cur
-    s += "</table>"
-    f.write(s)
+        curr_level = int(one_elem_dict['position'])
+        if curr_level == 0:
+            body_cont +="\t\t\t<tr>\n"
+        if curr_level - prev_level > 1:
+            body_cont += "\t\t\t\t<td colspan='" + str(curr_level - prev_level - 1) + "'></td>\n"
+        body_cont += "\t\t\t\t<td>\n\t\t\t\t\t<h4>" + one_elem_dict['name'] + "</h4>\n"
+        body_cont += "\t\t\t\t\t<ul>\n\t\t\t\t\t\t<li>" + one_elem_dict['number'] +"</li>\n" \
+            "\t\t\t\t\t\t<li>" + one_elem_dict['small'] +"</li>\n" \
+            "\t\t\t\t\t\t<li>" + one_elem_dict['molar'] + "</li>\n" \
+            '\t\t\t\t\t\t<li>' + one_elem_dict['electron'] + "</li>\n" \
+            "\t\t\t\t\t</ul>\n\t\t\t\t</td>\n"
+        if curr_level == 17:
+            body_cont += "\t\t\t</tr>\n"
+            curr_level = 0
+        prev_level = curr_level
+    body_cont += "\t\t</table>\n"
+    f.write(body_cont)
 
 
-def write_to_html(data):
+def generate_html(data):
     output_path = "periodic_table.html"
     with open(output_path, "w") as f:
         f.write("""\
@@ -57,41 +57,32 @@ def write_to_html(data):
                 \r\t</head>
             """)
         f.write("\r\t<body>\n")
-        content(f, data)
-        f.write("\t</body>\n")
+        f.write("\t\t<h1>Periodic Table</h1>\n")
+        format_html(f, data)
+        f.write("\t</body>\n\n")
         f.write("</html>\n")
 
-    print(f"✅ HTML file created successfully at: {output_path}")
+    print(f"✅ HTML file created successfully at <{output_path}>")
 
-
-def write_to_css():
+def generate_css():
     code_to_write ="""
-    body {font-size: 80%;}
+    body {font-size: 80%; background-color: #f0f0f0; font-family: 'Arial', sans-serif; }
     table { width: 100%; table-layout: fixed; border-collapse: collapse; }
     td { padding: 10px; }
-    td:not(:empty):not(:only-child) { border: 1px solid red; }
-    h4 { text-align: center; color: red; }
-    li { list-style: none; margin: 1em; margin-left: -23pt; text-align: left; }
+    td:not(:empty):not(:only-child) { border: 1px solid #ccc; }
+    h1 { text-align: center; color: black; }
+    h4 { text-align: center; color: #007acc; }
+    li { list-style: none; margin: 1em; margin-left: -20px; text-align: left; position: relative;}
     """
     with open("styles.css", "w") as f:
         f.write(code_to_write)
 
-def generate_html():
-    data = read_file()
-    write_to_html(data)
-
-
-def generate_css():
-    write_to_css()
-
-
-def generate_files():
-    generate_html()
-    generate_css()
-
 
 def main():
-    generate_files()
+    file_path = "./periodic_table.txt"
+    data = read_file(file_path)
+    generate_html(data)
+    generate_css()
 
 
 if __name__ == '__main__' :
