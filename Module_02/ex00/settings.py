@@ -1,6 +1,5 @@
-name = "42 Network"
-title = "CV"
-first_name = "Diego"
-last_name = "Gerwig"
+page_title = "💫 Diego Gerwig's CV"
+name = "Diego"
+surname = "Gerwig"
 age = 49
 profession = "civil engineer"
