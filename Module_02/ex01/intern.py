@@ -1,7 +1,7 @@
 class Intern:
     def __init__(self, name="My name? I’m nobody, an intern, I have no name."):
         self.name = name
-    
+
     def __str__(self):
         return self.name
 
@@ -17,7 +17,7 @@ class Intern:
 
 
 def main():
-	# Create intern instances
+    # Create intern instances
     intern1 = Intern()
     intern2 = Intern("Mark")
 
@@ -46,4 +46,4 @@ def main():
 
 
 if __name__ == "__main__":
-	main()
+    main()
