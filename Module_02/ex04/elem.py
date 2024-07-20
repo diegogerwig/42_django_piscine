@@ -9,16 +9,35 @@ class Text(str):
         """
         Do you really need a comment to understand this method?.
         """
-        text = super().__str__()
-        replacements = {
-            '<': '&lt;',
-            '>': '&gt;',
-            '"': '&quot;',
-            '\n': '\n<br />\n'
-        }
-        for old, new in replacements.items():
-            text = text.replace(old, new)
-        return text
+        # replacements = {
+        #     '<': '&lt;',
+        #     '>': '&gt;',
+        #     '"': '&quot;',
+        #     '\n': '\n<br />\n'
+        # }
+        # text = super().__str__()
+        # for old, new in replacements.items():
+        #     text = text.replace(old, new)
+        # return text
+
+        text = super().__str__().replace('<', '&lt;').replace('>', '&gt;')
+        if text == '"':
+            text = text.replace('"', '&quot;')
+        return text.replace('\n', '\n<br />\n')
+
+        # text = super().__str__()
+        # if text == '<':
+        #     text.replace('<', '&lt;')
+        # if text == '>':
+        #     text.replace('>', '&gt;')
+        # if text == '"':
+        #     text = text.replace('"', '&quot;')
+        # if text == '\n':
+        #     text.replace('\n', '\n<br />\n')
+        
+        # return text
+
+
 
 
 class Elem:
@@ -106,7 +125,7 @@ def main():
                 tag='head',
                 content=Elem(
                     tag='title',
-                    content=Text('Hello ground!')
+                    content=Text('"Hello ground!"')
                 )
             ),
             Elem(
@@ -114,7 +133,7 @@ def main():
                 content=[
                     Elem(
                         tag='h1',
-                        content=Text('Oh no, not again!')
+                        content=Text('"Oh no, not again!"')
                     ),
                     Elem(
                         tag='img',
