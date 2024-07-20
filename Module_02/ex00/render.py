@@ -60,5 +60,5 @@ def main():
     print(f"✅ File <{output_path}> has been created.")
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

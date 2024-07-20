@@ -19,7 +19,7 @@ class Intern:
 def main():
     # Create intern instances
     intern1 = Intern()
-    intern2 = Intern("Mark")
+    intern2 = Intern('Mark')
 
     # Print intern names
     print(intern1)  # Should print the default intern message
@@ -41,9 +41,9 @@ def main():
     except Exception as e:
         print(e)  # Should print the exception message
 
-    intern3 = Intern("")
+    intern3 = Intern('')
     print(intern3)  # Should print an empty string
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
