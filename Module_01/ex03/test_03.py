@@ -14,7 +14,7 @@ def test_script():
     subprocess.run(['python3', 'capital_city.py', 'Oregon'], check=True)
 
     print_header('Testing with unknown state: Ile-De-France')
-    subprocess.run(['python3', 'capital_city.py', 'Oregon'], check=True)
+    subprocess.run(['python3', 'capital_city.py', 'Ile-De-France'], check=True)
 
     print_header('Testing without any arguments')
     subprocess.run(['python3', 'capital_city.py'], check=True)

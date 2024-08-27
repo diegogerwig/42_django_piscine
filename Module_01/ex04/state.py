@@ -3,17 +3,18 @@ import sys
 
 def print_state(city):
     states = {
-        "Oregon": "OR",
-        "Alabama": "AL",
-        "New Jersey": "NJ",
-        "Colorado": "CO"
+        'Oregon': 'OR',
+        'Alabama': 'AL',
+        'New Jersey': 'NJ',
+        'Colorado': 'CO'
     }
     capital_cities = {
-        "OR": "Salem",
-        "AL": "Montgomery",
-        "NJ": "Trenton",
-        "CO": "Denver",
+        'OR': 'Salem',
+        'AL': 'Montgomery',
+        'NJ': 'Trenton',
+        'CO': 'Denver',
     }
+    
     state_found = False
 
     for city_key, city_value in capital_cities.items():
@@ -24,13 +25,9 @@ def print_state(city):
                     state_found = True
                     break
     if not state_found:
-        print("Unknown capital city")
+        print('Unknown capital city')
 
 
-def main():
+if __name__ == '__main__':
     if len(sys.argv) == 2:
         print_state(sys.argv[1])
-
-
-if __name__ == "__main__":
-    main()
