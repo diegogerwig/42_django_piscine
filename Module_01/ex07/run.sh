@@ -1,14 +1,14 @@
 #!/bin/bash
 
 # Path to the Python script you want to execute
-python_script="./periodic_table.py"
+python_script='./periodic_table.py'
 
 # Run the Python script
 python3 "$python_script"
 
 # Paths to the HTML and CSS files you want to move to the Downloads folder
-html_file="./periodic_table.html"
-css_file="./styles.css"
+html_file='./periodic_table.html'
+css_file='./styles.css'
 
 # Move the HTML and CSS files to the Downloads folder
 cp "$html_file" ~/Downloads/
@@ -21,7 +21,7 @@ html_filename=$(basename "$html_file")
 (xdg-open ~/Downloads/"$html_filename" &>/dev/null &)
 
 # URL of the W3C validator
-validator_url="https://validator.w3.org/nu/"
+validator_url='https://validator.w3.org/nu/'
 
 # HTML file you want to check
 html_file_path=~/Downloads/"$html_filename"
