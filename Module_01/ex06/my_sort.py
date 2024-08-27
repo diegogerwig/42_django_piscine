@@ -36,9 +36,5 @@ def sort_list():
             print(name)
 
 
-def main():
-    sort_list()
-
-
 if __name__ == '__main__':
-    main()
+    sort_list()
