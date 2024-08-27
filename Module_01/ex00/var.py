@@ -1,4 +1,4 @@
-def print_variable_types():
+def my_var():
     variables = [42,
                  "42",
                  "quarante-deux",
@@ -13,9 +13,5 @@ def print_variable_types():
         print(f"{variable} has a type {type(variable)}")
 
 
-def main():
-    print_variable_types()
-
-
 if __name__ == "__main__":
-    main()
+    my_var()
