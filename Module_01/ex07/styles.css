@@ -1,0 +1,8 @@
+
+    body {font-size: 80%; background-color: #bbb; font-family: 'Arial', sans-serif; }
+    table { width: 100%; table-layout: fixed; border-collapse: collapse; }
+    td:not(:empty):not(:only-child) { border: 1px solid #333; padding: 10px; background-color: #999; }
+    h1 { text-align: center; color: black; }
+    h4 { text-align: center; color: cyan; }
+    li { list-style: none; margin: 1em; margin-left: -20px; text-align: left; position: relative;}
+    
