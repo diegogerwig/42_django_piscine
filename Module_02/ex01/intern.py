@@ -18,31 +18,31 @@ class Intern:
 
 def test():
     # Create intern instances
-    intern1 = Intern()
-    intern2 = Intern('Mark')
+    intern_1 = Intern()
+    intern_2 = Intern('Mark')
 
     # Print intern names
-    print(intern1)  # Should print the default intern message
-    print(intern2)  # Should print "Mark"
+    print(intern_1)  # Should print the default intern message
+    print(intern_2)  # Should print "Mark"
 
     # Test making coffee
-    print(intern1.make_coffee())  # Should print the coffee message
-    print(intern2.make_coffee())  # Should print the coffee message
+    print(intern_1.make_coffee())  # Should print the coffee message
+    print(intern_2.make_coffee())  # Should print the coffee message
 
-    # Test the work method for intern1, which should raise an exception
+    # Test the work method for intern_1, which should raise an exception
     try:
-        intern1.work()
+        intern_1.work()
     except Exception as e:
         print(e)  # Should print the exception message
 
-    # Test the work method for intern2, which should also raise an exception
+    # Test the work method for intern_2, which should also raise an exception
     try:
-        intern2.work()
+        intern_2.work()
     except Exception as e:
         print(e)  # Should print the exception message
 
-    intern3 = Intern('')
-    print(intern3)  # Should print an empty string
+    intern_3 = Intern('')
+    print(intern_3)  # Should print an empty string
 
 
 if __name__ == '__main__':
