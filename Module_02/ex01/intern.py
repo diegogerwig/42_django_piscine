@@ -16,7 +16,7 @@ class Intern:
         return self.Coffee()
 
 
-def main():
+def test():
     # Create intern instances
     intern1 = Intern()
     intern2 = Intern('Mark')
@@ -46,4 +46,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    test()
