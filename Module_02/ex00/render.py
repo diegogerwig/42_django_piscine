@@ -43,7 +43,7 @@ def render_template(file_name, params):
     return output_path
 
 
-def main():
+if __name__ == '__main__':
     if len(sys.argv) != 2:
         print(f'💥 Usage: python {os.path.basename(sys.argv[0])} file{EXTENSION}')
         sys.exit(1)
@@ -58,7 +58,3 @@ def main():
     params = parse_settings(SETTINGS_FILENAME)
     output_path = render_template(file_name, params)
     print(f'✅ File <{output_path}> has been created.')
-
-
-if __name__ == '__main__':
-    main()
