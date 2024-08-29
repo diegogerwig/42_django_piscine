@@ -1,8 +1,8 @@
 import os
 import sys
 
-EXTENSION = ".template"
-SETTINGS_FILENAME = "settings.py"
+EXTENSION = '.template'
+SETTINGS_FILENAME = 'settings.py'
 
 
 def read_file(file_path):
@@ -11,7 +11,7 @@ def read_file(file_path):
             return file.read()
     except FileNotFoundError:
         print(f'❌ {file_path} not found.')
-    except PermissionError:
+    except PermissionError:                          
         print(f'❌ No permission to read file {file_path}')
     except Exception as e:
         print(f'❌ Error reading file {file_path}: {e}')
