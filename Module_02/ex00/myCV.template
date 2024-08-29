@@ -21,7 +21,7 @@
 	<body>
 		<p>"-Who are you?
 		-I'am {name}!"</p>
-		<h1>{name} {surname}</h1>
+		<h3>{name} {surname}</h3>
 		<table>
 		<tr>
 		<th>Category</th><th>Information</th>
