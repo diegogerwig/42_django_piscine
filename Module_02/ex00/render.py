@@ -19,16 +19,16 @@ def read_file(file_path):
 
 
 def parse_settings(file_path):
-    settings_dict = {}
+    params = {}
     file_str = read_file(file_path)
     lines = file_str.splitlines()
 
     for line in lines:
         if '=' in line:
             key, value = line.split('=', 1) # The 1 argument to split() ensures that the line is split only once, even if there are multiple equal signs.
-            settings_dict[key.strip()] = value.strip().strip('\'')
+            params[key.strip()] = value.strip().strip('\'') # Remove leading/trailing whitespace and single quotes.
 
-    return settings_dict
+    return params
 
 
 def render_template(file_name, params):
