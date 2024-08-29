@@ -1,43 +1,50 @@
 class HotBeverage:
-    docs = 'Just some hot water in a cup.'
 
-    def __init__(self, price=0.30, name='hot beverage'):
+    def __init__(self, price=0.30, name='hot beverage') -> None:
         self.price = price
         self.name = name
-
-    def description(self):
-        return self.docs
+    
+    def description(self) -> str:
+        return 'Just some hot water in a cup.'
 
     def __str__(self):
-        return f'name : {self.name}\nprice : {self.price}\ndescription : {self.description()}\n'
+        return f'name : {self.name}\nprice : {self.price:.2f}\ndescription : {self.description()}\n'
 
 
 class Coffee(HotBeverage):
-    docs = 'A coffee, to stay awake.'
 
-    def __init__(self, price=0.40, name='coffee'):
+    def __init__(self, price=0.40, name='coffee') -> None:
         super().__init__(price, name)
+
+    def description(self) -> str:
+        return 'A coffee, to stay awake.'
 
 
 class Tea(HotBeverage):
-    docs = 'Just some hot water in a cup.'
 
-    def __init__(self, price=0.30, name='tea'):
+    def __init__(self, price=0.30, name='tea') -> None:
         super().__init__(price, name)
+
+    def description(self) -> str:
+        return 'Just some hot water in a cup.'
 
 
 class Chocolate(HotBeverage):
-    docs = 'Chocolate, sweet chocolate...'
 
-    def __init__(self, price=0.50, name='chocolate'):
+    def __init__(self, price=0.50, name='chocolate') -> None:
         super().__init__(price, name)
+
+    def description(self) -> str:
+        return 'Chocolate, sweet chocolate...'
 
 
 class Cappuccino(HotBeverage):
-    docs = 'Un po’ di Italia nella sua tazza!'
 
-    def __init__(self, price=0.45, name='cappuccino'):
+    def __init__(self, price=0.45, name='cappuccino') -> None:
         super().__init__(price, name)
+
+    def description(self) -> str:
+        return 'Un po’ di Italia nella sua tazza!'
 
 
 def test():
