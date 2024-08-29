@@ -25,8 +25,8 @@ def parse_settings(file_path):
 
     for line in lines:
         if '=' in line:
-            key, value = line.split('=', 1)
-            settings_dict[key.strip()] = value.strip().strip('"')
+            key, value = line.split('=', 1) # The 1 argument to split() ensures that the line is split only once, even if there are multiple equal signs.
+            settings_dict[key.strip()] = value.strip().strip('\'')
 
     return settings_dict
 
