@@ -40,11 +40,11 @@ class Cappuccino(HotBeverage):
         super().__init__(price, name)
 
 
-def main():
+def test():
     instance_list = [HotBeverage(), Coffee(), Tea(), Chocolate(), Cappuccino()]
     for instance in instance_list:
         print(instance)
 
 
 if __name__ == '__main__':
-    main()
+    test()
