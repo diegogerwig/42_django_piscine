@@ -7,7 +7,7 @@ class HotBeverage:
     def description(self) -> str:
         return 'Just some hot water in a cup.'
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f'name : {self.name}\nprice : {self.price:.2f}\ndescription : {self.description()}\n'
 
 
