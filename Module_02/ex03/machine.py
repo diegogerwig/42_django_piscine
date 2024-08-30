@@ -33,8 +33,6 @@ class CoffeeMachine:
         return self.EmptyCup()
 
 
-
-
 def test():
     beverages_dict = {0: HotBeverage, 1: Coffee, 2: Tea, 3: Chocolate, 4: Cappuccino}
     iterations = 12
