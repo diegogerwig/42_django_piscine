@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-class Text(str): # str is a built-in Python class that represents a string of characters. The Text class is a subclass of str.
+class Text(str):  # str is a built-in Python class that represents a string of characters. The Text class is a subclass of str.
     """
     A Text class to represent a text you could use with your HTML elements.
 
@@ -13,7 +13,7 @@ class Text(str): # str is a built-in Python class that represents a string of ch
         """
 
         # Convert special characters to HTML entities
-        text = super().__str__().replace('<', '&lt;').replace('>', '&gt;') # super() initializes the parent class.
+        text = super().__str__().replace('<', '&lt;').replace('>', '&gt;')  # super() initializes the parent class.
 
         # Handle the special case for a single double quote
         if text == '"':
