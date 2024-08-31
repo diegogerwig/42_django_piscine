@@ -314,9 +314,28 @@ def __test():
     __test_Html()
     __test_Elem()
     __test_write_to_file(
-        Page(Html([Head(Title(Text("hello world!"))),
-             Body(H1(Text("HELLO WORLD!")))])),
-        "__test_write_to_file.html")
+        Page(
+            Html([
+                Head([
+                    Meta(attr={"charset": "UTF-8"}),
+                    Meta(attr={"name": "description", "content": "This is a test page for hello world."}),
+                    Meta(attr={"name": "author", "content": "dgerwig"}),
+                    Title(Text("hello world!"))
+                ]),
+                Body([
+                    H1(Text("🌍 Hello World!")),
+                    P(Text("Welcome to this test page. Below you will find a list and an image.")),
+                    Ul([
+                        Li(Text("First item")),
+                        Li(Text("Second item")),
+                        Li(Text("Third item"))
+                    ]),
+                    Img(attr={"src": "https://via.placeholder.com/150", "alt": "Placeholder Image"})
+                ])
+            ])
+        ),
+        "__test_write_to_file.html"
+    )
 
 
 if __name__ == '__main__':

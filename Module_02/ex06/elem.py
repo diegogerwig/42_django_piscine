@@ -68,7 +68,8 @@ class Elem:
         Here is a function to render our elements attributes.
         """
         result = ''
-        for pair in sorted(self.attr.items()):
+        # for pair in sorted(self.attr.items()):
+        for pair in self.attr.items():  # To avoid sorting the attributes, we can remove the sorted() function.
             result += ' ' + str(pair[0]) + '="' + str(pair[1]) + '"'
         return result
 
