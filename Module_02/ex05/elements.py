@@ -82,10 +82,10 @@ class Br(Elem):
         super().__init__(tag="br", attr=attr, content=content, tag_type="simple")
 
 
-def main():
+def create_html():
     print( Html( [Head(), Body()] ) )
 
-    print('='*50)
+    print('\n' + '='*50 + '\n')
 
     elem = Elem(
         tag='html',
@@ -94,7 +94,7 @@ def main():
                 tag='head',
                 content=Elem(
                     tag='title',
-                    content=Text('Hello ground!')
+                    content=Text('"Hello ground!"')
                 )
             ),
             Elem(
@@ -102,7 +102,7 @@ def main():
                 content=[
                     Elem(
                         tag='h1',
-                        content=Text('Oh no, not again!')
+                        content=Text('"Oh no, not again!"')
                     ),
                     Elem(
                         tag='img',
@@ -117,4 +117,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    create_html()
