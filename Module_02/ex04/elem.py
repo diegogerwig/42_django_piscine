@@ -13,7 +13,7 @@ class Text(str): # str is a built-in Python class that represents a string of ch
         """
 
         # Convert special characters to HTML entities
-        text = super().__str__().replace('<', '&lt;').replace('>', '&gt;') # The super() function returns an object that represents the parent class.
+        text = super().__str__().replace('<', '&lt;').replace('>', '&gt;') # super() initializes the parent class.
 
         # Handle the special case for a single double quote
         if text == '"':
@@ -31,7 +31,7 @@ class Elem:
     Elem will permit us to represent our HTML elements.
     """
     class ValidationError(Exception):
-        def __init__(self, message="It's neither a Text nor an Elem"):
+        def __init__(self, message="Error: content must be a Text instance or an Elem instance"):
             super().__init__(message)
 
     def __init__(self, tag='div', attr={}, content=None, tag_type='double'):
