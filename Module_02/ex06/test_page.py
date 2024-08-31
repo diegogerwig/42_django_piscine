@@ -3,11 +3,13 @@ from elem import Elem, Text
 from Page import Page
 
 # ANSI escape codes for colors
-RESET = "\033[0m"
 GREEN = "\033[92m"
 RED = "\033[91m"
 CYAN = "\033[96m"
 YELLOW = "\033[93m"
+BOLD = "\033[1m"
+BLINK = "\033[5m"
+RESET = "\033[0m"
 
 # Global counters for test results
 success_count = 0
@@ -120,8 +122,9 @@ def test_body():
 def test_title():
     print_simple_header("title")
     test_cases = [
-        (Page(Title()), False),
-        (Page(Title([Title(Text("Hello?"))])), True),
+        (Page(Title()), False),      
+        (Page(Title(Text("Hello"))), True),      
+        (Page(Title([Title(Text("Hello?"))])), False),
         (Page(Title([Title(Text("Hello?")), Title(Text("Hello?"))])), False)
     ]
     for target, expected in test_cases:
@@ -174,6 +177,8 @@ def print_global_summary():
     print_simple_header("GLOBAL TEST SUMMARY")
     print(f"Total SUCCESS: {GREEN}{success_count}{RESET}")
     print(f"Total FAILURE: {RED}{failure_count}{RESET}")
+    if failure_count == 0:
+        print(f"\n{GREEN}{BOLD}{BLINK}⭐ ⭐ ⭐ ⭐ ⭐   All tests passed!  ⭐ ⭐ ⭐ ⭐ ⭐{RESET}\n")
 
 def test():
     global success_count, failure_count
