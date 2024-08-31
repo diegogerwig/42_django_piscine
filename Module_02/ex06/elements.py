@@ -104,7 +104,7 @@ class Br(Elem):  # 'br' is Line Break. It is used to break lines.
 def create_html():
     print(Html([Head(), Body()]))
 
-    print('\n' + '='*50 + '\n')
+    print('\n' + '=' * 50 + '\n')
 
     elem = Elem(
         tag='html',
