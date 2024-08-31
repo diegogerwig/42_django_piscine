@@ -8,6 +8,13 @@ class Page:
             raise Elem.ValidationError()
         self.elem = elem
 
+    def __str__(self) -> str:
+        content = ""
+        if isinstance(self.elem, Html):
+            content += "<!DOCTYPE html>\n"
+        content += str(self.elem)
+        return content
+
     def is_valid(self) -> bool:
         return self.__check(self.elem)
 
@@ -18,8 +25,7 @@ class Page:
         
         if isinstance(elem, (Text, Meta)):
             return True
-        
-        if isinstance(elem, Html) and len(elem.content) == 2 and \
+        elif isinstance(elem, Html) and len(elem.content) == 2 and \
                 isinstance(elem.content[0], Head) and isinstance(elem.content[1], Body):
             if all(self.__check(el) for el in elem.content):
                 return True
@@ -53,12 +59,6 @@ class Page:
             return True
         return False
 
-    def __str__(self) -> str:
-        result = ""
-        if isinstance(self.elem, Html):
-            result += "<!DOCTYPE html>\n"
-        result += str(self.elem)
-        return result
 
     def write_to_file(self, path: str) -> None:
         with open(path, "w") as f:

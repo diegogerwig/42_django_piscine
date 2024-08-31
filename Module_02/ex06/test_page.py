@@ -1,342 +1,196 @@
-import sys
-
 from elements import (Html, Head, Body, Title, Meta, Img, Table, Th, Tr, Td, Ul, Ol, Li, H1, H2, P, Div, Span, Hr, Br)
 from elem import Elem, Text
 from Page import Page
 
+# ANSI escape codes for colors
+RESET = "\033[0m"
+GREEN = "\033[92m"
+RED = "\033[91m"
+CYAN = "\033[96m"
+YELLOW = "\033[93m"
 
-def __print_test(target: Page, toBe: bool):
-    print("================START===============")
-    print(str(target))
-    print("===============IS_VALID=============")
-    assert target.is_valid() == toBe
-    print("{:^36s}".format(str(target.is_valid())))
-    print("=================END================")
+# Global counters for test results
+success_count = 0
+failure_count = 0
 
+def print_simple_header(title: str):
+    print(f"\n{CYAN}{'='*34}{RESET}")
+    print(f"{CYAN}{title}{RESET}")
+    print(f"{CYAN}{'='*34}{RESET}")
 
-def __test_Table():
-    print("\n%{:=^34s}%\n".format("Table"))
-    target = Page(Table())
-    __print_test(target, True)
-    target = Page(
-        Table(
-            [
-                Tr(),
-            ]))
-    __print_test(target, True)
-    target = Page(
-        Table(
-            [
-                H1(
-                    Text("Hello World!")
-                ),
-            ]))
-    __print_test(target, False)
+def print_test_result(target: Page, expected: bool):
+    global success_count, failure_count
+    is_valid = target.is_valid()
 
+    print(f"\nTags to test: {YELLOW} \n{target} {RESET}")
 
-def __test_Tr():
-    print("\n%{:=^34s}%\n".format("Tr"))
-    target = Page(Tr())
-    __print_test(target, False)
-    target = Page(
-        Tr(
-            [
-                Th(Text("title")),
-                Th(Text("title")),
-                Th(Text("title")),
-                Th(Text("title")),
-                Th(Text("title")),
-            ]))
-    __print_test(target, True)
-    target = Page(
-        Tr(
-            [
-                Td(Text("content")),
-                Td(Text("content")),
-                Td(Text("content")),
-                Td(Text("content")),
-                Td(Text("content")),
-                Td(Text("content")),
-            ]))
-    __print_test(target, True)
-    target = Page(
-        Tr(
-            [
-                Th(Text("title")),
-                Td(Text("content")),
-            ]))
-    __print_test(target, False)
+    validation_result = "VALID" if is_valid else "INVALID"
+    print(f"Is valid or not: {YELLOW}{validation_result}{RESET}")
+    
+    result = GREEN + "SUCCESS" if is_valid == expected else RED + "FAILURE"
+    print(f"{result}{RESET}")
 
+    # Update global counters
+    if is_valid == expected:
+        success_count += 1
+    else:
+        failure_count += 1
 
-def __test_Ul_OL():
-    print("\n%{:=^34s}%\n".format("Ul_OL"))
-    target = Page(
-        Ul()
-    )
-    __print_test(target, False)
-    target = Page(
-        Ol()
-    )
-    __print_test(target, False)
-    target = Page(
-        Ul(
-            Li(
-                Text('test')
-            )
-        )
-    )
-    __print_test(target, True)
-    target = Page(
-        Ol(
-            Li(
-                Text('test')
-            )
-        )
-    )
-    __print_test(target, True)
-    target = Page(
-        Ul([
-            Li(
-                Text('test')
-            ),
-            Li(
-                Text('test')
-            ),
-        ])
-    )
-    __print_test(target, True)
-    target = Page(
-        Ol([
-            Li(
-                Text('test')
-            ),
-            Li(
-                Text('test')
-            ),
-        ])
-    )
-    __print_test(target, True)
-    target = Page(
-        Ul([
-            Li(
-                Text('test')
-            ),
-            H1(
-                Text('test')
-            ),
-        ])
-    )
-    __print_test(target, False)
-    target = Page(
-        Ol([
-            Li(
-                Text('test')
-            ),
-            H1(
-                Text('test')
-            ),
-        ])
-    )
-    __print_test(target, False)
+def test_table():
+    print_simple_header("table")
+    test_cases = [
+        (Page(Table()), True),
+        (Page(Table([Tr()])), True),
+        (Page(Table([H1(Text("Hello World!"))])), False)
+    ]
+    for target, expected in test_cases:
+        print_test_result(target, expected)
 
+def test_tr():
+    print_simple_header("tr")
+    test_cases = [
+        (Page(Tr()), False),
+        (Page(Tr([Th(Text("title"))]*5)), True),
+        (Page(Tr([Td(Text("content"))]*6)), True),
+        (Page(Tr([Th(Text("title")), Td(Text("content"))])), False)
+    ]
+    for target, expected in test_cases:
+        print_test_result(target, expected)
 
-def __test_Span():
-    print("\n%{:=^34s}%\n".format("Span"))
-    target = Page(
-        Span()
-    )
-    __print_test(target, True)
-    target = Page(
-        Span([
-            Text("Hello?"),
-            P(Text("World!")),
-        ])
-    )
-    __print_test(target, True)
-    target = Page(
-        Span([
-            H1(Text("World!")),
-        ])
-    )
-    __print_test(target, False)
+def test_list():
+    print_simple_header("ul & ol")
+    test_cases = [
+        (Page(Ul()), False),
+        (Page(Ol()), False),
+        (Page(Ul([Li(Text('test'))])), True),
+        (Page(Ol([Li(Text('test'))])), True),
+        (Page(Ul([Li(Text('test'))]*2)), True),
+        (Page(Ol([Li(Text('test'))]*2)), True),
+        (Page(Ul([Li(Text('test')), H1(Text('test'))])), False),
+        (Page(Ol([Li(Text('test')), H1(Text('test'))])), False)
+    ]
+    for target, expected in test_cases:
+        print_test_result(target, expected)
 
+def test_span():
+    print_simple_header("span")
+    test_cases = [
+        (Page(Span()), True),
+        (Page(Span([Text("Hello?"), P(Text("World!"))])), True),
+        (Page(Span([H1(Text("World!"))])), False)
+    ]
+    for target, expected in test_cases:
+        print_test_result(target, expected)
 
-def __test_P():
-    print("\n%{:=^34s}%\n".format("P"))
-    target = Page(
-        P()
-    )
-    __print_test(target, True)
-    target = Page(
-        P([
-            Text("Hello?"),
-        ])
-    )
-    __print_test(target, True)
-    target = Page(
-        P([
-            H1(Text("World!")),
-        ])
-    )
-    __print_test(target, False)
+def test_p():
+    print_simple_header("p")
+    test_cases = [
+        (Page(P()), True),
+        (Page(P([Text("Hello?")])), True),
+        (Page(P([H1(Text("World!"))])), False)
+    ]
+    for target, expected in test_cases:
+        print_test_result(target, expected)
 
+def test_text():
+    print_simple_header("title & h1 & h2 & li & th & td")
+    for element in [H1, H2, Li, Th, Td]:
+        test_cases = [
+            (Page(element()), False),
+            (Page(element([Text("Hello?")])), True),
+            (Page(element([H1(Text("World!"))])), False),
+            (Page(element([Text("Hello?")] * 2)), False)
+        ]
+        for target, expected in test_cases:
+            print_test_result(target, expected)
 
-def __test_Title_H1_H2_Li_Th_Td():
-    print("\n%{:=^34s}%\n".format("H1_H2_Li_Th_Td"))
-    for c in [H1, H2, Li, Th, Td]:
-        target = Page(
-            c()
-        )
-        __print_test(target, False)
-        target = Page(
-            c([
-                Text("Hello?"),
-            ])
-        )
-        __print_test(target, True)
-        target = Page(
-            c([
-                H1(Text("World!")),
-            ])
-        )
-        __print_test(target, False)
-        target = Page(
-            c([
-                Text("Hello?"),
-                Text("Hello?"),
-            ])
-        )
-        __print_test(target, False)
+def test_body():
+    print_simple_header("body & div")
+    for element in [Body, Div]:
+        test_cases = [
+            (Page(element()), True),
+            (Page(element([Text("Hello?")])), True),
+            (Page(element([H1(Text("World!"))])), True),
+            (Page(element([Text("Hello?"), Span()])), True),
+            (Page(Html([element()])), False)
+        ]
+        for target, expected in test_cases:
+            print_test_result(target, expected)
 
+def test_title():
+    print_simple_header("title")
+    test_cases = [
+        (Page(Title()), False),
+        (Page(Title([Title(Text("Hello?"))])), True),
+        (Page(Title([Title(Text("Hello?")), Title(Text("Hello?"))])), False)
+    ]
+    for target, expected in test_cases:
+        print_test_result(target, expected)
 
-def __test_Body_Div():
-    print("\n%{:=^34s}%\n".format("Body_Div"))
-    for c in [Body, Div]:
-        target = Page(
-            c()
-        )
-        __print_test(target, True)
-        target = Page(
-            c([
-                Text("Hello?"),
-            ])
-        )
-        __print_test(target, True)
-        target = Page(
-            c([
-                H1(Text("World!")),
-            ])
-        )
-        __print_test(target, True)
-        target = Page(
-            c([
-                Text("Hello?"),
-                Span(),
-            ])
-        )
-        __print_test(target, True)
-        target = Page(
-            c([
-                Html(),
-                c()
-            ])
-        )
-        __print_test(target, False)
+def test_html():
+    print_simple_header("html")
+    test_cases = [
+        (Page(Html()), False),
+        (Page(Html([Head([Title(Text("Hello?"))]), Body([H1(Text("Hello!"))])])), True),
+        (Page(Html(Div())), False)
+    ]
+    for target, expected in test_cases:
+        print_test_result(target, expected)
 
+def test_elem():
+    print_test_result(Page(Elem()), False)
 
-def __test_Title():
-    print("\n%{:=^34s}%\n".format("Title"))
-    target = Page(
-        Title()
-    )
-    __print_test(target, False)
-    target = Page(
-        Title([
-            Title(Text("Hello?")),
-        ])
-    )
-    __print_test(target, True)
-    target = Page(
-        Title([
-            Title(Text("Hello?")),
-            Title(Text("Hello?")),
-        ])
-    )
-    __print_test(target, False)
-
-
-def __test_Html():
-    print("\n%{:=^34s}%\n".format("Html"))
-    target = Page(
-        Html()
-    )
-    __print_test(target, False)
+def test_write_to_file():
+    print_simple_header("write_to_file")
     target = Page(
         Html([
             Head([
-                Title(Text("Hello?")),
+                Meta(attr={"charset": "UTF-8"}),
+                Meta(attr={"name": "description", "content": "This is a test page for hello world."}),
+                Meta(attr={"name": "author", "content": "dgerwig"}),
+                Title(Text("💫 Testing html_file"))
             ]),
             Body([
-                H1(Text("Hello?")),
+                H1(Text("🌍 Hello World!")),
+                Hr(),
+                Br(),
+                Hr(),
+                P(Text("Welcome to this test page.")),
+                Ul([
+                    Li(Text("First item")),
+                    Li(Text("Second item")),
+                    Li(Text("Third item"))
+                ]),
+                Img(attr={"src": "https://picsum.photos/200", "alt": "Random Image"})
             ])
         ])
     )
-    __print_test(target, True)
-    target = Page(
-        Html(
-            Div()
-        )
-    )
-    __print_test(target, False)
-
-
-def __test_Elem():
-    __print_test(Page(Elem()), False)
-
-
-def __test_write_to_file(target: Page, path: str):
-    print("================START===============")
-    print(str(target))
-    print("==========WRITE_TO_FILE=============")
+    path = "test_file.html"
     target.write_to_file(path)
-    print("{:^36s}".format(path))
-    print("=================END================")
+    print(f"{YELLOW}{target}{RESET}")
+    print(f"File written to: {GREEN}{path}{RESET}")
 
+def print_global_summary():
+    print_simple_header("GLOBAL TEST SUMMARY")
+    print(f"Total SUCCESS: {GREEN}{success_count}{RESET}")
+    print(f"Total FAILURE: {RED}{failure_count}{RESET}")
 
-def __test():
-    __test_Table()
-    __test_Tr()
-    __test_Ul_OL()
-    __test_Span()
-    __test_P()
-    __test_Title_H1_H2_Li_Th_Td()
-    __test_Body_Div()
-    __test_Html()
-    __test_Elem()
-    __test_write_to_file(
-        Page(
-            Html([
-                Head([
-                    Meta(attr={"charset": "UTF-8"}),
-                    Meta(attr={"name": "description", "content": "This is a test page for hello world."}),
-                    Meta(attr={"name": "author", "content": "dgerwig"}),
-                    Title(Text("hello world!"))
-                ]),
-                Body([
-                    H1(Text("🌍 Hello World!")),
-                    P(Text("Welcome to this test page. Below you will find a list and an image.")),
-                    Ul([
-                        Li(Text("First item")),
-                        Li(Text("Second item")),
-                        Li(Text("Third item"))
-                    ]),
-                    Img(attr={"src": "https://via.placeholder.com/150", "alt": "Placeholder Image"})
-                ])
-            ])
-        ),
-        "__test_write_to_file.html"
-    )
+def test():
+    global success_count, failure_count
 
+    test_table()
+    test_tr()
+    test_list()
+    test_span()
+    test_p()
+    test_text()
+    test_body()
+    test_title()
+    test_html()
+    test_elem()
+    test_write_to_file()
+
+    print_global_summary()
 
 if __name__ == '__main__':
-    __test()
+    test()
