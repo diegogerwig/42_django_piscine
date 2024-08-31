@@ -1,4 +1,6 @@
-class Text(str):
+#!/usr/bin/python3
+
+class Text(str):  # str is a built-in Python class that represents a string of characters. The Text class is a subclass of str.
     """
     A Text class to represent a text you could use with your HTML elements.
 
@@ -9,21 +11,19 @@ class Text(str):
         """
         Do you really need a comment to understand this method?.
         """
-        # text = super().__str__()
-        # replacements = {
-        #     '<': '&lt;',
-        #     '>': '&gt;',
-        #     '"': '&quot;',
-        #     '\n': '\n<br />\n'
-        # }
-        # for old, new in replacements.items():
-        #     text = text.replace(old, new)
-        # return text
-    
-        text = super().__str__().replace('<', '&lt;').replace('>', '&gt;')
+
+        # Convert special characters to HTML entities
+        text = super().__str__().replace('<', '&lt;').replace('>', '&gt;')  # super() initializes the parent class.
+
+        # Handle the special case for a single double quote
         if text == '"':
             text = text.replace('"', '&quot;')
-        return text.replace('\n', '\n<br />\n')
+
+        # Replace newline characters with HTML line breaks
+        text = text.replace('\n', '\n<br />\n')
+
+        # Return the processed text
+        return text
 
 
 class Elem:
@@ -31,7 +31,7 @@ class Elem:
     Elem will permit us to represent our HTML elements.
     """
     class ValidationError(Exception):
-        def __init__(self, message="It's neither a Text nor an Elem"):
+        def __init__(self, message="Error: content must be a Text instance or an Elem instance"):
             super().__init__(message)
 
     def __init__(self, tag='div', attr={}, content=None, tag_type='double'):
@@ -57,9 +57,9 @@ class Elem:
         elements...).
         """
         result = ""
-        if self.tag_type == 'double':
+        if self.tag_type == 'double':  # The double tag type is the most common tag type. It has an opening tag and a closing tag.
             result = "<{0}{1}>{2}</{0}>".format(self.tag, self.__make_attr(), self.__make_content())
-        elif self.tag_type == 'simple':
+        elif self.tag_type == 'simple':  # The simple tag type is a self-closing tag. It has an opening tag, but no closing tag.
             result = "<{0}{1} />".format(self.tag, self.__make_attr())
         return result
 
@@ -91,7 +91,7 @@ class Elem:
         elif content != Text(''):
             self.content.append(content)
 
-    @staticmethod
+    @staticmethod  # The @staticmethod decorator is used to define a static method in a class. With a static method, you can call it without an object of the class.
     def check_type(content):
         """
         Is this object a HTML-compatible Text instance or a Elem, or even a
@@ -103,7 +103,7 @@ class Elem:
                                                 for elem in content])))
 
 
-def main():
+def create_html():
     elem = Elem(
         tag='html',
         content=[
@@ -111,7 +111,7 @@ def main():
                 tag='head',
                 content=Elem(
                     tag='title',
-                    content=Text('Hello ground!')
+                    content=Text('"Hello ground!"')
                 )
             ),
             Elem(
@@ -119,7 +119,7 @@ def main():
                 content=[
                     Elem(
                         tag='h1',
-                        content=Text('Oh no, not again!')
+                        content=Text('"Oh no, not again!"')
                     ),
                     Elem(
                         tag='img',
@@ -134,4 +134,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    create_html()

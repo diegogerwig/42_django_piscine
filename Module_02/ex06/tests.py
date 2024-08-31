@@ -1,230 +1,126 @@
-import sys
+#!/usr/bin/env python3
+# coding: utf-8
 
-from elements import (Html, Head, Body, Title, Meta, Img, Table, Th, Tr, Td, Ul, Ol, Li, H1, H2, P, Div, Span, Hr, Br, Elem, Text)
-
-from Page import Page
-
-
-class TextColors:
-    RED = '\033[31m'
-    GREEN = '\033[32m'
-    YELLOW = '\033[33m'
-    BLUE = '\033[34m'
-    MAGENTA = '\033[35m'
-    CYAN = '\033[36m'
-    WHITE = '\033[37m'
-    RESET = '\033[0m'
-
-def print_colored_text(text, color_code):
-    if color_code.upper() in dir(TextColors):
-        color = getattr(TextColors, color_code.upper())
-        print(f"{color}{text}{TextColors.RESET}", file=sys.stdout)
-    else:
-        print(text)
+import traceback
+from elem import Elem, Text
 
 
-class PageTester():
-    def __init__(self, print_error_msg=False, print_code=False, write_path=None):
-        self.print_error_msg = print_error_msg
-        self.print_code = print_code
-        self.write_path = write_path
+def test_text():
+    # What is Text?
+    assert isinstance(Text(), str)
+    # Default behaviour :
+    assert str(Text()) == ''
+    # With an argument :
+    assert str(Text('')) == ''
+    assert str(Text('foo')) == 'foo'
+    # Pattern replacing :
+    assert str(Text('\n')) == '\n<br />\n'
+    assert str(Text('foo\nbar')) == 'foo\n<br />\nbar'
+    # Escaping <, >, "...
+    assert str(Text('<')) == '&lt;'
+    assert str(Text('>')) == '&gt;'
+    assert str(Text('"')) == '&quot;'
+    print('Text behaviour : OK.')
 
-    def test(self):
-        self.__one_Text()
-        self.__test_Html()
-        self.__test_Head()
-        self.__test_Body_Div()
-        self.__test_P()
-        self.__test_Span()
-        self.__test_Ul_Ol()
-        self.__test_Tr()
-        self.__test_Table()
+    
+def test_elem_basics():
+    # Default behaviour :
+    assert str(Elem()) == '<div></div>'
+    # Arguments order :
+    assert str(Elem('div', {}, None, 'double')) == '<div></div>'
+    # Argument names :
+    assert str(Elem(tag='body', attr={}, content=Elem(),
+                    tag_type='double')) == '<body>\n  <div></div>\n</body>'
+    # With elem as content :
+    assert str(Elem(content=Elem())) == '<div>\n  <div></div>\n</div>'
+    # With list as content :
+    assert str(Elem(content=[Text('foo'), Text('bar'), Elem()])) == '<div>\n  foo\n  bar\n \
+ <div></div>\n</div>'
+    print('Basic Elem behaviour : OK.')
 
-    def is_valid(self, page):
-        print_colored_text(page.is_valid(), 'blue')
-        if self.print_error_msg:
-            print_colored_text(f" - {page.error_msg}", 'YELLOW')
-        if self.print_code:
-            print(page, "\n")
-        if self.write_path:
-            page.write_to_file(self.write_path)
+    
+def test_empty_texts():
+    assert str(Elem(content=Text(''))) == '<div></div>'
+    assert str(Elem(content=[Text(''), Text('')])) == '<div></div>'
+    assert str(Elem(content=[Text('foo'), Text(''), Elem()])) == '<div>\n  foo\
+\n  <div></div>\n</div>'
+    print('Elem with empty texts : OK.')
 
-    def __test_Html(self):
-        print("\n{:=^42s}\n".format("Html"))
-        page = Page(
-                    Html([
-                        Head()
-                    ])
-                )
-        self.is_valid(page)
     
-        page = Page(
-                    Html([
-                        Body(),
-                    ])
-                )
-        self.is_valid(page)
+def test_errors():
+    # Type error if the content isn't made of Text or Elem.
+    try:
+        Elem(content=1)
+    except Exception as e:
+        assert type(e) == Elem.ValidationError
+    # The right way :
+    assert str(Elem(content=Text(1))) == '<div>\n  1\n</div>'
+
+    # Type error if the elements of the list aren't Text or Elem instances.
+    try:
+        Elem(content=['foo', Elem(), 1])
+    except Exception as e:
+        assert type(e) == Elem.ValidationError
+    # The right way :
+    assert (str(Elem(content=[Text('foo'), Elem(), Text(1)]))
+            == '<div>\n  foo\n  <div></div>\n  1\n</div>')
+
+    # Same with add_method()
+    try:
+        elem = Elem()
+        elem.add_content(1)
+        raise(Exception("incorrect behaviour."))
+    except Exception as e:
+        assert isinstance(e, Elem.ValidationError)
     
-        page = Page(
-                    Html([
-                        Body(),
-                        Head(Title(Text("test"))),
-                    ])
-                )
-        self.is_valid(page)
+    # Or with lists :
+    try :
+        elem = Elem()
+        elem.add_content([1,])
+        raise(Exception('incorrect behaviour'))
+    except Exception as e:
+        assert isinstance(e, Elem.ValidationError)
+
+    # str can't be used :
+    try:
+        elem = Elem()
+        elem.add_content(['',])
+        raise(Exception("incorrect behaviour."))
+    except Exception as e:
+        assert isinstance(e, Elem.ValidationError)
     
-        page = Page(
-                    Html([
-                        Head(Title(Text("test"))),
-                        Body(),
-                    ])
-                )
-        self.is_valid(page)
-    
-    def __test_Head(self):
-        print("\n{:=^42s}\n".format("Head"))
-        page = Page(
-                    Head(),
-                )
-        self.is_valid(page)
-    
-        page = Page(
-                    Head(H1(Text("test"))),
-                )
-        self.is_valid(page)
-    
-        page = Page(
-                    Head(Title(Text("test"))),
-                )
-        self.is_valid(page)
-    
-    def __test_Body_Div(self):
-        print("\n{:=^42s}\n".format("Body Div"))
-        page = Page(
-                    Body(Title(Text("test"))),
-                )
-        self.is_valid(page)
-        
-    
-        page = Page(
-                    Body(H1(Text("test"))),
-                )
-        self.is_valid(page)
-    
-    def __test_Span(self):
-        print("\n{:=^42s}\n".format("Span"))
-        page = Page(
-                    Span(Title(Text("test"))),
-                )
-        self.is_valid(page)
-        
-    
-        page = Page(
-                    Span(P(Text("test"))),
-                )
-        self.is_valid(page)
-    
-    def __test_Ul_Ol(self):
-        print("\n{:=^42s}\n".format("Ul Ol"))
-        page = Page(
-                    Ul(Title(Text("test"))),
-                )
-        self.is_valid(page)
-        
-        page = Page(
-                    Ol([
-                        Li(Text("test")),
-                        Ul(Text("test")),
-                        ]),
-                )
-        self.is_valid(page)
-    
-        page = Page(
-                    Ol(Li(Text("test"))),
-                )
-        self.is_valid(page)
-    
-    def __test_Tr(self):
-        print("\n{:=^42s}\n".format("Tr"))
-        page = Page(
-                    Tr(Li(Text("test"))),
-                )
-        self.is_valid(page)
-    
-        page = Page(
-                    Tr([
-                        Td(Text("test")),
-                        Th(Text("test")),
-                        ]),
-                )
-        self.is_valid(page)
-    
-        page = Page(
-                    Tr([
-                        Td(Text("test")),
-                        Td(Text("test")),
-                        ]),
-                )
-        self.is_valid(page)
-    
-    def __test_Table(self):
-        print("\n{:=^42s}\n".format("Table"))
-        page = Page(
-                    Table(Li(Text("test"))),
-                )
-        self.is_valid(page)
-    
-        page = Page(
-                    Table([
-                        Tr(Td(Text("test"))),
-                        Td(Td(Text("test"))),
-                        ]),
-                )
-        self.is_valid(page)
-    
-        page = Page(
-                    Table([
-                        Tr(Td(Text("test"))),
-                        Tr(Td(Text("test"))),
-                        ]),
-                )
-        self.is_valid(page)
-    
-    # Title_H1_H2_Li_Th_Td
-    def __one_Text(self):
-        print("\n{:=^42s}\n".format("Title H1 H2 Li Th Td"))
-        elem = Html([
-            Head(Title(Text('"Hello ground!"'))),
-    				    Body([H1(),
-                  ])])
-        page = Page(elem)
-        self.is_valid(page)
-    
-    def __test_P(self):
-        print("\n{:=^42s}\n".format("P"))
-        page = Page(
-                    P([
-                        Text('"again!"'), 
-                        Text('"again!"'),
-                    ])
-                )
-        self.is_valid(page)
-    
-        page = Page(
-                    P()
-                )
-        self.is_valid(page)
-    
-        page = Page(
-                    P(H2())
-                )
-        self.is_valid(page)
+    try:
+        elem = Elem(content='')
+        raise(Exception("incorrect behaviour."))
+    except Exception as e:
+        assert isinstance(e, Elem.ValidationError)
+    print('Error cases : OK.')
 
 
-def main():
-    tester = PageTester()
-    tester.test()
+def test_embedding():
+    assert (str(Elem(content=Elem(content=Elem(content=Elem()))))
+            == """<div>
+  <div>
+    <div>
+      <div></div>
+    </div>
+  </div>
+</div>""")
+    print('Element embedding : OK.')
 
 
+def test():
+    test_text()
+    test_elem_basics()
+    test_embedding()
+    test_empty_texts()
+    test_errors()
+    
 if __name__ == '__main__':
-    main()
+    try :
+        test()
+        print('Tests succeeded!')
+    except AssertionError as e:
+        traceback.print_exc()
+        print(e)
+        print('Tests failed!')
