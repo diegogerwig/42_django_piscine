@@ -7,7 +7,6 @@ class CoffeeMachine:
         self.count = 0
 
     class EmptyCup(HotBeverage):
-        # docs = 'An empty cup?! Gimme my money back!'
 
         def __init__(self, price=0.90, name='empty cup') -> None:
             super().__init__(price, name)
