@@ -15,7 +15,7 @@ class Body(Elem):  # 'body' is the container for the visible content of the docu
     def __init__(self, content=None, attr={}):
         super().__init__(tag="body", attr=attr, content=content, tag_type="double")
 
-     
+
 class Title(Elem):  # 'title' is the title of the document.
     def __init__(self, content=None, attr={}):
         super().__init__(tag="title", attr=attr, content=content, tag_type="double")
@@ -81,7 +81,7 @@ class P(Elem):  # 'p' is used to create a paragraph in an HTML page.
         super().__init__(tag="p", attr=attr, content=content, tag_type="double")
 
 
-class Div(Elem): # 'div' is used to create a division or a section in an HTML page.
+class Div(Elem):  # 'div' is used to create a division or a section in an HTML page.
     def __init__(self, content=None, attr={}):
         super().__init__(tag="div", attr=attr, content=content, tag_type="double")
 
