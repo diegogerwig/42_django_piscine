@@ -14,7 +14,7 @@ class CoffeeMachine:
         def description(self) -> str:
             return 'An empty cup?! Gimme my money back!'
 
-    class BrokenMachineException(Exception):
+    class BrokenMachineException(Exception): # The Exception class is a built-in class in Python that defines the base class for all built-in exceptions.
 
         def __init__(self, message='❗ This coffee machine has to be repaired.') -> None:
             super().__init__(message)

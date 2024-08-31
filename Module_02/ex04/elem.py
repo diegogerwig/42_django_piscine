@@ -1,4 +1,6 @@
-class Text(str):
+#!/usr/bin/python3
+
+class Text(str): # str is a built-in Python class that represents a string of characters. The Text class is a subclass of str.
     """
     A Text class to represent a text you could use with your HTML elements.
 
@@ -9,35 +11,19 @@ class Text(str):
         """
         Do you really need a comment to understand this method?.
         """
-        # replacements = {
-        #     '<': '&lt;',
-        #     '>': '&gt;',
-        #     '"': '&quot;',
-        #     '\n': '\n<br />\n'
-        # }
-        # text = super().__str__()
-        # for old, new in replacements.items():
-        #     text = text.replace(old, new)
-        # return text
 
-        text = super().__str__().replace('<', '&lt;').replace('>', '&gt;')
+        # Convert special characters to HTML entities
+        text = super().__str__().replace('<', '&lt;').replace('>', '&gt;') # The super() function returns an object that represents the parent class.
+
+        # Handle the special case for a single double quote
         if text == '"':
             text = text.replace('"', '&quot;')
-        return text.replace('\n', '\n<br />\n')
 
-        # text = super().__str__()
-        # if text == '<':
-        #     text.replace('<', '&lt;')
-        # if text == '>':
-        #     text.replace('>', '&gt;')
-        # if text == '"':
-        #     text = text.replace('"', '&quot;')
-        # if text == '\n':
-        #     text.replace('\n', '\n<br />\n')
-        
-        # return text
+        # Replace newline characters with HTML line breaks
+        text = text.replace('\n', '\n<br />\n')
 
-
+        # Return the processed text
+        return text
 
 
 class Elem:
@@ -105,7 +91,7 @@ class Elem:
         elif content != Text(''):
             self.content.append(content)
 
-    @staticmethod
+    @staticmethod  # The @staticmethod decorator is used to define a static method in a class. With a static method, you can call it without an object of the class.
     def check_type(content):
         """
         Is this object a HTML-compatible Text instance or a Elem, or even a
@@ -117,7 +103,7 @@ class Elem:
                                                 for elem in content])))
 
 
-def main():
+def create_html():
     elem = Elem(
         tag='html',
         content=[
@@ -148,4 +134,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    create_html()
