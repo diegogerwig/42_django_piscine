@@ -16,34 +16,36 @@ class CoffeeMachine:
 
     class BrokenMachineException(Exception):
 
-        def __init__(self, message='This coffee machine has to be repaired.') -> None:
+        def __init__(self, message='❗ This coffee machine has to be repaired.') -> None:
             super().__init__(message)
 
     def repair(self) -> None:
         self.count = 0
-        print('machine has been repaired')
+        print('✅ This coffee machine has been repaired\n')
 
-    def serve(self, instance) -> HotBeverage:
+    def serve(self, beverage) -> HotBeverage:
         self.count += 1
-        if self.count > 9:
+        if self.count > 10:
             raise self.BrokenMachineException()
+        
         if random.randrange(2) == 0:
-            return instance()
-        return self.EmptyCup()
+            return beverage()
+        else:
+            return self.EmptyCup()
 
 
 def test():
     beverages_dict = {0: HotBeverage, 1: Coffee, 2: Tea, 3: Chocolate, 4: Cappuccino}
-    iterations = 12
-    
-    try:
-        machine = CoffeeMachine()
-        for _ in range(iterations):
-            print(f'Iteration {_ + 1} from {iterations}')
+    iterations = 25
+        
+    machine = CoffeeMachine()
+    for i in range(iterations):
+        print(f'Iteration {i + 1} from {iterations}')
+        try:
             print(machine.serve(beverages_dict.get(random.randrange(5))))
-    except Exception as e:
-        print(e)
-        machine.repair()
+        except CoffeeMachine.BrokenMachineException as e:
+            print(e)
+            machine.repair()
 
 
 if __name__ == '__main__':
