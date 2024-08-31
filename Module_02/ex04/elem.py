@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-class Text(str): # str is a built-in Python class that represents a string of characters. The Text class is a subclass of str.
+class Text(str):  # str is a built-in Python class that represents a string of characters. The Text class is a subclass of str.
     """
     A Text class to represent a text you could use with your HTML elements.
 
@@ -13,7 +13,7 @@ class Text(str): # str is a built-in Python class that represents a string of ch
         """
 
         # Convert special characters to HTML entities
-        text = super().__str__().replace('<', '&lt;').replace('>', '&gt;') # super() initializes the parent class.
+        text = super().__str__().replace('<', '&lt;').replace('>', '&gt;')  # super() initializes the parent class.
 
         # Handle the special case for a single double quote
         if text == '"':
@@ -57,9 +57,9 @@ class Elem:
         elements...).
         """
         result = ""
-        if self.tag_type == 'double':
+        if self.tag_type == 'double':  # The double tag type is the most common tag type. It has an opening tag and a closing tag.
             result = "<{0}{1}>{2}</{0}>".format(self.tag, self.__make_attr(), self.__make_content())
-        elif self.tag_type == 'simple':
+        elif self.tag_type == 'simple':  # The simple tag type is a self-closing tag. It has an opening tag, but no closing tag.
             result = "<{0}{1} />".format(self.tag, self.__make_attr())
         return result
 

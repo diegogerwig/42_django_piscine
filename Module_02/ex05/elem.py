@@ -57,9 +57,9 @@ class Elem:
         elements...).
         """
         result = ""
-        if self.tag_type == 'double':
+        if self.tag_type == 'double':  # The double tag type is the most common tag type. It has an opening tag and a closing tag.
             result = "<{0}{1}>{2}</{0}>".format(self.tag, self.__make_attr(), self.__make_content())
-        elif self.tag_type == 'simple':
+        elif self.tag_type == 'simple':  # The simple tag type is a self-closing tag. It has an opening tag, but no closing tag.
             result = "<{0}{1} />".format(self.tag, self.__make_attr())
         return result
 
