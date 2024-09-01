@@ -2,16 +2,15 @@ from elements import (Html, Head, Body, Title, Meta, Img, Table, Th, Tr, Td, Ul,
 from elem import Elem, Text
 from Page import Page
 
-# ANSI escape codes for colors
 GREEN = "\033[92m"
 RED = "\033[91m"
 CYAN = "\033[96m"
 YELLOW = "\033[93m"
+MAGENTA = "\033[95m"
 BOLD = "\033[1m"
 BLINK = "\033[5m"
 RESET = "\033[0m"
 
-# Global counters for test results
 success_count = 0
 failure_count = 0
 
@@ -27,12 +26,11 @@ def print_test_result(target: Page, expected: bool):
     print(f"\nTags to test: {YELLOW} \n{target} {RESET}")
 
     validation_result = "VALID" if is_valid else "INVALID"
-    print(f"Is valid or not: {YELLOW}{validation_result}{RESET}")
+    print(f"Valid or not? -> {MAGENTA}{validation_result}{RESET}")
     
     result = GREEN + "SUCCESS" if is_valid == expected else RED + "FAILURE"
     print(f"{result}{RESET}")
 
-    # Update global counters
     if is_valid == expected:
         success_count += 1
     else:
