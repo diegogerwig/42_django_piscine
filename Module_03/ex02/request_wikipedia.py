@@ -1,9 +1,9 @@
 #!/usr/bin/python3
 
+import sys
 import requests
 import json
 import dewiki
-import sys
 
 
 def request_wikipeadia(page: str):
@@ -26,9 +26,11 @@ def request_wikipeadia(page: str):
         data = json.loads(res.text)
     except json.decoder.JSONDecodeError as e:
         raise e
-    if data.get("error") is not None:
-        raise Exception(data["error"]["info"])
-    return (dewiki.from_string(data["parse"]["wikitext"]["*"]))
+    if data.get('error') is not None:
+        raise Exception(data['error']['info'])
+    return (dewiki.from_string(data['parse']['wikitext']['*']))
+
+
 
 
 def main():
@@ -38,15 +40,15 @@ def main():
         except Exception as e:
             return print(e)
         try:
-            f = open("{}.wiki".format(sys.argv[1]), "w")
+            f = open('{}.wiki'.format(sys.argv[1]), 'w')
             f.write(wiki_data)
             f.close
         except Exception as e:
             return print(e)
     elif len(sys.argv) == 2:
-        print("one argument required! : title")
+        print('one argument required! : title')
     else:
-        print("wrong argument count!")
+        print('❌ Wrong argument count!')
 
 
 if __name__ == '__main__':

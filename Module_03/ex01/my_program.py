@@ -1,42 +1,70 @@
 #!/usr/bin/python3
 
+import os
 from path import Path
 
 
-def generate_loading_bar(steps, length=20):
-    loading_lines = []
-    for i in range(steps + 1):
-        # Calculate the number of '#' to display as progress and '-' for the remaining bar
-        progress = int((i / steps) * length)
-        bar = f"[{'#' * progress}{'-' * (length - progress)}] {int((i / steps) * 100)}%"
-        loading_lines.append(bar)
+def copy_lines(source_file, destination_file):
+    try:
+        source_file = os.path.expanduser(source_file)
+        print(f'✨ Attempting to read from: {source_file}')
+        with open(source_file, 'r') as src:
+            lines = src.readlines()
+
+        if len(lines) == 0:
+            print(f'💥 No content found in {source_file}.')
+            return
+        else:
+            print(f'✅ Read {len(lines)} lines from {source_file}')
     
-    return loading_lines
+    except FileNotFoundError:
+        print(f'❌ Error: {source_file} not found.')
+        return
+    except Exception as e:
+        print(f'❌ An error occurred while reading {source_file}: {e}')
+        return
+
+    try:
+        print(f'✨ Writing content to {destination_file}')
+        with open(destination_file, 'w') as dest:
+            dest.writelines(lines[:])
+        print(f'✅ Successfully wrote to {destination_file}')
+    
+    except Exception as e:
+        print(f'❌ An error occurred while writing to {destination_file}: {e}')
+        return
 
 
 def main():
     
-    # Create directory if it doesn't exist
     try:
         Path.makedirs('test_dir')
     except FileExistsError as e:
-        print(f"Directory already exists: {e}")
+        print(f'❌ Directory already exists: {e}')
     except Exception as e:
-        print(f"An error occurred: {e}")
+        print(f'❌ An error occurred: {e}')
     
-    # Create or update the file
+    destination_file = 'test_dir/test_file'
+    
     try:
-        Path.touch('test_dir/test_file')
-        f = Path('test_dir/test_file')
+        Path.touch(destination_file)
     except Exception as e:
-        print(f"An error occurred: {e}")
+        print(f'❌ An error occurred: {e}')
     
-    # Generate a loading bar with 10 steps and write it to the file
-    loading_bar = generate_loading_bar(10)
-    f.write_lines(loading_bar)
+    source_file = '~/sgoinfre/local_lib/lib/python3.12/site-packages/path/classes.py'
+
+    try:
+        copy_lines(source_file, destination_file)
+        print(f'✅ Copied lines from {source_file} to {destination_file}')
+    except Exception as e:
+        print(f'❌ An error occurred during file operation: {e}')
     
-    # Read and print the content of the file
-    print(f.read_text())
+    try:
+        with open(destination_file, 'r') as dest:
+            print(f'✨ Reading content from {destination_file}: \n')
+            print(dest.read())
+    except Exception as e:
+        print(f'❌ An error occurred while reading {destination_file}: {e}')
 
 
 if __name__ == '__main__':
