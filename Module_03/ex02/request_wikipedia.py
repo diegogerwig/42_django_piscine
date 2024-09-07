@@ -53,7 +53,7 @@ def write_to_file(filename: str, content: str):
 
 def main():
     if len(sys.argv) != 2:
-        print('❌ Incorrect usage: Please provide exactly one argument for the page title.')
+        print('❗ Incorrect usage: Provide exactly one argument for the page title.')
         sys.exit(1)
 
     page = sys.argv[1]

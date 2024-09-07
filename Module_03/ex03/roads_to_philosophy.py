@@ -1,72 +1,58 @@
 #!/usr/bin/env python3
 
-import requests
-from bs4 import BeautifulSoup
 import sys
+import requests
+from bs4 import BeautifulSoup as bs
+
+
+def search_wikipedia(path: str, visited=None) -> None:
+    if visited is None:
+        visited = []
+
+    URL = f'https://en.wikipedia.org{path}'
+    try:
+        response = requests.get(URL)
+        response.raise_for_status()
+    except requests.HTTPError as e:
+        if response.status_code == 404:
+            print('💀 It leads to a dead end!')
+        else:
+            print(f'❌ HTTP Error: {e}')
+        return
+
+    soup = bs(response.text, 'html.parser')
+    title = soup.find(id='firstHeading').text
+
+    if title in visited:
+        print('🎆 It leads to an infinite loop!')
+        return
+
+    visited.append(title)
+    print(title)
+
+    if title == 'Philosophy':
+        print(f'✅ {len(visited)} roads from {visited[0]} to Philosophy')
+        return
+
+    content = soup.find(id='mw-content-text')
+    all_links = content.select('p > a')
+    for link in all_links:
+        href = link.get('href')
+        if href and href.startswith('/wiki/') and not href.startswith('/wiki/Wikipedia:') and not href.startswith('/wiki/Help:'):
+            search_wikipedia(href, visited)
+            return
+
+    print('💀 It leads to a dead end!')
 
 
 def main():
-	if len(sys.argv) != 2:
-		exit("Usage: python3 roads_to_philosophy.py string_to_find")
+    if len(sys.argv) != 2:
+        print('❗ Usage: python script.py <title>')
+        return
 
-	string_to_find = sys.argv[1]
-
-	if string_to_find == "Philosophy":
-		print("0 roads from Philosophy to philosophy !")
-		exit(0)
-	nexturl = "http://en.wikipedia.org/wiki/" + string_to_find
-
-	visited = []
-	i = 0
-	try:
-		while True:
-			i += 1
-			req = requests.get(nexturl)
-
-			if req.status_code != 200 or not req:
-				exit("Something wrong with Server")
-
-			if not req.text:
-				exit(f"Can't find {string_to_find}")
-
-			soup = BeautifulSoup(req.text, 'html.parser')
-			article = soup.findAll('h1', {'class': 'firstHeading'})[0].contents[0]
-			print(article)
-
-			if article == "Philosophy":
-				break
-			maincontent = soup.findAll("div", {"class": "mw-parser-output"})[0]
-			paragraphs = maincontent.findAll('p')
-			next_url_found = False
-			for paragraph in paragraphs:
-				if not next_url_found:
-					parenthesis_in_progress = False
-					for thing in paragraph.contents:
-						if not next_url_found:
-							if "(" in thing:
-								parenthesis_in_progess = True
-							if ")" in thing and parenthesis_in_progress:
-								parenthesis_in_progress = False
-
-							if not parenthesis_in_progress:
-								if not isinstance(thing, str):
-									try:
-										n = thing['href']
-										if not n in visited:
-											next_url_found = True
-											nexturl = n
-											visited.append(nexturl)
-										else:
-											exit("It leads to an infinite loop ! ")
-									except:
-										pass
-
-			nexturl = "http://en.wikipedia.org" + nexturl
-
-		print("{} roads from {} to Philosophy !".format(i, string_to_find))
-	except:
-		exit("It leads to a dead end!")
+    title = sys.argv[1]
+    search_wikipedia(f'/wiki/{title}')
 
 
 if __name__ == '__main__':
-	main()
+    main()
