@@ -29,7 +29,7 @@ def request_wiki(page: str) -> str:
         raise Exception(f'❌ Request error occurred: {e}')
 
     try:
-        data = res.json()  # Directly using `res.json()` instead of `json.loads(res.text)`
+        data = res.json()
     except json.decoder.JSONDecodeError as e:
         raise Exception(f'❌ Error decoding the JSON response: {e}')
 
@@ -58,17 +58,17 @@ def main():
 
     page = sys.argv[1]
 
-    sanitized_page = page.replace(" ", "_")
+    page_snake_case = page.replace(" ", "_")
     
     try:
         wiki_data = request_wiki(page)
-        write_to_file(sanitized_page, wiki_data)
+        write_to_file(page_snake_case, wiki_data)
     except Exception as e:
         print(f'❌ Error: {e}')
         sys.exit(1)
 
-    print(f'✨ Reading from file {sanitized_page}.wiki')
-    with open(f'{sanitized_page}.wiki', 'r') as f:
+    print(f'✨ Reading from file {page_snake_case}.wiki')
+    with open(f'{page_snake_case}.wiki', 'r') as f:
         print(f.read())
 
 
