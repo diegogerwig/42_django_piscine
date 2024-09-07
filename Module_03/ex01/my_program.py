@@ -61,7 +61,7 @@ def main():
     
     try:
         with open(destination_file, 'r') as dest:
-            print(f'✨ Reading content from {destination_file}: \n')
+            print(f'✨ Reading & display content from {destination_file}: \n')
             print(dest.read())
     except Exception as e:
         print(f'❌ An error occurred while reading {destination_file}: {e}')
