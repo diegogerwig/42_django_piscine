@@ -13,30 +13,30 @@ def request_wiki(page: str) -> str:
     URL = 'https://en.wikipedia.org/w/api.php'
 
     PARAMS = {
-        'action': 'parse',
+        'action': 'parse',  # Parse the content of a page
         'page': page,
-        'prop': 'wikitext',
         'format': 'json',
-        'redirects': 'true'
+        'prop': 'wikitext',
+        'redirects': '',
     }
 
     try:
-        res = requests.get(url=URL, params=PARAMS)
-        res.raise_for_status()  # Raises an HTTPError for bad responses
+        response = requests.get(url=URL, params=PARAMS)
+        response.raise_for_status()  # Raises an HTTPError for bad responses
     except requests.HTTPError as e:
         raise Exception(f'❌ HTTP error occurred: {e}')
     except requests.RequestException as e:
         raise Exception(f'❌ Request error occurred: {e}')
 
     try:
-        data = res.json()
+        data = response.json()
     except json.decoder.JSONDecodeError as e:
         raise Exception(f'❌ Error decoding the JSON response: {e}')
 
     if 'error' in data:
         raise Exception(f'❌ API error: {data['error']['info']}')
 
-    return dewiki.from_string(data['parse']['wikitext']['*'])
+    return dewiki.from_string(data['parse']['wikitext']['*'])  # Parse the wikitext to plain text
 
 
 def write_to_file(filename: str, content: str):
@@ -59,7 +59,7 @@ def main():
     page = sys.argv[1]
 
     page_snake_case = page.replace(" ", "_")
-    
+
     try:
         wiki_data = request_wiki(page)
         write_to_file(page_snake_case, wiki_data)
