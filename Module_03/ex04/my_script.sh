@@ -8,6 +8,8 @@ source ~/sgoinfre/django_venv/bin/activate
 
 if [[ "$VIRTUAL_ENV" != "" ]]; then
     echo '✅ Virtual environment activated.'
+    echo '🚀 Installing requirements...'
+    echo "   Python version: $(which python)"
 else
     echo '❌ Failed to activate virtual environment.'
 fi
