@@ -28,7 +28,7 @@ def search_wikipedia(path: str, visited=None) -> None:
         return
 
     visited.append(title)
-    print(title)
+    print(f'{len(visited)} -> {title}')
 
     if title == 'Philosophy':
         print(f'✅ {len(visited)} roads from {visited[0]} to Philosophy')
