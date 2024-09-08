@@ -52,8 +52,6 @@ def write_to_file(filename: str, content: str):
         raise Exception(f'❌ File writing error: {e}')
 
 
-
-
 def main():
     if len(sys.argv) != 2:
         print('❗ Incorrect usage: Provide exactly one argument for the page title.')
