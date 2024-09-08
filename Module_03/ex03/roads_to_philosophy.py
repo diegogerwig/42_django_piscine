@@ -5,7 +5,7 @@ import requests
 from bs4 import BeautifulSoup as bs
 
 
-def search_wikipedia(path: str, visited=None) -> None:
+def wiki_road(path: str, visited=None) -> None:
     if visited is None:
         visited = []
 
@@ -39,7 +39,7 @@ def search_wikipedia(path: str, visited=None) -> None:
     for link in all_links:
         href = link.get('href')
         if href and href.startswith('/wiki/') and not href.startswith('/wiki/Wikipedia:') and not href.startswith('/wiki/Help:'):
-            search_wikipedia(href, visited)
+            wiki_road(href, visited)
             return
 
     print('💀 It leads to a dead end!')
@@ -51,7 +51,7 @@ def main():
         return
 
     title = sys.argv[1]
-    search_wikipedia(f'/wiki/{title}')
+    wiki_road(f'/wiki/{title}')
 
 
 if __name__ == '__main__':
