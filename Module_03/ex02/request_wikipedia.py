@@ -14,10 +14,10 @@ def request_wiki(page: str) -> str:
 
     PARAMS = {
         'action': 'parse',  # Parse the content of a page
-        'page': page,
-        'format': 'json',
-        'prop': 'wikitext',
-        'redirects': '',
+        'page': page,  # The title of the page to retrieve
+        'format': 'json', # The format of the response
+        'prop': 'wikitext',  # The properties to get
+        'redirects': 'true',  # Automatically resolve redirects
     }
 
     try:
@@ -30,8 +30,8 @@ def request_wiki(page: str) -> str:
 
     try:
         data = response.json()
-    except json.decoder.JSONDecodeError as e:
-        raise Exception(f'❌ Error decoding the JSON response: {e}')
+    except Exception as e:
+        raise Exception(f'❌ Error occurred while decoding the JSON response: {e}')
 
     if 'error' in data:
         raise Exception(f'❌ API error: {data['error']['info']}')

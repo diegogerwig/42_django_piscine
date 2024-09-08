@@ -9,7 +9,8 @@ def wiki_road(path: str, visited=None) -> None:
     if visited is None:
         visited = []
 
-    URL = f'https://en.wikipedia.org{path}'
+
+    URL = f'https://es.wikipedia.org{path}'
     try:
         response = requests.get(URL)
         response.raise_for_status()
@@ -24,7 +25,7 @@ def wiki_road(path: str, visited=None) -> None:
     title = soup.find(id='firstHeading').text
 
     if title in visited:
-        print('🎆 It leads to an infinite loop!')
+        print(f'🎆 It leads to an infinite loop! -> {title}')
         return
 
     visited.append(title)
