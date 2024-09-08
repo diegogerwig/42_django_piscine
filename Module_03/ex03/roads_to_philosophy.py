@@ -6,17 +6,20 @@ from bs4 import BeautifulSoup as bs
 
 
 def wiki_road(path: str, visited=None) -> None:
+
     if visited is None:
         visited = []
 
+    title = path.split('/')[-1]
 
-    URL = f'https://es.wikipedia.org{path}'
+    URL = f'https://en.wikipedia.org{path}'
+
     try:
         response = requests.get(URL)
         response.raise_for_status()
     except requests.HTTPError as e:
         if response.status_code == 404:
-            print('💀 It leads to a dead end!')
+            print(f'💀 It leads to a dead end! -> {title}')
         else:
             print(f'❌ HTTP Error: {e}')
         return
@@ -43,7 +46,7 @@ def wiki_road(path: str, visited=None) -> None:
             wiki_road(href, visited)
             return
 
-    print('💀 It leads to a dead end!')
+    print(f'💀 It leads to a dead end! -> {title}')
 
 
 def main():
@@ -51,8 +54,8 @@ def main():
         print('❗ Usage: python script.py <title>')
         return
 
-    title = sys.argv[1]
-    wiki_road(f'/wiki/{title}')
+    title = sys.argv[1]  
+    wiki_road(f'/wiki/{title}')  
 
 
 if __name__ == '__main__':

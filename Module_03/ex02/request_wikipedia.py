@@ -7,9 +7,7 @@ import sys
 
 
 def request_wiki(page: str) -> str:
-    '''
-    Sends a request to the Wikipedia API to retrieve the wikitext of the specified page.
-    '''
+
     URL = 'https://en.wikipedia.org/w/api.php'
 
     PARAMS = {
@@ -39,10 +37,8 @@ def request_wiki(page: str) -> str:
     return dewiki.from_string(data['parse']['wikitext']['*'])  # Parse the wikitext to plain text
 
 
-def write_to_file(filename: str, content: str):
-    '''
-    Writes the provided content to a file with the given filename.
-    '''
+def write_to_file(filename: str, content: str): -> None
+
     try:
         with open(f'{filename}.wiki', 'w') as f:
             f.write(content)
@@ -52,6 +48,7 @@ def write_to_file(filename: str, content: str):
 
 
 def main():
+    
     if len(sys.argv) != 2:
         print('❗ Incorrect usage: Provide exactly one argument for the page title.')
         sys.exit(1)
