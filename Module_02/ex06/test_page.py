@@ -25,7 +25,7 @@ TARGET = Page(
             Meta(attr={"name": "author", "content": "dgerwig"})
         ]),
         Body([  # Body and Div must only contain the following type of elements: H1, H2, Div, Table, Ul, Ol, Span, Text
-            H1(Text("🌍 Hello World!")),
+            H3(Text("🌍 Hello World!")),
             Div([Text("This is a div with "), H2(Text("a header inside."))]),
             Table([
                 Tr([
@@ -72,10 +72,12 @@ def print_test_result(test_name: str, target: Page, expected: bool):
 
     print(f"\nTags to test: {YELLOW} \n{target} {RESET}")
 
-    validation_result = "VALID" if is_valid else "INVALID"
-    print(f"Valid or not? -> {MAGENTA}{validation_result}{RESET}")
+    # validation_result = "True" if is_valid else "False"
+    print(f"Rules -> \t{MAGENTA}{expected}{RESET}")
 
-    result = GREEN + "SUCCESS" if is_valid == expected else RED + "FAILURE"
+    print(f"My result -> \t{MAGENTA}{is_valid}{RESET}")
+
+    result = GREEN + "\t\tSUCCESS" if is_valid == expected else RED + "\t\tFAILURE"
     print(f"{result}{RESET}")
 
     if is_valid == expected:

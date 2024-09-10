@@ -1,11 +1,24 @@
 from elements import (Html, Head, Body, Title, Meta, Img, Table, Th, Tr, Td, Ul, Ol, Li, H1, H2, P, Div, Span, Hr, Br)
 from elem import Elem, Text
 
+
+VALID_TAGS = {
+    'Html', 'Head', 'Body', 'Title', 'Meta', 'Img', 'Table', 'Th', 'Tr', 'Td', 'Ul', 'Ol', 'Li', 'H1', 'H2', 'P', 'Div', 'Span', 'Hr', 'Br'
+}
+
+
 class Page:
-    def __init__(self, elem: Elem) -> None:
-        if not isinstance(elem, Elem):
-            raise Elem.ValidationError()
-        self.elem = elem
+    def __init__(self, elem):
+        try:
+            if elem not in VALID_TAGS:
+                print("Warning: 'tag' is not a valid tag. Setting to default value.")
+            if not isinstance(elem, Elem):
+                print("Warning: 'elem' is not an instance of Elem. Setting to default value.")
+                self.elem = Elem()
+            else:
+                self.elem = elem
+        except Exception as e:
+            print(f"An unexpected error occurred: {e}")
 
     def __str__(self) -> str:  
         content = ""
