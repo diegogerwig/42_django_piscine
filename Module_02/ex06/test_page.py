@@ -30,12 +30,13 @@ try:
             ]),
             Body([  # Body and Div must only contain the following type of elements: H1, H2, Div, Table, Ul, Ol, Span, Text
                 H1(Text("🌍 Hello World!")),
+                H2(Text("🌎 Goodbye World!")),
                 Div([Text("This is a div with "), H2(Text("a header inside."))]),
                 Table([
                     Tr([
                         Th(Text("Header 1")),
                         Th(Text("Header 2")),
-                        Th(Text("Header 3"))
+                        Th(Text("Header 3")),
                     ]),
                     Tr([
                         Td(Text("Data 1")),
@@ -80,9 +81,9 @@ def print_test_result(test_name: str, target: Page, expected: bool):
     print(f"\nTags to test: {YELLOW} \n{target} {RESET}")
 
     # validation_result = "True" if is_valid else "False"
-    print(f"Rules -> \t{MAGENTA}{expected}{RESET}")
+    print(f"HTML Rules -> \t{MAGENTA}{expected}{RESET}")
 
-    print(f"My result -> \t{MAGENTA}{is_valid}{RESET}")
+    print(f"Page Class -> \t{MAGENTA}{is_valid}{RESET}")
 
     result = GREEN + "\t\tSUCCESS" if is_valid == expected else RED + "\t\tFAILURE"
     print(f"{result}{RESET}")
@@ -98,7 +99,10 @@ def test_table():
     print_simple_header("table")
     test_cases = [
         (Page(Table()), True),
-        (Page(Table([Tr()])), True),
+        (Page(Table([Tr()])), False),
+        (Page(Table([Tr(Th())])), False),
+        (Page(Table([Tr(Th(Text()))])), False),
+        (Page(Table([Tr(Th(Text("planet")))])), True),
         (Page(Table([H1(Text("Hello World!"))])), False),
         (TARGET, True)
     ]
@@ -136,13 +140,15 @@ def test_list():
 def test_span():
     print_simple_header("span")
     test_cases = [
-        (Page(Span()), True),
-        (Page(Span([Text("Hello?"), P(Text("World!"))])), True),
-        (Page(Span([H1(Text("World!"))])), False),
-        (TARGET, True)
+        (Page(Span()), True),  # Span with no children should be valid
+        (Page(Span([Text("Hello"), P(Text("World"))])), True),  # Span with Text and P is valid
+        (Page(Span([H1(Text("World"))])), False),  # Span should not contain H1
+        (TARGET, True)  # Replace TARGET with your actual Page instance to test
     ]
-    for target, expected in test_cases:
-        print_test_result(test_span, target, expected)
+    
+    for idx, (target, expected) in enumerate(test_cases):
+        test_name = f"test_span"
+        print_test_result(test_name, target, expected)
 
 def test_p():
     print_simple_header("p")

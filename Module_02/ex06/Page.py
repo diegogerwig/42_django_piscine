@@ -1,17 +1,9 @@
 from elements import (Html, Head, Body, Title, Meta, Img, Table, Th, Tr, Td, Ul, Ol, Li, H1, H2, P, Div, Span, Hr, Br)
 from elem import Elem, Text
 
-
-VALID_TAGS = {
-    'Html', 'Head', 'Body', 'Title', 'Meta', 'Img', 'Table', 'Th', 'Tr', 'Td', 'Ul', 'Ol', 'Li', 'H1', 'H2', 'P', 'Div', 'Span', 'Hr', 'Br'
-}
-
-
 class Page:
     def __init__(self, elem):
         try:
-            if elem not in VALID_TAGS:
-                print("Warning: 'tag' is not a valid tag. Setting to default value.")
             if not isinstance(elem, Elem):
                 print("Warning: 'elem' is not an instance of Elem. Setting to default value.")
                 self.elem = Elem()
@@ -31,81 +23,121 @@ class Page:
         return self.__check(self.elem)
 
     def __check(self, elem: Elem) -> bool:
+        """Recursively checks if the element and its children are valid."""
         if not self.__is_valid_element_type(elem):
+            print(f"Error: Invalid element type '{type(elem).__name__}' encountered.")
             return False
 
+        # Specific checks for different types of elements
         if isinstance(elem, Html):
             return self.__check_html(elem)
-
-        if isinstance(elem, Head):  
+        elif isinstance(elem, Head):
             return self.__check_head(elem)
-
-        if isinstance(elem, (Body, Div)):
+        elif isinstance(elem, (Body, Div)):
             return self.__check_body_div(elem)
-
-        if isinstance(elem, (Title, H1, H2, Li, Th, Td)):
+        elif isinstance(elem, (Title, H1, H2, Li, Th, Td)):
             return self.__check_single_text_child(elem)
-
-        if isinstance(elem, P):
+        elif isinstance(elem, P):
             return self.__all_children_of_type(elem, Text)
-
-        if isinstance(elem, Span):
+        elif isinstance(elem, Span):
             return self.__check_span(elem)
-
-        if isinstance(elem, (Ul, Ol)):
+        elif isinstance(elem, (Ul, Ol)):
             return self.__check_list(elem)
-
-        if isinstance(elem, Tr):
+        elif isinstance(elem, Tr):
             return self.__check_table_row(elem)
-
-        if isinstance(elem, Table):
-            return self.__all_children_of_type(elem, Tr)
-
-        if isinstance(elem, (Text, Meta, Img, Hr, Br)):
+        elif isinstance(elem, Table):
+            return self.__check_table(elem)
+        elif isinstance(elem, (Meta, Img, Hr, Br, Text)):
             return True
 
-        return False
+        # For other elements, recursively check children
+        return all(self.__check(child) for child in elem.content)
 
-    def __is_valid_element_type(self, elem: Elem) -> bool:  # check if elem is a valid element
+    def __is_valid_element_type(self, elem: Elem) -> bool:
+        """Check if elem is a valid element."""
         return isinstance(elem, (Html, Head, Body, Title, Meta, Img, Table, Th, Tr, Td,
-                                 Ul, Ol, Li, H1, H2, P, Div, Span, Hr, Br, Text))  
+                                 Ul, Ol, Li, H1, H2, P, Div, Span, Hr, Br, Text))
 
-    def __check_html(self, elem: Html) -> bool:  # html must have head and body
-        return len(elem.content) == 2 and \
-               isinstance(elem.content[0], Head) and isinstance(elem.content[1], Body) and \
-               all(self.__check(el) for el in elem.content)
+    def __check_html(self, elem: Html) -> bool:
+        """Html must have head and body, and their children must be valid."""
+        if len(elem.content) != 2:
+            print("Error: Html must contain exactly two children (Head and Body).")
+            return False
+        head, body = elem.content
+        if not isinstance(head, Head) or not isinstance(body, Body):
+            print("Error: Html's children must be Head and Body.")
+            return False
+        return self.__check(head) and self.__check(body)
 
-    def __check_head(self, elem: Head) -> bool:  # head must have only one title
-        return [isinstance(el, Title) for el in elem.content].count(True) == 1 and \
-               all(self.__check(el) for el in elem.content)
+    def __check_head(self, elem: Head) -> bool:
+        """Head must have only one title, and its children must be valid."""
+        title_count = sum(isinstance(el, Title) for el in elem.content)
+        if title_count != 1:
+            print(f"Error: Head must contain exactly one Title. Found {title_count}.")
+            return False
+        return all(self.__check(el) for el in elem.content)
 
-    def __check_body_div(self, elem: Elem) -> bool:  # body and div must only contain h1, h2, div, table, ul, ol, span, text
-        return self.__all_children_of_type(elem, (H1, H2, Div, Table, Ul, Ol, Span, Text))
+    def __check_body_div(self, elem: Elem) -> bool:
+        """Body and Div must only contain h1, h2, div, table, ul, ol, span, text."""
+        valid_types = (H1, H2, Div, Table, Ul, Ol, Span, Text)
+        if not self.__all_children_of_type(elem, valid_types):
+            print(f"Error: Body/Div contains invalid child elements.")
+            return False
+        return all(self.__check(el) for el in elem.content)
 
-    def __check_single_text_child(self, elem: Elem) -> bool:  # title, h1, h2, li, th, td must have only one text child
-        return len(elem.content) == 1 and isinstance(elem.content[0], Text)
+    def __check_single_text_child(self, elem: Elem) -> bool:
+        """Title, h1, h2, li, th, td must have only one text child."""
+        if len(elem.content) != 1 or not isinstance(elem.content[0], Text):
+            print(f"Error: {type(elem).__name__} must contain exactly one Text child.")
+            return False
+        return True
 
-    def __check_span(self, elem: Span) -> bool:  # span must only contain text and p
-        return self.__all_children_of_type(elem, (Text, P)) and \
-               all(self.__check(el) for el in elem.content)
+    def __check_span(self, elem: Span) -> bool:
+        """Span must only contain text and p."""
+        if not self.__all_children_of_type(elem, (Text, P)):
+            print("Error: Span contains invalid child elements.")
+            return False
+        return all(self.__check(el) for el in elem.content)
 
-    def __check_list(self, elem: Elem) -> bool:  # ul and ol must only contain li
-        return len(elem.content) > 0 and \
-               self.__all_children_of_type(elem, Li) and \
-               all(self.__check(el) for el in elem.content)
+    def __check_list(self, elem: Elem) -> bool:
+        """Ul and Ol must only contain li, and their children must be valid."""
+        if len(elem.content) == 0 or not self.__all_children_of_type(elem, Li):
+            print(f"Error: {type(elem).__name__} must contain only Li elements.")
+            return False
+        return all(self.__check(el) for el in elem.content)
 
-    def __check_table_row(self, elem: Tr) -> bool:  # tr must only contain th and td, must be of the same type and must have content
-        return len(elem.content) > 0 and \
-               self.__all_children_of_type(elem, (Th, Td)) and \
-               self.__all_same_type(elem.content)
-    
-    def __all_children_of_type(self, elem: Elem, types: tuple) -> bool:  # check if all children of elem are of type types
+    def __check_table(self, elem: Table) -> bool:
+        """Table must only contain tr, and its children must be valid."""
+        if not self.__all_children_of_type(elem, Tr):
+            print("Error: Table must contain only Tr elements.")
+            return False
+        return all(self.__check(el) for el in elem.content)
+
+    def __check_table_row(self, elem: Tr) -> bool:
+        """Tr must only contain Th and Td, and all children must be of the same type."""
+        if len(elem.content) == 0:
+            print("Error: Tr element has no children.")
+            return False
+        if not self.__all_children_of_type(elem, (Th, Td)):
+            print(f"Error: Invalid child element found in Tr.")
+            return False
+        if not self.__all_same_type(elem.content):
+            print("Error: Not all children of Tr are of the same type.")
+            return False
+        return all(self.__check(child) for child in elem.content)
+
+    def __all_children_of_type(self, elem: Elem, types: tuple) -> bool:
+        """Check if all children of elem are of type types."""
         return all(isinstance(child, types) for child in elem.content)
 
-    def __all_same_type(self, elements: list) -> bool:  # check if all elements in a list are of the same type
+    def __all_same_type(self, elements: list) -> bool:
+        """Check if all elements in a list are of the same type."""
+        if not elements:
+            return True
         first_type = type(elements[0])
         return all(isinstance(el, first_type) for el in elements)
 
-    def write_to_file(self, path: str) -> None:  # write the page to a file
+    def write_to_file(self, path: str) -> None:
+        """Write the page to a file."""
         with open(path, "w") as f:
             f.write(self.__str__())
