@@ -1,6 +1,9 @@
+import sys
+
 from elements import (Html, Head, Body, Title, Meta, Img, Table, Th, Tr, Td, Ul, Ol, Li, H1, H2, P, Div, Span, Hr, Br)
 from elem import Elem, Text
 from Page import Page
+
 
 GREEN = "\033[92m"
 RED = "\033[91m"
@@ -16,50 +19,54 @@ failure_count = 0
 
 failed_tests = []
 
-TARGET = Page(
-    Html([
-        Head([
-            Title(Text("💫 Testing html_file")),
-            Meta(attr={"charset": "UTF-8"}),
-            Meta(attr={"name": "description", "content": "This is a test page for hello world."}),
-            Meta(attr={"name": "author", "content": "dgerwig"})
-        ]),
-        Body([  # Body and Div must only contain the following type of elements: H1, H2, Div, Table, Ul, Ol, Span, Text
-            H3(Text("🌍 Hello World!")),
-            Div([Text("This is a div with "), H2(Text("a header inside."))]),
-            Table([
-                Tr([
-                    Th(Text("Header 1")),
-                    Th(Text("Header 2")),
-                    Th(Text("Header 3"))
+try:
+    TARGET = Page(
+        Html([
+            Head([
+                Title(Text("💫 Testing html_file")),
+                Meta(attr={"charset": "UTF-8"}),
+                Meta(attr={"name": "description", "content": "This is a test page for hello world."}),
+                Meta(attr={"name": "author", "content": "dgerwig"})
+            ]),
+            Body([  # Body and Div must only contain the following type of elements: H1, H2, Div, Table, Ul, Ol, Span, Text
+                H3(Text("🌍 Hello World!")),
+                Div([Text("This is a div with "), H2(Text("a header inside."))]),
+                Table([
+                    Tr([
+                        Th(Text("Header 1")),
+                        Th(Text("Header 2")),
+                        Th(Text("Header 3"))
+                    ]),
+                    Tr([
+                        Td(Text("Data 1")),
+                        Td(Text("Data 2")),
+                        Td(Text("Data 3"))
+                    ]),
+                    Tr([
+                        Td(Text("Data 4")),
+                        Td(Text("Data 5")),
+                        Td(Text("Data 6"))
+                    ])
                 ]),
-                Tr([
-                    Td(Text("Data 1")),
-                    Td(Text("Data 2")),
-                    Td(Text("Data 3"))
+                Ul([
+                    Li(Text("First item")),
+                    Li(Text("Second item")),
+                    Li(Text("Third item"))
                 ]),
-                Tr([
-                    Td(Text("Data 4")),
-                    Td(Text("Data 5")),
-                    Td(Text("Data 6"))
-                ])
-            ]),
-            Ul([
-                Li(Text("First item")),
-                Li(Text("Second item")),
-                Li(Text("Third item"))
-            ]),
-            Ol([
-                Li(Text("First item")),
-                Li(Text("Second item")),
-                Li(Text("Third item"))
-            ]),
-            Span([
-                Text("This is a span ")
-            ]),
+                Ol([
+                    Li(Text("First item")),
+                    Li(Text("Second item")),
+                    Li(Text("Third item"))
+                ]),
+                Span([
+                    Text("This is a span ")
+                ]),
+            ])
         ])
-    ])
-)
+    )
+except Exception as e:
+    print(f"❌ An unexpected error occurred: {e}")
+    sys.exit(1)
 
 def print_simple_header(title: str):
     print(f"\n{CYAN}{'='*34}{RESET}")
