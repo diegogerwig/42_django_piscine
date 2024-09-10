@@ -29,7 +29,7 @@ try:
                 Meta(attr={"name": "author", "content": "dgerwig"})
             ]),
             Body([  # Body and Div must only contain the following type of elements: H1, H2, Div, Table, Ul, Ol, Span, Text
-                H3(Text("🌍 Hello World!")),
+                H1(Text("🌍 Hello World!")),
                 Div([Text("This is a div with "), H2(Text("a header inside."))]),
                 Table([
                     Tr([
