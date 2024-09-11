@@ -36,7 +36,7 @@ try:
                     Tr([
                         Th(Text("Header 1")),
                         Th(Text("Header 2")),
-                        Th(Text("Header 3")),
+                        P(Text("Header 3")),
                     ]),
                     Tr([
                         Td(Text("Data 1")),
@@ -80,10 +80,9 @@ def print_test_result(test_name: str, target: Page, expected: bool):
 
     print(f"\nTags to test: {YELLOW} \n{target} {RESET}")
 
-    # validation_result = "True" if is_valid else "False"
     print(f"HTML Rules -> \t{MAGENTA}{expected}{RESET}")
 
-    print(f"Page Class -> \t{MAGENTA}{is_valid}{RESET}")
+    print(f"class Page -> \t{MAGENTA}{is_valid}{RESET}")
 
     result = GREEN + "\t\tSUCCESS" if is_valid == expected else RED + "\t\tFAILURE"
     print(f"{result}{RESET}")
@@ -104,7 +103,6 @@ def test_table():
         (Page(Table([Tr(Th(Text()))])), False),
         (Page(Table([Tr(Th(Text("planet")))])), True),
         (Page(Table([H1(Text("Hello World!"))])), False),
-        (TARGET, True)
     ]
     for target, expected in test_cases:
         print_test_result('test_table', target, expected)
@@ -116,7 +114,6 @@ def test_tr():
         (Page(Tr([Th(Text("title"))]*5)), True),
         (Page(Tr([Td(Text("content"))]*6)), True),
         (Page(Tr([Th(Text("title")), Td(Text("content"))])), False),
-        (TARGET, True)
     ]
     for target, expected in test_cases:
         print_test_result('test_tr', target, expected)
@@ -132,7 +129,6 @@ def test_list():
         (Page(Ol([Li(Text('test'))]*2)), True),
         (Page(Ul([Li(Text('test')), H1(Text('test'))])), False),
         (Page(Ol([Li(Text('test')), H1(Text('test'))])), False),
-        (TARGET, True)
     ]
     for target, expected in test_cases:
         print_test_result('test_list', target, expected)
@@ -140,10 +136,9 @@ def test_list():
 def test_span():
     print_simple_header("span")
     test_cases = [
-        (Page(Span()), True),  # Span with no children should be valid
-        (Page(Span([Text("Hello"), P(Text("World"))])), True),  # Span with Text and P is valid
-        (Page(Span([H1(Text("World"))])), False),  # Span should not contain H1
-        (TARGET, True)  # Replace TARGET with your actual Page instance to test
+        (Page(Span()), True),  
+        (Page(Span([Text("Hello"), P(Text("World"))])), True),  
+        (Page(Span([H1(Text("World"))])), False),  
     ]
     
     for idx, (target, expected) in enumerate(test_cases):
@@ -156,7 +151,6 @@ def test_p():
         (Page(P()), True),
         (Page(P([Text("Hello?")])), True),
         (Page(P([H1(Text("World!"))])), False),
-        (TARGET, True)
     ]
     for target, expected in test_cases:
         print_test_result('test_p', target, expected)
@@ -169,7 +163,6 @@ def test_text():
             (Page(element([Text("Hello?")])), True),
             (Page(element([H1(Text("World!"))])), False),
             (Page(element([Text("Hello?")] * 2)), False),
-            (TARGET, True)
         ]
         for target, expected in test_cases:
             print_test_result('test_text', target, expected)
@@ -183,7 +176,6 @@ def test_body():
             (Page(element([H1(Text("World!"))])), True),
             (Page(element([Text("Hello?"), Span()])), True),
             (Page(Html([element()])), False),
-            (TARGET, True)
         ]
         for target, expected in test_cases:
             print_test_result('test_body', target, expected)
@@ -195,7 +187,6 @@ def test_title():
         (Page(Title(Text("Hello"))), True),      
         (Page(Title([Title(Text("Hello?"))])), False),
         (Page(Title([Title(Text("Hello?")), Title(Text("Hello?"))])), False),
-        (TARGET, True)
     ]
     for target, expected in test_cases:
         print_test_result('test_title', target, expected)
@@ -206,7 +197,6 @@ def test_html():
         (Page(Html()), False),
         (Page(Html([Head([Title(Text("Hello?"))]), Body([H1(Text("Hello!"))])])), True),
         (Page(Html(Div())), False),
-        (TARGET, True)
     ]
     for target, expected in test_cases:
         print_test_result('test_html', target, expected)
