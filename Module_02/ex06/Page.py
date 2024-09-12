@@ -48,7 +48,7 @@ class Page:
         elif isinstance(elem, (Meta, Img, Hr, Br, Text)):
             return True
 
-        # For other elements, recursively check children
+        # Check childrem of elem recursively
         return all(self.__check(child) for child in elem.content)
 
     def __is_valid_element_type(self, elem: Elem) -> bool:
@@ -69,6 +69,10 @@ class Page:
 
     def __check_head(self, elem: Head) -> bool:
         """Head must have only one title, and its children must be valid."""
+        valid_types = (Title)
+        if not self.__all_children_of_type(elem, valid_types):
+            print("Error: Head contains invalid child elements.")
+            return False
         title_count = sum(isinstance(el, Title) for el in elem.content)
         if title_count != 1:
             print(f"Error: Head must contain exactly one Title. Found {title_count}.")

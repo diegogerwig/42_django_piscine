@@ -31,6 +31,7 @@ class Elem:
     Elem will permit us to represent our HTML elements.
     """
     class ValidationError(Exception):
+
         def __init__(self, message="Error: content must be a Text instance or an Elem instance"):
             super().__init__(message)
 
@@ -43,10 +44,16 @@ class Elem:
         self.tag = tag
         self.attr = attr
         self.content = []
-        if content:
-            self.add_content(content)
-        elif content is not None and not isinstance(content, Text):
-            raise self.ValidationError
+
+        try:
+            if content:
+                self.add_content(content)  
+            elif content is not None and not isinstance(content, Text):
+                raise self.ValidationError()  
+        except self.ValidationError as e:
+            print(e)
+            self.content = []
+        
         self.tag_type = tag_type
 
     def __str__(self):
@@ -91,7 +98,7 @@ class Elem:
             if not Elem.check_type(content):
                 raise Elem.ValidationError
         except Elem.ValidationError:
-            print("Content validation failed. Please provide valid content.")
+            print("🚫 Content validation failed. Please provide valid content.")
             return
         
         if type(content) is list:

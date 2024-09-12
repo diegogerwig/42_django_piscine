@@ -24,19 +24,23 @@ try:
         Html([
             Head([
                 Title(Text("💫 Testing html_file")),
-                Meta(attr={"charset": "UTF-8"}),
-                Meta(attr={"name": "description", "content": "This is a test page for hello world."}),
-                Meta(attr={"name": "author", "content": "dgerwig"})
+                # Title(Text("💫 A second title")),
+                # Meta(attr={"charset": "UTF-8"}),
             ]),
             Body([  # Body and Div must only contain the following type of elements: H1, H2, Div, Table, Ul, Ol, Span, Text
+                # Title(Text("💫 Testing html_file")),
                 H1(Text("🌍 Hello World!")),
                 H2(Text("🌎 Goodbye World!")),
+                # H3(Text("🌏 Hello Again!")),
+                # P(Text("🌏 Hello Again!")),
                 Div([Text("This is a div with "), H2(Text("a header inside."))]),
                 Table([
                     Tr([
                         Th(Text("Header 1")),
                         Th(Text("Header 2")),
-                        P(Text("Header 3")),
+                        Th(Text("Header 3")),
+                        # P(Text("Header 4")),
+                        # p(Text("Header 5")),
                     ]),
                     Tr([
                         Td(Text("Data 1")),
@@ -52,7 +56,8 @@ try:
                 Ul([
                     Li(Text("First item")),
                     Li(Text("Second item")),
-                    Li(Text("Third item"))
+                    Li(Text("Third item")),
+                    # P(Text("Fourth item")),
                 ]),
                 Ol([
                     Li(Text("First item")),
