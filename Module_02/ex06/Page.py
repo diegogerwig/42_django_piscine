@@ -15,7 +15,7 @@ class Page:
     def __str__(self) -> str:  
         content = ""
         if isinstance(self.elem, Html):
-            content += "<!DOCTYPE html>\n"  # add doctype to html
+            content += "<!DOCTYPE html>\n"
         content += str(self.elem)
         return content
 
@@ -23,12 +23,10 @@ class Page:
         return self.__check(self.elem)
 
     def __check(self, elem: Elem) -> bool:
-        """Recursively checks if the element and its children are valid."""
         if not self.__is_valid_element_type(elem):
             print(f"Error: Invalid element type '{type(elem).__name__}' encountered.")
             return False
 
-        # Specific checks for different types of elements
         if isinstance(elem, Html):
             return self.__check_html(elem)
         elif isinstance(elem, Head):
