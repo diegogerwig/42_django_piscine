@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# This script will create a virtual environment and install the requirements for the project.
+# Run this script witn 'source my_script.sh' to get the virtual environment activated.
+
 bash clean_repo.sh
 
 python3 -m venv ~/sgoinfre/django_venv
