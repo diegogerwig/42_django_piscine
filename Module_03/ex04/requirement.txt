@@ -1,2 +1,2 @@
-Django
+django
 psycopg2-binary

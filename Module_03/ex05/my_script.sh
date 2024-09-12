@@ -1,12 +1,10 @@
-#!/bin/bash
-
-# This script will create a virtual environment and install the requirements for the project.
-# Run this script witn 'source my_script.sh' to get the virtual environment activated.
+#!/bin/sh
 
 bash clean_repo.sh
 
-python3 -m venv ~/sgoinfre/django_venv
+~/sgoinfre/django_venv
 source ~/sgoinfre/django_venv/bin/activate
+
 
 if [[ "$VIRTUAL_ENV" != "" ]]; then
     echo '✅ Virtual environment activated.'
@@ -17,3 +15,13 @@ else
 fi
 
 pip install -r requirement.txt
+
+django-admin startproject helloworld_project
+
+cd helloworld_project
+
+python manage.py startapp helloworld
+
+# python manage.py migrate
+
+# python manage.py runserver
