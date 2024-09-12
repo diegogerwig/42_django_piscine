@@ -2,7 +2,7 @@
 
 bash clean_repo.sh
 
-~/sgoinfre/django_venv
+python3 -m venv ~/sgoinfre/django_venv
 source ~/sgoinfre/django_venv/bin/activate
 
 
@@ -16,12 +16,8 @@ fi
 
 pip install -r requirement.txt
 
-django-admin startproject helloworld_project
+django-admin startproject Django_project
 
-cd helloworld_project
+cd Django_project
 
-python manage.py startapp helloworld
-
-# python manage.py migrate
-
-# python manage.py runserver
+python manage.py startapp helloworld_app
