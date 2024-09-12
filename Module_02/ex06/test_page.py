@@ -69,9 +69,6 @@ except Exception as e:
     print(f"❌ An unexpected error occurred: {e}")
     sys.exit(1)
 
-
-
-
 def print_simple_header(title: str):
     print(f"\n{CYAN}{'='*34}{RESET}")
     print(f"{CYAN}{title}{RESET}")
