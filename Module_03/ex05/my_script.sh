@@ -5,7 +5,6 @@ bash clean_repo.sh
 python3 -m venv ~/sgoinfre/django_venv
 source ~/sgoinfre/django_venv/bin/activate
 
-
 if [[ "$VIRTUAL_ENV" != "" ]]; then
     echo '✅ Virtual environment activated.'
     echo '⭐ Installing requirements...'
@@ -21,3 +20,5 @@ django-admin startproject Django_project
 cd Django_project
 
 python manage.py startapp helloworld_app
+
+bash create_django_project.sh
