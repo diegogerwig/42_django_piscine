@@ -1,6 +1,6 @@
 #!/bin/sh
 
-bash clean_repo.sh
+bash ./src/clean_repo.sh
 
 python3 -m venv ~/sgoinfre/django_venv
 source ~/sgoinfre/django_venv/bin/activate
@@ -15,6 +15,6 @@ fi
 
 pip install -r requirements.txt
 
-bash create_django_project.sh
+bash ./src/create_django_project.sh
 
-bash create_app_ex00.sh
+bash ./src/create_app_ex00.sh
