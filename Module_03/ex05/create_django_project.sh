@@ -4,5 +4,3 @@
 
 # 2. Create a Django app named helloworld_app.
 
-
-
