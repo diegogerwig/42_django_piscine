@@ -1,1 +1,1 @@
-django
+django==5.1.1

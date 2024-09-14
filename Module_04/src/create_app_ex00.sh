@@ -7,7 +7,8 @@ views_file="$app_name/views.py"
 urls_file="$app_name/urls.py"
 project_urls_file="$project_name/urls.py"
 templates_dir_app="$app_name/templates/$app_name"
-templates_files="templates/index.html"
+templates_files="../templates/index.html"
+
 
 # Change to the project directory.
 cd "$project_name"
@@ -59,7 +60,8 @@ echo "✅ URL pattern created in $project_urls_file."
 
 # Create a template in the templates directory of the app.
 mkdir -p "$templates_dir_app"
-cp "$templates_files" "$templates_dir_app"
+cp $templates_files "$templates_dir_app/"
+echo "✅ Template created in $templates_dir_app."
 
 
 # Migrate the changes
