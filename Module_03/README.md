@@ -66,13 +66,14 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path('helloworld/', views.hello_world, name='hello_world'),
+    path('', views.hello_world, name='hello_world'),
 ]
 
 ### Open the Django_project/urls.py file and include the URLs from your app:
 
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path
+from django.urls.conf import include
 
 urlpatterns = [
     path('admin/', admin.site.urls),

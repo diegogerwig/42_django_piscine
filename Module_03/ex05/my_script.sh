@@ -15,10 +15,4 @@ fi
 
 pip install -r requirement.txt
 
-django-admin startproject Django_project
-
-cd Django_project
-
-python manage.py startapp helloworld_app
-
 bash create_django_project.sh
