@@ -13,6 +13,7 @@ else
     echo '❌ Failed to activate virtual environment.'
 fi
 
+
 pip install -r requirements.txt
 
 bash ./src/create_django_project.sh
