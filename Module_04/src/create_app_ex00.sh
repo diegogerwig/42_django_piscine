@@ -29,7 +29,7 @@ cat <<EOL >> "$views_file"
 def index(request):
     return render(request, 'ex00/index.html')
 EOL
-echo "✅ View hello_world created."
+echo "✅ View created."
 
 
 # Create a URL pattern in the urls.py file of the app.
@@ -62,13 +62,3 @@ echo "✅ URL pattern created in $project_urls_file."
 mkdir -p "$templates_dir_app"
 cp $templates_files "$templates_dir_app/"
 echo "✅ Templates created in $templates_dir_app."
-
-
-# Migrate the changes
-python manage.py migrate
-echo "✅ Changes migrated."
-
-
-# Run the server
-echo "✅ Running server..."
-python manage.py runserver

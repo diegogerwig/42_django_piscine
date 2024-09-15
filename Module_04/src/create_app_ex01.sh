@@ -7,7 +7,9 @@ views_file="$app_name/views.py"
 urls_file="$app_name/urls.py"
 project_urls_file="$project_name/urls.py"
 templates_dir_app="$app_name/templates/$app_name"
-templates_files="../templates/index.html"
+templates_files="../templates/base.html ../templates/display.html ../templates/django.html ../templates/nav.html ../templates/templates.html"
+static_dir_app="$app_name/static/$app_name"
+static_files="../templates/style1.css ../templates/style2.css"
 
 
 # Change to the project directory.
@@ -26,10 +28,17 @@ echo "✅ $app_name added to INSTALLED_APPS."
 
 # Create a view in the views.py file of the app.
 cat <<EOL >> "$views_file"
-def index(request):
-    return render(request, 'ex00/index.html')
+
+def django(request):
+    return render(request, 'ex01/django.html')
+
+def display(request):
+    return render(request, 'ex01/display.html')
+
+def templates(request):
+    return render(request, 'ex01/templates.html')
 EOL
-echo "✅ View hello_world created."
+echo "✅ Views created."
 
 
 # Create a URL pattern in the urls.py file of the app.
@@ -38,7 +47,9 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path('', views.index, name='index'),
+    path('django', views.django, name='django'),
+    path('display', views.display, name='display'),
+    path('templates', views.templates, name='templates'),
 ]
 EOL
 echo "✅ URL pattern created in $urls_file."
@@ -53,22 +64,19 @@ from django.urls.conf import include
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('ex00/', include('ex00.urls')),
+    path('ex01/', include('ex01.urls')),
 ]
 EOL
 echo "✅ URL pattern created in $project_urls_file."
 
 
-# Create a template in the templates directory of the app.
+# Create templates in the templates directory of the app.
 mkdir -p "$templates_dir_app"
 cp $templates_files "$templates_dir_app/"
 echo "✅ Templates created in $templates_dir_app."
 
 
-# Migrate the changes
-python manage.py migrate
-echo "✅ Changes migrated."
-
-
-# Run the server
-echo "✅ Running server..."
-python manage.py runserver
+# Create static files in the static directory of the app.
+mkdir -p "$static_dir_app"
+cp $static_files "$static_dir_app/"
+echo "✅ Static files created in $static_dir_app."
