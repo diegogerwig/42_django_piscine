@@ -61,12 +61,12 @@ echo "✅ URL pattern created in $project_urls_file."
 # Create a template in the templates directory of the app.
 mkdir -p "$templates_dir_app"
 cp $templates_files "$templates_dir_app/"
-echo "✅ Template created in $templates_dir_app."
+echo "✅ Templates created in $templates_dir_app."
 
 
 # Migrate the changes
 python manage.py migrate
-echo "✅ Migrated changes."
+echo "✅ Changes migrated."
 
 
 # Run the server
