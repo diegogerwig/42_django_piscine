@@ -80,3 +80,8 @@ echo "✅ Templates created in $templates_dir_app."
 mkdir -p "$static_dir_app"
 cp $static_files "$static_dir_app/"
 echo "✅ Static files created in $static_dir_app."
+
+
+
+
+
