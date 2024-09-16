@@ -1,7 +1,7 @@
 #!/bin/sh
 
 project_name="d04"
-app_name="ex01"
+app_name="ex02"
 settings_file="$project_name/settings.py"
 views_file="$app_name/views.py"
 urls_file="$app_name/urls.py"
@@ -65,6 +65,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('ex00/', include('ex00.urls')),
     path('ex01/', include('ex01.urls')),
+    path('ex02/', include('ex02.urls')),
 ]
 EOL
 echo "✅ URL pattern created in $project_urls_file."
