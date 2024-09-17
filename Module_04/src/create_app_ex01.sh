@@ -7,9 +7,9 @@ views_file="$app_name/views.py"
 urls_file="$app_name/urls.py"
 project_urls_file="$project_name/urls.py"
 templates_dir_app="$app_name/templates/$app_name"
-templates_files="../templates/base.html ../templates/display.html ../templates/django.html ../templates/nav.html ../templates/templates.html"
+templates_files="../templates/ex01/base.html ../templates/ex01/display.html ../templates/ex01/django.html ../templates/ex01/nav.html ../templates/ex01/templates.html"
 static_dir_app="$app_name/static/$app_name"
-static_files="../templates/style1.css ../templates/style2.css"
+static_files="../templates/ex01/style1.css ../templates/ex01/style2.css"
 
 
 # Change to the project directory.

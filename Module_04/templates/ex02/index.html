@@ -1,0 +1,82 @@
+{% extends 'ex02/base.html' %}
+{% load static %}
+
+{% block title %}
+    <title>History Form</title>
+{% endblock title %}
+
+{% block style %}
+    <style>
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+            border-bottom: 2px solid #ddd;
+            padding-bottom: 10px;
+        }
+        form {
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        table {
+            width: 100%;
+        }
+        th {
+            text-align: left;
+            padding: 10px 0;
+        }
+        input[type="submit"] {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        input[type="submit"]:hover {
+            background-color: #45a049;
+        }
+        .history-item {
+            background-color: #fff;
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+        }
+    </style>
+{% endblock style %}
+
+{% block content %}
+    <div class="container">
+        <section>
+            <h1>History Form</h1>
+            <form action="" method="post">
+                {% csrf_token %}
+                <table>
+                    {{ form.as_table }}
+                </table>
+                <input type="submit" value="Submit" />
+            </form>
+        </section>
+
+        <section>
+            <h1>History Data</h1>
+            {% if historys %}
+                <ul>
+                {% for history in historys reversed %}
+                    <li class="history-item">{{ history }}</li>
+                {% endfor %}
+                </ul>
+            {% else %}
+                <p>No history data available.</p>
+            {% endif %}
+        </section>
+    </div>
+{% endblock %}

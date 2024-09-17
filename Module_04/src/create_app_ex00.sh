@@ -7,7 +7,7 @@ views_file="$app_name/views.py"
 urls_file="$app_name/urls.py"
 project_urls_file="$project_name/urls.py"
 templates_dir_app="$app_name/templates/$app_name"
-templates_files="../templates/index.html"
+templates_files="../templates/ex00/index.html"
 
 
 # Change to the project directory.
