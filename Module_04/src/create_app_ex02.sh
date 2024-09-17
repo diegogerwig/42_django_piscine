@@ -92,12 +92,22 @@ EOL
 echo "✅ URL pattern created in $project_urls_file."
 
 
-# Create a temporary file to store the logging configuration
-TMP_FILE=$(mktemp)
+# Add the logging configuration to the settings.py file of the project.
 
-# Write the logging configuration to the temporary file
-cat << EOF > "$TMP_FILE"
+# Ensure the settings file is provided
+if [ -z "$settings_file" ]; then
+    echo "❌ Error: 'settings_file' not provided."
+    exit 1
+fi
 
+# Check if settings file exists
+if [ ! -f "$settings_file" ]; then
+    echo "❌ Error: '$settings_file' not found."
+    exit 1
+fi
+
+# Append the logging configuration directly to settings.py
+cat << EOF >> "$settings_file"
 # Logging configuration
 import os
 
@@ -168,13 +178,6 @@ LOGGING = {
     }
 }
 EOF
-
-# Append the contents of the temporary file to settings.py
-cat "$TMP_FILE" >> "$settings_file"
-
-# Remove the temporary file
-rm "$TMP_FILE"
-
 echo "✅ Logging configuration has been added to $settings_file."
 
 
@@ -183,14 +186,7 @@ sed -i "s/'UTC'/'Europe\/Madrid'/" "$settings_file"
 echo "✅ Timezone changed to Europe/Madrid in $settings_file."
 
 
-
 # Create templates in the templates directory of the app.
 mkdir -p "$templates_dir_app"
 cp $templates_files "$templates_dir_app/"
 echo "✅ Templates created in $templates_dir_app."
-
-
-# # Create static files in the static directory of the app.
-# mkdir -p "$static_dir_app"
-# cp $static_files "$static_dir_app/"
-# echo "✅ Static files created in $static_dir_app."

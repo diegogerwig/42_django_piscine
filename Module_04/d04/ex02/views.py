@@ -9,12 +9,12 @@ from . import forms
 
 
 def index(request: HttpRequest):
-    logger = logging.getLogger('history')
+    logger = logging.getLogger('histo')
 
     if request.method == 'POST':
         form = forms.History(request.POST)
         if form.is_valid():
-            logger.info(form.cleaned_data['history'])
+            logger.info(form.cleaned_data['histo'])
         return redirect('/ex02')
     try:
         f = open(settings.HISTORY_LOG_FILE, 'r')
