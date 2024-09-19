@@ -14,7 +14,7 @@
             padding: 0;
         }
         .container {
-            max-width: 800px;
+            max-width: 90%;
             margin: 0 auto;
             padding: 20px;
         }
@@ -32,22 +32,29 @@
         }
         table {
             width: 100%;
+            th {
+                max-width: fit-content;
+                width: 30%;
+                text-align: left;
+                padding: 10px 0;
+            }
         }
-        th {
-            text-align: left;
-            padding: 10px 0;
+        input[type="text"], textarea {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
         }
         input[type="submit"] {
-            background-color: greenyellow;
+            background-color: #666;
             color: #ddd;
-            padding: 10px 20px;
+            padding: 10px 10px;
             border: none;
             border-radius: 4px;
             cursor: pointer;
             font-size: 16px;
-        }
-        input[type="submit"]:hover {
-            background-color: greenyellow;
         }
         .history-item {
             background-color: #bbb;
@@ -57,6 +64,7 @@
             border-radius: 4px;
             font-size: 16px;
         }
+
     </style>
 {% endblock style %}
 
@@ -69,18 +77,18 @@
                 <table>
                     {{ form.as_table }}
                 </table>
-                <input type="submit" value="Submit" />
+                <input type="submit" value="SUBMIT" />
             </form>
         </section>
 
         <section>
-            <h1>📈 Messages HISTORY</h1>
+            <h1>📈 Messages HISTORY (reversed sorted)</h1>
             {% if historys %}
                 <ul>
                 {% for history in historys reversed %}
                     <li class="history-item">
                         {% with log=history|slice:"1:-1"|cut:"]" %}
-                            {% with datetime=log|slice:":20" message=log|slice:"25:" %}
+                            {% with datetime=log|slice:":19" message=log|slice:"24:" %}
                                 {{ datetime }} >> {{ message }}
                             {% endwith %}
                         {% endwith %}

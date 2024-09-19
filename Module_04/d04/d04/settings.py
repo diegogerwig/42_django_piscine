@@ -20,7 +20,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-g7o)(&l^4&)+8b9%4!^f^7fj@jsr8i0fy)-)kbt1a3paf_s3oz'
+SECRET_KEY = 'django-insecure-0%lc3ee1p@9m@*_i(p@o4w_=hgq8v$n1imye@$7^ow9j-h#6i0'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -133,63 +133,32 @@ HISTORY_LOG_FILE = os.path.join(BASE_DIR, 'ex02', 'logs.log')
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
-    'filters': {
-        'require_debug_false': {
-            '()': 'django.utils.log.RequireDebugFalse',
-        },
-        'require_debug_true': {
-            '()': 'django.utils.log.RequireDebugTrue',
-        },
-    },
     'formatters': {
-        'django.server': {
-            '()': 'django.utils.log.ServerFormatter',
-            'format': '[{server_time}] {message}',
-            'style': '{',
-        },
-        'history_format': {
-            '()': 'django.utils.log.ServerFormatter',
+        'simple': {
             'format': '[{asctime}] {message}',
             'style': '{',
-        }
+        },
     },
     'handlers': {
         'console': {
             'level': 'INFO',
-            'filters': ['require_debug_true'],
             'class': 'logging.StreamHandler',
         },
-        'django.server': {
-            'level': 'INFO',
-            'class': 'logging.StreamHandler',
-            'formatter': 'django.server',
-        },
-        'mail_admins': {
-            'level': 'ERROR',
-            'filters': ['require_debug_false'],
-            'class': 'django.utils.log.AdminEmailHandler'
-        },
-        'history_handler': {
+        'file': {
             'level': 'INFO',
             'class': 'logging.FileHandler',
             'filename': HISTORY_LOG_FILE,
-            'mode': 'a',
-            'formatter': 'history_format',
+            'formatter': 'simple',
         },
     },
     'loggers': {
         'django': {
-            'handlers': ['console', 'mail_admins'],
+            'handlers': ['console'],
             'level': 'INFO',
-        },
-        'django.server': {
-            'handlers': ['django.server'],
-            'level': 'INFO',
-            'propagate': False,
         },
         'history': {
-            'handlers': ['console', 'history_handler'],
-            'level': 'INFO'
-        }
-    }
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
+        },
+    },
 }

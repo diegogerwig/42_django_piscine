@@ -9,7 +9,7 @@ from . import forms
 
 
 def index(request: HttpRequest):
-    logger = logging.getLogger('history')
+    logger = logging.getLogger('history' )
 
     if request.method == 'POST':
         form = forms.History(request.POST)
