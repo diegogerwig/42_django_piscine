@@ -34,7 +34,7 @@ from . import forms
 
 
 def index(request: HttpRequest):
-    logger = logging.getLogger('history')
+    logger = logging.getLogger('history' )
 
     if request.method == 'POST':
         form = forms.History(request.POST)
@@ -57,7 +57,17 @@ cat <<EOL > "$app_name/forms.py"
 from django import forms
 
 class History(forms.Form):
-    history = forms.CharField(label='history')
+    history = forms.CharField(
+        label='📝 Your message (max 50 characters)',
+        max_length=50,
+        widget=forms.TextInput(attrs={'placeholder': 'Max 50 characters'})
+    )
+
+    def clean_history(self):
+        data = self.cleaned_data['history']
+        if len(data) > 50:
+            raise forms.ValidationError("The message is too long.")
+        return data
 EOL
 
 
@@ -115,65 +125,34 @@ HISTORY_LOG_FILE = os.path.join(BASE_DIR, 'ex02', 'logs.log')
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
-    'filters': {
-        'require_debug_false': {
-            '()': 'django.utils.log.RequireDebugFalse',
-        },
-        'require_debug_true': {
-            '()': 'django.utils.log.RequireDebugTrue',
-        },
-    },
     'formatters': {
-        'django.server': {
-            '()': 'django.utils.log.ServerFormatter',
-            'format': '[{server_time}] {message}',
-            'style': '{',
-        },
-        'history_format': {
-            '()': 'django.utils.log.ServerFormatter',
+        'simple': {
             'format': '[{asctime}] {message}',
             'style': '{',
-        }
+        },
     },
     'handlers': {
         'console': {
             'level': 'INFO',
-            'filters': ['require_debug_true'],
             'class': 'logging.StreamHandler',
         },
-        'django.server': {
-            'level': 'INFO',
-            'class': 'logging.StreamHandler',
-            'formatter': 'django.server',
-        },
-        'mail_admins': {
-            'level': 'ERROR',
-            'filters': ['require_debug_false'],
-            'class': 'django.utils.log.AdminEmailHandler'
-        },
-        'history_handler': {
+        'file': {
             'level': 'INFO',
             'class': 'logging.FileHandler',
             'filename': HISTORY_LOG_FILE,
-            'mode': 'a',
-            'formatter': 'history_format',
+            'formatter': 'simple',
         },
     },
     'loggers': {
         'django': {
-            'handlers': ['console', 'mail_admins'],
+            'handlers': ['console'],
             'level': 'INFO',
-        },
-        'django.server': {
-            'handlers': ['django.server'],
-            'level': 'INFO',
-            'propagate': False,
         },
         'history': {
-            'handlers': ['console', 'history_handler'],
-            'level': 'INFO'
-        }
-    }
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
+        },
+    },
 }
 EOF
 echo "✅ Logging configuration has been added to $settings_file."
