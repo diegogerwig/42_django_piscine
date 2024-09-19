@@ -7,6 +7,12 @@
 
 {% block style %}
     <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #aaa;
+            margin: 0;
+            padding: 0;
+        }
         .container {
             max-width: 800px;
             margin: 0 auto;
@@ -18,7 +24,7 @@
             padding-bottom: 10px;
         }
         form {
-            background-color: #f9f9f9;
+            background-color: #bbb;
             border: 1px solid #ddd;
             padding: 20px;
             border-radius: 5px;
@@ -32,8 +38,8 @@
             padding: 10px 0;
         }
         input[type="submit"] {
-            background-color: #4CAF50;
-            color: white;
+            background-color: greenyellow;
+            color: #ddd;
             padding: 10px 20px;
             border: none;
             border-radius: 4px;
@@ -41,14 +47,15 @@
             font-size: 16px;
         }
         input[type="submit"]:hover {
-            background-color: #45a049;
+            background-color: greenyellow;
         }
         .history-item {
-            background-color: #fff;
+            background-color: #bbb;
             border: 1px solid #ddd;
             padding: 10px;
             margin-bottom: 10px;
             border-radius: 4px;
+            font-size: 16px;
         }
     </style>
 {% endblock style %}
@@ -56,7 +63,7 @@
 {% block content %}
     <div class="container">
         <section>
-            <h1>Inpu message console</h1>
+            <h1>📑 Message FORM</h1>
             <form action="" method="post">
                 {% csrf_token %}
                 <table>
@@ -67,11 +74,17 @@
         </section>
 
         <section>
-            <h1>Messages history</h1>
+            <h1>📈 Messages HISTORY</h1>
             {% if historys %}
                 <ul>
                 {% for history in historys reversed %}
-                    <li class="history-item">{{ history|floatformat:0 }}</li>
+                    <li class="history-item">
+                        {% with log=history|slice:"1:-1"|cut:"]" %}
+                            {% with datetime=log|slice:":20" message=log|slice:"25:" %}
+                                {{ datetime }} >> {{ message }}
+                            {% endwith %}
+                        {% endwith %}
+                    </li>
                 {% endfor %}
                 </ul>
             {% else %}

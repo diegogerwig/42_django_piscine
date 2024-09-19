@@ -1,4 +1,4 @@
 from django import forms
 
 class History(forms.Form):
-    histo = forms.CharField(label='histo')
+    history = forms.CharField(label='history')

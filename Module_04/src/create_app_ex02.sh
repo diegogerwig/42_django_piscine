@@ -8,8 +8,6 @@ urls_file="$app_name/urls.py"
 project_urls_file="$project_name/urls.py"
 templates_dir_app="$app_name/templates/$app_name"
 templates_files="../templates/ex02/base.html  ../templates/ex02/index.html"
-# static_dir_app="$app_name/static/$app_name"
-# static_files="../templates/ex02/style.css"
 
 
 # Change to the project directory.
@@ -30,7 +28,7 @@ echo "✅ $app_name added to INSTALLED_APPS."
 cat <<EOL >> "$views_file"
 import logging
 from django.http import HttpRequest
-from django.shortcuts import redirect, render
+from django.shortcuts import redirect
 from django.conf import settings
 from . import forms
 
