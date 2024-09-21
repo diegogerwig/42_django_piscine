@@ -52,11 +52,11 @@ def init(request: HttpRequest):
                 );
                 """)
                 conn.commit()
-                return HttpResponse("OK >> Table created successfully.")
+                return HttpResponse("✅ OK >> Table created successfully.")
             except psycopg2.errors.DuplicateTable:
-                return HttpResponse("OK >> Table already exists.")
+                return HttpResponse("✅ OK >> Table already exists.")
     except Exception as e:
-        return HttpResponse(f"An error occurred: {e}")
+        return HttpResponse(f"❌ An error occurred: {e}")
 EOL
 echo "✅ View created."
 
