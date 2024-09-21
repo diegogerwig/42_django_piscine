@@ -69,6 +69,7 @@ class History(forms.Form):
             raise forms.ValidationError("The message is too long.")
         return data
 EOL
+echo "✅ Form created."
 
 
 # Create a URL pattern in the urls.py file of the app.
