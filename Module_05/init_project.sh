@@ -17,6 +17,7 @@ pip install -r requirements.txt
 
 echo "🐳 Starting Docker..."
 docker stop $(docker ps -q)
+docker rm $(docker ps -aq)
 docker-compose up --build -d
 
 if docker ps | grep -q "db" && docker ps | grep -q "adminer"; then

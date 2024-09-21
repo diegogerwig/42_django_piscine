@@ -4,6 +4,8 @@ from django.shortcuts import render
 from django.conf import settings
 from django.http import HttpRequest, HttpResponse
 import psycopg2
+# from django.db import OperationalError
+# from psycopg2 import sql
 
 def init(request: HttpRequest):
     try:
@@ -15,17 +17,20 @@ def init(request: HttpRequest):
             port=settings.DATABASES['default']['PORT'],
         )
         with conn.cursor() as curs:
-            curs.execute("""
-            CREATE TABLE ex00_movies(
-                title VARCHAR(64) UNIQUE NOT NULL,
-                episode_nb INT PRIMARY KEY,
-                opening_crawl TEXT,
-                director VARCHAR(32) NOT NULL,
-                producer VARCHAR(128) NOT NULL,
-                release_date DATE NOT NULL
+            try:
+                curs.execute("""
+                CREATE TABLE ex00_movies(
+                    title VARCHAR(64) UNIQUE NOT NULL,
+                    episode_nb INT PRIMARY KEY,
+                    opening_crawl TEXT,
+                    director VARCHAR(32) NOT NULL,
+                    producer VARCHAR(128) NOT NULL,
+                    release_date DATE NOT NULL
                 );
-            """)
-            curs.execute('commit')
-        return HttpResponse("OK")
+                """)
+                conn.commit()
+                return HttpResponse("OK >> Table created successfully.")
+            except psycopg2.errors.DuplicateTable:
+                return HttpResponse("OK >> Table already exists.")
     except Exception as e:
-        return HttpResponse(e)
+        return HttpResponse(f"An error occurred: {e}")
