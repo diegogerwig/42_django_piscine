@@ -27,8 +27,6 @@ cat <<EOL >> "$views_file"
 from django.conf import settings
 from django.http import HttpRequest, HttpResponse
 import psycopg2
-# from django.db import OperationalError
-# from psycopg2 import sql
 
 def init(request: HttpRequest):
     try:
