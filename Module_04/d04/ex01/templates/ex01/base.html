@@ -1,0 +1,21 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		{% block title %}
+		{% endblock title %} 
+		{% block style %}
+			<link rel="stylesheet" href="../../static/ex01/style1.css">
+		{% endblock style %}
+	</head>
+
+	<body>
+		{% include 'ex01/nav.html' %} 
+		{% block content %}
+		{% endblock content %}
+	</body>
+
+</html>
