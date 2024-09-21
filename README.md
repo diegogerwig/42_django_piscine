@@ -22,8 +22,7 @@ handy in Python.
 Summary: After Python, Django!
 
 ## Module 05
-
-
+Summary: Today, we’ll tackle the ORM of Django.
 
 ## Module 06
 
