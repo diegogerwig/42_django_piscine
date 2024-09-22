@@ -1,4 +1,5 @@
 from django.urls.conf import include
+from django.urls.conf import include
 """
 URL configuration for d05 project.
 
@@ -21,4 +22,5 @@ from django.urls import path
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('ex00/', include('ex00.urls')),
+    path('ex01/', include('ex01.urls')),
 ]

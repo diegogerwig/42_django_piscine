@@ -29,5 +29,6 @@ fi
 bash ./src/create_django_project.sh
 
 bash ./src/create_app_ex00.sh
+bash ./src/create_app_ex01.sh
 
 bash ./src/run_project.sh
