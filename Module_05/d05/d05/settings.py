@@ -1,3 +1,12 @@
+import environ
+import os
+from pathlib import Path
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+env = environ.Env()
+env_file_path = os.path.join(BASE_DIR, '..', '.env')
+environ.Env.read_env(env_file_path)
 """
 Django settings for d05 project.
 
@@ -20,7 +29,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-5k@68)1y-l^%3203py+ev(m+gtksx1$s*0p=xuo)c)+v4gs=za'
+SECRET_KEY = 'django-insecure-os)yeuaf$7#*m8o^b1bt(-y!$=o3pug2kq7r44fknr$*(8lia='
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -77,9 +86,9 @@ WSGI_APPLICATION = 'd05.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'djangotraining',
-        'USER': 'djangouser',
-        'PASSWORD': 'secret',
+        'NAME': env('POSTGRES_DB'),
+        'USER': env('POSTGRES_USER'),
+        'PASSWORD': env('POSTGRES_PASSWORD'),
         'HOST': '127.0.0.1',
         'PORT': '5432',
     }

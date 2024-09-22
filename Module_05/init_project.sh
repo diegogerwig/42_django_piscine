@@ -20,7 +20,7 @@ docker stop $(docker ps -q)
 docker rm $(docker ps -aq)
 docker-compose up --build -d
 
-if docker ps | grep -q "db" && docker ps | grep -q "adminer"; then
+if docker ps | grep -q "postgres" && docker ps | grep -q "adminer" && docker ps | grep -q "pgadmin"; then
     echo "✅ Docker is running."
 else
     echo "❌ Docker failed to start."

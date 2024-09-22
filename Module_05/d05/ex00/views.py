@@ -4,8 +4,6 @@ from django.shortcuts import render
 from django.conf import settings
 from django.http import HttpRequest, HttpResponse
 import psycopg2
-# from django.db import OperationalError
-# from psycopg2 import sql
 
 def init(request: HttpRequest):
     try:
@@ -29,8 +27,8 @@ def init(request: HttpRequest):
                 );
                 """)
                 conn.commit()
-                return HttpResponse("OK >> Table created successfully.")
+                return HttpResponse("✅ OK >> Table created successfully.")
             except psycopg2.errors.DuplicateTable:
-                return HttpResponse("OK >> Table already exists.")
+                return HttpResponse("✅ OK >> Table already exists.")
     except Exception as e:
-        return HttpResponse(f"An error occurred: {e}")
+        return HttpResponse(f"❌ An error occurred: {e}")

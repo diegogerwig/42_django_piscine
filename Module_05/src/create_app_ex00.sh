@@ -23,7 +23,7 @@ echo "✅ $app_name added to INSTALLED_APPS."
 
 
 # Create a view in the views.py file of the app.
-cat <<EOL >> "$views_file"
+cat << EOL >> "$views_file"
 from django.conf import settings
 from django.http import HttpRequest, HttpResponse
 import psycopg2
@@ -60,7 +60,7 @@ echo "✅ View created."
 
 
 # Create a URL pattern in the urls.py file of the app.
-cat <<EOL >> "$app_urls_file"
+cat << EOL >> "$app_urls_file"
 from django.urls import path
 from . import views
 
@@ -72,7 +72,6 @@ echo "✅ URL pattern created in $app_urls_file."
 
 
 # Create a URL pattern in the urls.py file of the project.
-IMPORT_LINE="from django.urls.conf import include"
 sed -i "1i\\from django.urls.conf import include" "$project_urls_file"
 
 NEW_URL="path('$app_name/', include('$app_name.urls')),"
@@ -82,12 +81,28 @@ echo "✅ URL pattern created in $project_urls_file."
 
 
 # Create a new database configuration in the settings.py file of the project.
+env_code=$(cat << 'EOF'
+import environ
+import os
+from pathlib import Path
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+env = environ.Env()
+env_file_path = os.path.join(BASE_DIR, '..', '.env')
+environ.Env.read_env(env_file_path)
+
+EOF
+)
+
+echo "$env_code" | cat - "$settings_file" | tee "$settings_file" > /dev/null
+
 new_db_config="DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'djangotraining',
-        'USER': 'djangouser',
-        'PASSWORD': 'secret',
+        'NAME': env('POSTGRES_DB'),
+        'USER': env('POSTGRES_USER'),
+        'PASSWORD': env('POSTGRES_PASSWORD'),
         'HOST': '127.0.0.1',
         'PORT': '5432',
     }
