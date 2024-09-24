@@ -21,7 +21,7 @@ def init(request: HttpRequest):
         with conn.cursor() as curs:
             try:
                 curs.execute("""
-                CREATE TABLE ex00_movies(
+                CREATE TABLE ex02_movies(
                     title VARCHAR(64) UNIQUE NOT NULL,
                     episode_nb INT PRIMARY KEY,
                     opening_crawl TEXT,
@@ -32,13 +32,15 @@ def init(request: HttpRequest):
                 """)
                 conn.commit()
                 return HttpResponse("✅ OK >> Table created successfully.")
+            
             except psycopg2.errors.DuplicateTable:
                 return HttpResponse("✅ OK >> Table already exists.")
+    
     except Exception as e:
         return HttpResponse(f"❌ An error occurred: {e}")
 
 
-def populate(request):
+def populate(request: HttpRequest):
     try:
         conn = psycopg2.connect(
             dbname=settings.DATABASES['default']['NAME'],
@@ -47,6 +49,20 @@ def populate(request):
             host=settings.DATABASES['default']['HOST'],
             port=settings.DATABASES['default']['PORT'],
         )
+
+        # CREATE_TABLE = """
+        # CREATE TABLE IF NOT EXISTS ex02_movies (
+        #     episode_nb INT PRIMARY KEY,
+        #     title VARCHAR(64) UNIQUE NOT NULL,
+        #     director VARCHAR(32) NOT NULL,
+        #     producer VARCHAR(128) NOT NULL,
+        #     release_date DATE NOT NULL
+        # );
+        # """
+        
+        # with conn.cursor() as curs:
+        #     curs.execute(CREATE_TABLE)
+        #     conn.commit()
 
         movies = [
             {
@@ -127,17 +143,31 @@ def populate(request):
                         movie['producer'],
                         movie['release_date'],
                     ])
-                    result.append("OK")
+                    result.append("✅ OK >> Data inserted successfully.")
                     conn.commit()
+                except psycopg2.errors.UndefinedTable as e:
+                    conn.rollback()
+                    return HttpResponse("❗ The table does not exist. Please create the table first.")
                 except psycopg2.DatabaseError as e:
                     conn.rollback()
                     result.append(e)
+        
         return HttpResponse("<br/>".join(str(i) for i in result))
+    
     except Exception as e:
-        return HttpResponse(e)
+        return HttpResponse(f"❌ An error occurred: {e}")
 
 
-def display(request):
+
+    #             except psycopg2.DatabaseError as e:
+    #                 conn.rollback()
+    #                 result.append(e)
+    #     return HttpResponse("<br/>".join(str(i) for i in result))
+    # except Exception as e:
+    #     return HttpResponse(e)
+
+
+def display(request: HttpRequest):
     try:
         conn = psycopg2.connect(
             dbname=settings.DATABASES['default']['NAME'],
@@ -146,14 +176,17 @@ def display(request):
             host=settings.DATABASES['default']['HOST'],
             port=settings.DATABASES['default']['PORT'],
         )
-
-        SELECT_TABEL = """
+        SELECT_TABLE = """
             SELECT * FROM {table_name};
             """.format(table_name=TABLE_NAME)
         with conn.cursor() as curs:
-            curs.execute(SELECT_TABEL)
+            curs.execute(SELECT_TABLE)
             movies = curs.fetchall()
-        return render(request, 'ex02/display.html', {"movies": movies})
+        if movies:
+            return render(request, 'ex02/display.html', {"movies": movies})
+        else:
+            return HttpResponse("❗ No data available")
+    
     except Exception as e:
-        return HttpResponse("No data available")
+        return HttpResponse("❗ No data available")
 
