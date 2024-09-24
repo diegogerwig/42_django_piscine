@@ -16,7 +16,7 @@ cd "$project_name"
 
 # Create a Django app in the project.
 python manage.py startapp "$app_name"
-echo "✅ $app_name created."
+echo "✅ $app_name APP created."
 
 
 # Add the app to the INSTALLED_APPS list in the settings.py file of the project.
@@ -228,3 +228,6 @@ echo "✅ Timezone changed to Europe/Madrid in $settings_file."
 mkdir -p "$templates_dir_app"
 cp $templates_files "$templates_dir_app/"
 echo "✅ Templates created in $templates_dir_app."
+
+
+echo -e "\n**********************\n"

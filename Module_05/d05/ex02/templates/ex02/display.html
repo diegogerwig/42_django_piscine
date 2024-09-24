@@ -13,9 +13,9 @@
 				padding: 20px;
 			}
 			table {
-				width: 100%;
+				width: 95%;
 				border-collapse: collapse;
-				margin: 25px 0;
+				margin: 25px auto;
 				background-color: #ccc;
 				box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 			}
@@ -46,6 +46,7 @@
 				<tr>
 					<th>Title</th>
 					<th>Episode Number</th>
+					<th>Opening Crawl</th>
 					<th>Director</th>
 					<th>Producer</th>
 					<th>Release Date</th>
@@ -59,6 +60,7 @@
 					<td>{{ movie.2 }}</td>
 					<td>{{ movie.3 }}</td>
 					<td>{{ movie.4 }}</td>
+					<td>{{ movie.5 }}</td>
 				</tr>
 				{% endfor %}
 			</tbody>

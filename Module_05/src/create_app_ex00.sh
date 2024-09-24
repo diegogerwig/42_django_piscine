@@ -14,7 +14,7 @@ cd "$project_name"
 
 # Create a Django app in the project.
 python manage.py startapp "$app_name"
-echo "✅ $app_name created."
+echo "✅ $app_name APP created."
 
 
 # Add the app to the INSTALLED_APPS list in the settings.py file of the project.
@@ -134,3 +134,6 @@ echo "✅ Database configuration updated in $settings_file."
 # Change the timezone to Europe/Madrid in the settings.py file of the project.
 sed -i "s/'UTC'/'Europe\/Madrid'/" "$settings_file"
 echo "✅ Timezone changed to Europe/Madrid in $settings_file."
+
+
+echo -e "\n**********************\n"

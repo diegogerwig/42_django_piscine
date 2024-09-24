@@ -15,7 +15,7 @@ cd "$project_name"
 
 # Create a Django app in the project.
 python manage.py startapp "$app_name"
-echo "✅ $app_name created."
+echo "✅ $app_name APP created."
 
 
 # Add the app to the INSTALLED_APPS list in the settings.py file of the project.
@@ -72,9 +72,12 @@ class Movies(models.Model):
     def __str__(self):
         return self.title
 EOL
-echo "✅ URL pattern created in $app_urls_file."
+echo "✅ MODEL created in $app_urls_file."
 
 
 # Change the timezone to Europe/Madrid in the settings.py file of the project.
 sed -i "s/'UTC'/'Europe\/Madrid'/" "$settings_file"
 echo "✅ Timezone changed to Europe/Madrid in $settings_file."
+
+
+echo -e "\n**********************\n"

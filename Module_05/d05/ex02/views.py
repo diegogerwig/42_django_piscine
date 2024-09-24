@@ -50,20 +50,6 @@ def populate(request: HttpRequest):
             port=settings.DATABASES['default']['PORT'],
         )
 
-        # CREATE_TABLE = """
-        # CREATE TABLE IF NOT EXISTS ex02_movies (
-        #     episode_nb INT PRIMARY KEY,
-        #     title VARCHAR(64) UNIQUE NOT NULL,
-        #     director VARCHAR(32) NOT NULL,
-        #     producer VARCHAR(128) NOT NULL,
-        #     release_date DATE NOT NULL
-        # );
-        # """
-        
-        # with conn.cursor() as curs:
-        #     curs.execute(CREATE_TABLE)
-        #     conn.commit()
-
         movies = [
             {
                 "episode_nb": 1,
@@ -156,15 +142,6 @@ def populate(request: HttpRequest):
     
     except Exception as e:
         return HttpResponse(f"❌ An error occurred: {e}")
-
-
-
-    #             except psycopg2.DatabaseError as e:
-    #                 conn.rollback()
-    #                 result.append(e)
-    #     return HttpResponse("<br/>".join(str(i) for i in result))
-    # except Exception as e:
-    #     return HttpResponse(e)
 
 
 def display(request: HttpRequest):

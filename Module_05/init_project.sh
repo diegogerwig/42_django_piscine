@@ -7,23 +7,23 @@ source ~/sgoinfre/django_venv/bin/activate
 
 if [[ "$VIRTUAL_ENV" != "" ]]; then
     echo '✅ Virtual environment activated.'
-    echo '⭐ Installing requirements...'
     echo "💻 Python version: $(which python)"
+    echo -e '⭐ Installing requirements...\n'
 else
     echo '❌ Failed to activate virtual environment.'
 fi
 
 pip install -r requirements.txt
 
-echo "🐳 Starting Docker..."
+echo -e "\n🐳 Starting Docker..."
 docker stop $(docker ps -q)
 docker rm $(docker ps -aq)
 docker-compose up --build -d
 
 if docker ps | grep -q "postgres" && docker ps | grep -q "adminer" && docker ps | grep -q "pgadmin"; then
-    echo "✅ Docker is running."
+    echo -e "✅ Docker is running.\n"
 else
-    echo "❌ Docker failed to start."
+    echo -e "❌ Docker failed to start.\n"
 fi
 
 bash ./src/create_django_project.sh

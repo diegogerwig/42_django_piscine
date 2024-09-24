@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo '🧹 Cleaning repository...'
+echo -e '\n🧹 Cleaning repository...'
 
 paths_to_remove=(
     "~/sgoinfre/django_venv"
@@ -17,4 +17,4 @@ for path in "${paths_to_remove[@]}"; do
     fi
 done
 
-echo '🗑️  Cleaned repository.'
+echo -e '🗑️  Cleaned repository.\n'
