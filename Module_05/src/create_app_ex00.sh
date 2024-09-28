@@ -131,9 +131,4 @@ mv "$temp_file" "$settings_file"
 echo "✅ Database configuration updated in $settings_file."
 
 
-# Change the timezone to Europe/Madrid in the settings.py file of the project.
-sed -i "s/'UTC'/'Europe\/Madrid'/" "$settings_file"
-echo "✅ Timezone changed to Europe/Madrid in $settings_file."
-
-
 echo -e "\n**********************\n"

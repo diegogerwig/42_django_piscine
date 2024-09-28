@@ -1,13 +1,13 @@
 #!/bin/sh
 
 project_name="d05"
-app_name="ex02"
+app_name="ex04"
 settings_file="$project_name/settings.py"
 views_file="$app_name/views.py"
 app_urls_file="$app_name/urls.py"
 project_urls_file="$project_name/urls.py"
 templates_dir_app="$app_name/templates/$app_name"
-templates_files="../templates/ex02/display.html"
+templates_files="../templates/$app_name/display.html ../templates/$app_name/remove.html" 
 
 
 # Change to the project directory.
@@ -30,8 +30,10 @@ from django.conf import settings
 from django.http import HttpRequest, HttpResponse
 import psycopg2
 from django.shortcuts import render
+from django.forms import Form
+from django.shortcuts import redirect
 
-TABLE_NAME = "ex02_movies"
+TABLE_NAME = "ex04_movies"
 
 
 def init(request: HttpRequest):
@@ -46,7 +48,7 @@ def init(request: HttpRequest):
         with conn.cursor() as curs:
             try:
                 curs.execute("""
-                    CREATE TABLE ex02_movies(
+                    CREATE TABLE ex04_movies(
                         title VARCHAR(64) UNIQUE NOT NULL,
                         episode_nb INT PRIMARY KEY,
                         opening_crawl TEXT,
@@ -164,7 +166,7 @@ def populate(request: HttpRequest):
                     result.append(e)
         
         return HttpResponse("<br>".join(str(i) for i in result))
-
+    
     except Exception as e:
         return HttpResponse(f"❌ An error occurred: {e}")
 
@@ -185,11 +187,62 @@ def display(request: HttpRequest):
             curs.execute(SELECT_TABLE)
             movies = curs.fetchall()
         if movies:
-            return render(request, 'ex02/display.html', {"movies": movies})
+            return render(request, 'ex04/display.html', {"movies": movies})
         else:
             return HttpResponse("❗ No data available")
     
     except Exception as e:
+        return HttpResponse("❗ No data available")
+
+
+def remove_row(conn, tablename, key, value):
+    try:
+        with conn.cursor() as curr:
+            curr.execute(f"DELETE FROM {tablename} WHERE {tablename}.{key} = %s;", [value])
+        conn.commit()
+    except Exception as e:
+        print('❌ Error : ', e)
+    return conn
+
+
+def remove(request: HttpRequest):
+    response = None
+    form = Form()
+    try:
+        conn = psycopg2.connect(
+            dbname=settings.DATABASES['default']['NAME'],
+            user=settings.DATABASES['default']['USER'],
+            password=settings.DATABASES['default']['PASSWORD'],
+            host=settings.DATABASES['default']['HOST'],
+            port=settings.DATABASES['default']['PORT'],
+        )
+
+        if request.method == 'POST':
+            form = Form(request.POST)
+            if form.is_valid() and request.POST.get('select'):
+                remove_row(conn, 'ex04_movies', 'episode_nb', request.POST['select'])
+                # Redirigir después de eliminar para evitar reenvío de formulario
+                return redirect('remove')  # Asumiendo que 'remove' es el nombre de la ruta
+
+        with conn.cursor() as cursor:
+            cursor.execute("""
+                SELECT episode_nb, title, opening_crawl, director, producer, release_date
+                FROM ex04_movies
+                ORDER BY episode_nb
+            """)
+            response = cursor.fetchall()
+
+    except psycopg2.Error as e:
+        print('❌ Error : ', e)
+        return HttpResponse("❗ No data available")
+
+    finally:
+        if conn and not conn.closed:
+            conn.close()
+
+    if response:
+        return render(request, 'ex04/remove.html', {'movies': response, 'form': form})
+    else:
         return HttpResponse("❗ No data available")
 
 EOL
@@ -202,9 +255,10 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path('init/', views.init, name='ex02-init'),
-    path('populate/', views.populate, name='ex02-populate'),
-    path('display/', views.display, name='ex02-display'),
+    path('init/', views.init),
+    path('populate/', views.populate),
+    path('display/', views.display),
+    path('remove/', views.remove, name='remove'),
 ]
 EOL
 echo "✅ URL pattern created in $app_urls_file."

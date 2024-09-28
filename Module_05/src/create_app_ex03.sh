@@ -164,11 +164,6 @@ EOL
 echo "✅ MODEL created in $app_urls_file."
 
 
-# Change the timezone to Europe/Madrid in the settings.py file of the project.
-sed -i "s/'UTC'/'Europe\/Madrid'/" "$settings_file"
-echo "✅ Timezone changed to Europe/Madrid in $settings_file."
-
-
 # Create templates in the templates directory of the app.
 mkdir -p "$templates_dir_app"
 cp $templates_files "$templates_dir_app/"

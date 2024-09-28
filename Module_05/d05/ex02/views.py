@@ -21,14 +21,14 @@ def init(request: HttpRequest):
         with conn.cursor() as curs:
             try:
                 curs.execute("""
-                CREATE TABLE ex02_movies(
-                    title VARCHAR(64) UNIQUE NOT NULL,
-                    episode_nb INT PRIMARY KEY,
-                    opening_crawl TEXT,
-                    director VARCHAR(32) NOT NULL,
-                    producer VARCHAR(128) NOT NULL,
-                    release_date DATE NOT NULL
-                );
+                    CREATE TABLE ex02_movies(
+                        title VARCHAR(64) UNIQUE NOT NULL,
+                        episode_nb INT PRIMARY KEY,
+                        opening_crawl TEXT,
+                        director VARCHAR(32) NOT NULL,
+                        producer VARCHAR(128) NOT NULL,
+                        release_date DATE NOT NULL
+                    );
                 """)
                 conn.commit()
                 return HttpResponse("✅ OK >> Table created successfully.")
@@ -103,19 +103,19 @@ def populate(request: HttpRequest):
         ]
 
         INSERT_DATA = """
-        INSERT INTO {table_name}
-        (
-            episode_nb,
-            title,
-            director,
-            producer,
-            release_date
-        )
-        VALUES
-        (
-            %s, %s, %s, %s, %s
-        );
-        """.format(table_name=TABLE_NAME)
+            INSERT INTO {table_name}
+            (
+                episode_nb,
+                title,
+                director,
+                producer,
+                release_date
+            )
+            VALUES
+            (
+                %s, %s, %s, %s, %s
+            );
+            """.format(table_name=TABLE_NAME)
 
         result = []
 
@@ -138,7 +138,7 @@ def populate(request: HttpRequest):
                     conn.rollback()
                     result.append(e)
         
-        return HttpResponse("<br/>".join(str(i) for i in result))
+        return HttpResponse("❗ ".join(str(i) for i in result))
     
     except Exception as e:
         return HttpResponse(f"❌ An error occurred: {e}")
