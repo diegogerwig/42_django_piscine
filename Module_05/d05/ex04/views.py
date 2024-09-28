@@ -140,7 +140,7 @@ def populate(request: HttpRequest):
                     conn.rollback()
                     result.append(e)
         
-        return HttpResponse(" <br> ".join(str(i) for i in result))
+        return HttpResponse("<br>".join(str(i) for i in result))
     
     except Exception as e:
         return HttpResponse(f"❌ An error occurred: {e}")
@@ -196,8 +196,7 @@ def remove(request: HttpRequest):
             form = Form(request.POST)
             if form.is_valid() and request.POST.get('select'):
                 remove_row(conn, 'ex04_movies', 'episode_nb', request.POST['select'])
-                # Redirigir después de eliminar para evitar reenvío de formulario
-                return redirect('remove')  # Asumiendo que 'remove' es el nombre de la ruta
+                return redirect('remove') 
 
         with conn.cursor() as cursor:
             cursor.execute("""

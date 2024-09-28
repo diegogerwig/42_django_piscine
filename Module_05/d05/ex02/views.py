@@ -138,8 +138,8 @@ def populate(request: HttpRequest):
                     conn.rollback()
                     result.append(e)
         
-        return HttpResponse("❗ ".join(str(i) for i in result))
-    
+        return HttpResponse("<br>".join(str(i) for i in result))
+
     except Exception as e:
         return HttpResponse(f"❌ An error occurred: {e}")
 

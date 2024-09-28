@@ -14,7 +14,7 @@
                 padding: 20px;
                 display: flex;
                 justify-content: center;
-                align-items: flex-start; /* Alinea el formulario hacia arriba */
+                align-items: flex-start;
                 min-height: 100vh;
             }
 
@@ -106,7 +106,6 @@
             <select name="select" id="movie-select" required>
                 <option value="" disabled selected>Choose a movie</option>
                 {% for movie in movies %}
-                    <!-- <option value="{{ elem.0 }}">{{ elem.1 }} (ID: {{ elem.0 }})</option> -->
                     <option value="{{ movie.0 }}">{{ movie.1 }}</option>
                 {% endfor %}
             </select>
