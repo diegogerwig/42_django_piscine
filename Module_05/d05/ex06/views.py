@@ -1,32 +1,6 @@
-#!/bin/sh
+from django.shortcuts import render
 
-project_name="d05"
-app_name="ex06"
-settings_file="$project_name/settings.py"
-views_file="$app_name/views.py"
-app_urls_file="$app_name/urls.py"
-app_forms_file="$app_name/forms.py"
-project_urls_file="$project_name/urls.py"
-templates_dir_app="$app_name/templates/$app_name"
-templates_files="../templates/$app_name/display.html ../templates/$app_name/remove.html ../templates/$app_name/update.html" 
-
-
-# Change to the project directory.
-cd "$project_name"
-
-
-# Create a Django app in the project.
-python manage.py startapp "$app_name"
-echo "✅ $app_name APP created."
-
-
-# Add the app to the INSTALLED_APPS list in the settings.py file of the project.
-sed -i "/INSTALLED_APPS = \[/,/]/ s/\(]\)/    '$app_name',\n&/" "$settings_file"
-echo "✅ $app_name added to INSTALLED_APPS."
-
-
-# Create a view in the views.py file of the app.
-cat << EOL >> "$views_file"
+# Create your views here.
 from django.conf import settings
 from django.http import HttpRequest, HttpResponse
 import psycopg2
@@ -37,6 +11,22 @@ from django.shortcuts import redirect
 
 
 TABLE_NAME = "ex06_movies"
+
+# def create_table(conn, tablename, content):
+#     sql_string = "(\n"
+#     i = 0
+#     curr = conn.cursor()
+#     for key, value in content.items():
+#         i += 1
+#         if i < len(content):
+#             sql_string += "    %s %s,\n" % (key, value)
+#         else:
+#             sql_string += "    %s %s\n" % (key, value)
+#     sql_string += ")"
+#     curr.execute("""CREATE TABLE %s %s""" % (tablename, sql_string))
+#     conn.commit()
+#     return conn
+
 
 def create_table(conn, tablename, content):
     sql_string = "(\n"
@@ -49,9 +39,14 @@ def create_table(conn, tablename, content):
         else:
             sql_string += "    %s %s\n" % (key, value)
     sql_string += ")"
-    curr.execute("""CREATE TABLE %s %s""" % (tablename, sql_string))
-    conn.commit()
-    return conn
+    
+    # Intentar crear la tabla solo si no existe
+    try:
+        curr.execute("""CREATE TABLE IF NOT EXISTS %s %s""" % (tablename, sql_string))
+        conn.commit()
+    except psycopg2.Error as e:
+        conn.rollback()
+        raise e
 
 
 def init(request: HttpRequest):
@@ -80,13 +75,13 @@ def init(request: HttpRequest):
                 curr = conn.cursor()
                 curr.execute("""
                     CREATE OR REPLACE FUNCTION update_changetimestamp_column()
-                    RETURNS TRIGGER AS $$
+                    RETURNS TRIGGER AS 1774886
                     BEGIN
                     NEW.updated = now();
                     NEW.created = OLD.created;
                     RETURN NEW;
                     END;
-                    $$ language 'plpgsql';
+                    1774886 language 'plpgsql';
                     CREATE TRIGGER update_films_changetimestamp BEFORE UPDATE
                     ON ex06_movies FOR EACH ROW EXECUTE PROCEDURE
                     update_changetimestamp_column();
@@ -300,7 +295,7 @@ def update(request: HttpRequest):
             try:
                 cursor.execute("""
                     UPDATE ex06_movies 
-                    SET opening_crawl = '%s' 
+                    SET opening_crawl = %s 
                     WHERE episode_nb = %s;
                     """ % (
                         request.POST['opening_crawl'],
@@ -326,49 +321,3 @@ def update(request: HttpRequest):
     else:
         return HttpResponse("❗ No data available")
 
-EOL
-echo "✅ View created."
-
-
-# Create a URL pattern in the urls.py file of the app.
-cat << EOL >> "$app_urls_file"
-from django.urls import path
-from . import views
-
-urlpatterns = [
-    path('init/', views.init),
-    path('populate/', views.populate),
-    path('display/', views.display),
-    path('remove/', views.remove, name='remove'),
-    path('update/', views.update, name='update'),
-]
-EOL
-echo "✅ URL pattern created in $app_urls_file."
-
-
-# Create the forms.py file to the app.
-cat << EOL >> "$app_forms_file"
-from django import forms
-
-class UpdateForm(forms.Form):
-    opening_crawl = forms.CharField(required=True)
-EOL
-echo "✅ FORMS file created in $app_forms_file."
-
-
-# Create a URL pattern in the urls.py file of the project.
-sed -i "1i\\from django.urls.conf import include" "$project_urls_file"
-
-NEW_URL="path('$app_name/', include('$app_name.urls')),"
-sed -i "/urlpatterns = \[/,/]/ s|]|    $NEW_URL\n]|" "$project_urls_file"
-
-echo "✅ URL pattern created in $project_urls_file."
-
-
-# Create templates in the templates directory of the app.
-mkdir -p "$templates_dir_app"
-cp $templates_files "$templates_dir_app/"
-echo "✅ Templates created in $templates_dir_app."
-
-
-echo -e "\n**********************\n"

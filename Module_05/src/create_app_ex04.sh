@@ -45,6 +45,7 @@ def init(request: HttpRequest):
             host=settings.DATABASES['default']['HOST'],
             port=settings.DATABASES['default']['PORT'],
         )
+        
         with conn.cursor() as curs:
             try:
                 curs.execute("""
@@ -57,6 +58,7 @@ def init(request: HttpRequest):
                         release_date DATE NOT NULL
                     );
                 """)
+
                 conn.commit()
                 return HttpResponse("✅ OK >> Table created successfully.")
             
