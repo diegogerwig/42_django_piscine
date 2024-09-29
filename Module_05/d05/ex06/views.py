@@ -28,27 +28,6 @@ TABLE_NAME = "ex06_movies"
 #     return conn
 
 
-def create_table(conn, tablename, content):
-    sql_string = "(\n"
-    i = 0
-    curr = conn.cursor()
-    for key, value in content.items():
-        i += 1
-        if i < len(content):
-            sql_string += "    %s %s,\n" % (key, value)
-        else:
-            sql_string += "    %s %s\n" % (key, value)
-    sql_string += ")"
-    
-    # Intentar crear la tabla solo si no existe
-    try:
-        curr.execute("""CREATE TABLE IF NOT EXISTS %s %s""" % (tablename, sql_string))
-        conn.commit()
-    except psycopg2.Error as e:
-        conn.rollback()
-        raise e
-
-
 def init(request: HttpRequest):
     try:
         conn = psycopg2.connect(
@@ -61,31 +40,28 @@ def init(request: HttpRequest):
 
         with conn.cursor() as curs:
             try:
-                create_table(conn, 'ex06_movies', {
-                    'title': 'varchar(64) UNIQUE NOT NULL',
-                    'episode_nb': 'int PRIMARY KEY',
-                    'opening_crawl': 'text',
-                    'director': 'varchar(32) NOT NULL',
-                    'producer': 'varchar(128) NOT NULL',
-                    'release_date': 'date NOT NULL',
-                    'created': 'timestamp NOT NULL DEFAULT NOW()',
-                    'updated': 'timestamp NOT NULL DEFAULT NOW()'
-                })
-            
-                curr = conn.cursor()
-                curr.execute("""
+                curs.execute("""
+                    CREATE TABLE ex04_movies(
+                        title VARCHAR(64) UNIQUE NOT NULL,
+                        episode_nb INT PRIMARY KEY,
+                        opening_crawl TEXT,
+                        director VARCHAR(32) NOT NULL,
+                        producer VARCHAR(128) NOT NULL,
+                        release_date DATE NOT NULL
+                    );
+
                     CREATE OR REPLACE FUNCTION update_changetimestamp_column()
-                    RETURNS TRIGGER AS 1774886
+                    RETURNS TRIGGER AS 1782630
                     BEGIN
                     NEW.updated = now();
                     NEW.created = OLD.created;
                     RETURN NEW;
                     END;
-                    1774886 language 'plpgsql';
+                    1782630 language 'plpgsql';
                     CREATE TRIGGER update_films_changetimestamp BEFORE UPDATE
                     ON ex06_movies FOR EACH ROW EXECUTE PROCEDURE
                     update_changetimestamp_column();
-                    """)
+                """)
                 conn.commit()
                 return HttpResponse("✅ OK >> Table created successfully.")
 
@@ -295,7 +271,7 @@ def update(request: HttpRequest):
             try:
                 cursor.execute("""
                     UPDATE ex06_movies 
-                    SET opening_crawl = %s 
+                    SET opening_crawl = %s
                     WHERE episode_nb = %s;
                     """ % (
                         request.POST['opening_crawl'],
