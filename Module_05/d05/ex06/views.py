@@ -12,20 +12,20 @@ from django.shortcuts import redirect
 
 TABLE_NAME = "ex06_movies"
 
-# def create_table(conn, tablename, content):
-#     sql_string = "(\n"
-#     i = 0
-#     curr = conn.cursor()
-#     for key, value in content.items():
-#         i += 1
-#         if i < len(content):
-#             sql_string += "    %s %s,\n" % (key, value)
-#         else:
-#             sql_string += "    %s %s\n" % (key, value)
-#     sql_string += ")"
-#     curr.execute("""CREATE TABLE %s %s""" % (tablename, sql_string))
-#     conn.commit()
-#     return conn
+def create_table(conn, tablename, content):
+    sql_string = "(\n"
+    i = 0
+    curr = conn.cursor()
+    for key, value in content.items():
+        i += 1
+        if i < len(content):
+            sql_string += "    %s %s,\n" % (key, value)
+        else:
+            sql_string += "    %s %s\n" % (key, value)
+    sql_string += ")"
+    curr.execute("""CREATE TABLE %s %s""" % (tablename, sql_string))
+    conn.commit()
+    return conn
 
 
 def init(request: HttpRequest):
@@ -40,37 +40,45 @@ def init(request: HttpRequest):
 
         with conn.cursor() as curs:
             try:
-                curs.execute("""
-                    CREATE TABLE ex04_movies(
-                        title VARCHAR(64) UNIQUE NOT NULL,
-                        episode_nb INT PRIMARY KEY,
-                        opening_crawl TEXT,
-                        director VARCHAR(32) NOT NULL,
-                        producer VARCHAR(128) NOT NULL,
-                        release_date DATE NOT NULL
-                    );
+                create_table(conn, 'ex06_movies', {
+                    'title': 'varchar(64) UNIQUE NOT NULL',
+                    'episode_nb': 'int PRIMARY KEY',
+                    'opening_crawl': 'text',
+                    'director': 'varchar(32) NOT NULL',
+                    'producer': 'varchar(128) NOT NULL',
+                    'release_date': 'date NOT NULL',
+                    'created': 'timestamp NOT NULL DEFAULT NOW()',
+                    'updated': 'timestamp NOT NULL DEFAULT NOW()'
+                })
+            
+                try:
+                    curs.execute("""
+                        CREATE OR REPLACE FUNCTION update_changetimestamp_column()
+                        RETURNS TRIGGER AS $$
+                        BEGIN
+                            NEW.updated = now();
+                            NEW.created = OLD.created;
+                            RETURN NEW;
+                        END;
+                        $$ LANGUAGE plpgsql;
 
-                    CREATE OR REPLACE FUNCTION update_changetimestamp_column()
-                    RETURNS TRIGGER AS 1782630
-                    BEGIN
-                    NEW.updated = now();
-                    NEW.created = OLD.created;
-                    RETURN NEW;
-                    END;
-                    1782630 language 'plpgsql';
-                    CREATE TRIGGER update_films_changetimestamp BEFORE UPDATE
-                    ON ex06_movies FOR EACH ROW EXECUTE PROCEDURE
-                    update_changetimestamp_column();
-                """)
-                conn.commit()
-                return HttpResponse("✅ OK >> Table created successfully.")
+                        CREATE TRIGGER update_films_changetimestamp BEFORE UPDATE
+                        ON ex06_movies FOR EACH ROW EXECUTE PROCEDURE
+                        update_changetimestamp_column();
+                        """)
+                    conn.commit()
+                    return HttpResponse("✅ OK >> Table, function, and trigger created successfully.")
+                
+                except psycopg2.Error as e:
+                    conn.rollback()
+                    return HttpResponse(f"❌ Error creating function or trigger: {e}")
 
             except psycopg2.errors.DuplicateTable:
                 return HttpResponse("✅ OK >> Table already exists.")
             
-            except psycopg2.Error as e:
-                conn.rollback()
-                return HttpResponse(f"❌ Database error: {e}")
+            # except psycopg2.Error as e:
+            #     conn.rollback()
+            #     return HttpResponse(f"❌ Database error: {e}")
     
     except Exception as e:
         return HttpResponse(f"❌ An error occurred: {e}")
@@ -255,45 +263,55 @@ def remove(request: HttpRequest):
 
 
 def update(request: HttpRequest):
-    form = UpdateForm()
-    conn = psycopg2.connect(
-        dbname=settings.DATABASES['default']['NAME'],
-        user=settings.DATABASES['default']['USER'],
-        password=settings.DATABASES['default']['PASSWORD'],
-        host=settings.DATABASES['default']['HOST'],
-        port=settings.DATABASES['default']['PORT'],
-    )
-    cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    conn = None
+    cursor = None
+    
+    try:
+        conn = psycopg2.connect(
+            dbname=settings.DATABASES['default']['NAME'],
+            user=settings.DATABASES['default']['USER'],
+            password=settings.DATABASES['default']['PASSWORD'],
+            host=settings.DATABASES['default']['HOST'],
+            port=settings.DATABASES['default']['PORT'],
+        )
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
-    if request.method == 'POST':
-        form = UpdateForm(request.POST)
-        if form.is_valid():
-            try:
+        # Fetch movies for choices
+        cursor.execute("SELECT episode_nb, title FROM ex06_movies ORDER BY episode_nb")
+        choices = [(str(row['episode_nb']), row['title']) for row in cursor.fetchall()]
+
+        if request.method == 'POST':
+            form = UpdateForm(choices, request.POST)
+            if form.is_valid():
+                episode_nb = form.cleaned_data['title']
+                opening_crawl = form.cleaned_data['opening_crawl']
                 cursor.execute("""
                     UPDATE ex06_movies 
                     SET opening_crawl = %s
-                    WHERE episode_nb = %s;
-                    """ % (
-                        request.POST['opening_crawl'],
-                        request.POST['select'][0]
-                        )
-                    )
+                    WHERE episode_nb = %s
+                    RETURNING *;
+                    """, (opening_crawl, episode_nb))
+                updated_row = cursor.fetchone()
                 conn.commit()
-                return redirect('update') 
-            except Exception as e:
-                print(e)
-                conn.rollback()
-    try:
+                return redirect('update')
+        else:
+            form = UpdateForm(choices=choices)
+        
         cursor.execute("""
-            SELECT episode_nb, title, opening_crawl, director, producer, release_date
+            SELECT episode_nb, title, opening_crawl, director, producer, release_date, updated
             FROM ex06_movies
             ORDER BY episode_nb
             """)
+        movies = cursor.fetchall()
+        
+        return render(request, 'ex06/update.html', {'movies': movies, 'form': form})
+    
     except Exception as e:
-        return HttpResponse("❗ No data available")
-    response = cursor.fetchall()
-    if response:
-        return render(request, 'ex06/update.html', {'movies': response, 'form': form})
-    else:
-        return HttpResponse("❗ No data available")
+        return HttpResponse(f"❗ An error occurred: {str(e)}")
+    
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
 

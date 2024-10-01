@@ -26,7 +26,7 @@ echo "✅ $app_name added to INSTALLED_APPS."
 
 
 # Create a view in the views.py file of the app.
-cat << EOL >> "$views_file"
+cat << 'EOL' >> "$views_file"
 from django.conf import settings
 from django.http import HttpRequest, HttpResponse
 import psycopg2
@@ -77,29 +77,34 @@ def init(request: HttpRequest):
                     'updated': 'timestamp NOT NULL DEFAULT NOW()'
                 })
             
-                curr = conn.cursor()
-                curr.execute("""
-                    CREATE OR REPLACE FUNCTION update_changetimestamp_column()
-                    RETURNS TRIGGER AS $$
-                    BEGIN
-                    NEW.updated = now();
-                    NEW.created = OLD.created;
-                    RETURN NEW;
-                    END;
-                    $$ language 'plpgsql';
-                    CREATE TRIGGER update_films_changetimestamp BEFORE UPDATE
-                    ON ex06_movies FOR EACH ROW EXECUTE PROCEDURE
-                    update_changetimestamp_column();
-                    """)
-                conn.commit()
-                return HttpResponse("✅ OK >> Table created successfully.")
+                try:
+                    curs.execute("""
+                        CREATE OR REPLACE FUNCTION update_changetimestamp_column()
+                        RETURNS TRIGGER AS $$
+                        BEGIN
+                            NEW.updated = now();
+                            NEW.created = OLD.created;
+                            RETURN NEW;
+                        END;
+                        $$ LANGUAGE plpgsql;
+
+                        CREATE TRIGGER update_films_changetimestamp BEFORE UPDATE
+                        ON ex06_movies FOR EACH ROW EXECUTE PROCEDURE
+                        update_changetimestamp_column();
+                        """)
+                    conn.commit()
+                    return HttpResponse("✅ OK >> Table, function, and trigger created successfully.")
+                
+                except psycopg2.Error as e:
+                    conn.rollback()
+                    return HttpResponse(f"❌ Error creating function or trigger: {e}")
 
             except psycopg2.errors.DuplicateTable:
                 return HttpResponse("✅ OK >> Table already exists.")
             
-            except psycopg2.Error as e:
-                conn.rollback()
-                return HttpResponse(f"❌ Database error: {e}")
+            # except psycopg2.Error as e:
+            #     conn.rollback()
+            #     return HttpResponse(f"❌ Database error: {e}")
     
     except Exception as e:
         return HttpResponse(f"❌ An error occurred: {e}")
@@ -284,54 +289,64 @@ def remove(request: HttpRequest):
 
 
 def update(request: HttpRequest):
-    form = UpdateForm()
-    conn = psycopg2.connect(
-        dbname=settings.DATABASES['default']['NAME'],
-        user=settings.DATABASES['default']['USER'],
-        password=settings.DATABASES['default']['PASSWORD'],
-        host=settings.DATABASES['default']['HOST'],
-        port=settings.DATABASES['default']['PORT'],
-    )
-    cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    conn = None
+    cursor = None
+    
+    try:
+        conn = psycopg2.connect(
+            dbname=settings.DATABASES['default']['NAME'],
+            user=settings.DATABASES['default']['USER'],
+            password=settings.DATABASES['default']['PASSWORD'],
+            host=settings.DATABASES['default']['HOST'],
+            port=settings.DATABASES['default']['PORT'],
+        )
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
-    if request.method == 'POST':
-        form = UpdateForm(request.POST)
-        if form.is_valid():
-            try:
+        # Fetch movies for choices
+        cursor.execute("SELECT episode_nb, title FROM ex06_movies ORDER BY episode_nb")
+        choices = [(str(row['episode_nb']), row['title']) for row in cursor.fetchall()]
+
+        if request.method == 'POST':
+            form = UpdateForm(choices, request.POST)
+            if form.is_valid():
+                episode_nb = form.cleaned_data['title']
+                opening_crawl = form.cleaned_data['opening_crawl']
                 cursor.execute("""
                     UPDATE ex06_movies 
-                    SET opening_crawl = '%s' 
-                    WHERE episode_nb = %s;
-                    """ % (
-                        request.POST['opening_crawl'],
-                        request.POST['select'][0]
-                        )
-                    )
+                    SET opening_crawl = %s
+                    WHERE episode_nb = %s
+                    RETURNING *;
+                    """, (opening_crawl, episode_nb))
+                updated_row = cursor.fetchone()
                 conn.commit()
-                return redirect('update') 
-            except Exception as e:
-                print(e)
-                conn.rollback()
-    try:
+                return redirect('update')
+        else:
+            form = UpdateForm(choices=choices)
+        
         cursor.execute("""
-            SELECT episode_nb, title, opening_crawl, director, producer, release_date
+            SELECT episode_nb, title, opening_crawl, director, producer, release_date, updated
             FROM ex06_movies
             ORDER BY episode_nb
             """)
+        movies = cursor.fetchall()
+        
+        return render(request, 'ex06/update.html', {'movies': movies, 'form': form})
+    
     except Exception as e:
-        return HttpResponse("❗ No data available")
-    response = cursor.fetchall()
-    if response:
-        return render(request, 'ex06/update.html', {'movies': response, 'form': form})
-    else:
-        return HttpResponse("❗ No data available")
+        return HttpResponse(f"❗ An error occurred: {str(e)}")
+    
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
 
 EOL
 echo "✅ View created."
 
 
 # Create a URL pattern in the urls.py file of the app.
-cat << EOL >> "$app_urls_file"
+cat << 'EOL' >> "$app_urls_file"
 from django.urls import path
 from . import views
 
@@ -347,11 +362,24 @@ echo "✅ URL pattern created in $app_urls_file."
 
 
 # Create the forms.py file to the app.
-cat << EOL >> "$app_forms_file"
+cat << 'EOL' >> "$app_forms_file"
 from django import forms
 
+class RemoveForm(forms.Form):
+    title = forms.ChoiceField(choices=(), required=True)
+
+    def __init__(self, choices, *args, **kwargs):
+        super(RemoveForm, self).__init__(*args, **kwargs)
+        self.fields['title'].choices = choices
+
 class UpdateForm(forms.Form):
-    opening_crawl = forms.CharField(required=True)
+    title = forms.ChoiceField(choices=(), required=True)
+    opening_crawl = forms.CharField(widget=forms.Textarea, required=True)
+
+    def __init__(self, choices=None, *args, **kwargs):
+        super(UpdateForm, self).__init__(*args, **kwargs)
+        if choices:
+            self.fields['title'].choices = choices
 EOL
 echo "✅ FORMS file created in $app_forms_file."
 
