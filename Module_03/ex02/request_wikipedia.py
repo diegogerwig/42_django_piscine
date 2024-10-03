@@ -37,7 +37,7 @@ def request_wiki(page: str) -> str:
     return dewiki.from_string(data['parse']['wikitext']['*'])  # Parse the wikitext to plain text
 
 
-def write_to_file(filename: str, content: str): -> None
+def write_to_file(filename: str, content: str):
 
     try:
         with open(f'{filename}.wiki', 'w') as f:
