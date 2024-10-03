@@ -105,8 +105,8 @@
             {% endfor %}
         </select>
         <label for="{{ form.opening_crawl.id_for_label }}">Enter new opening crawl:</label>
-        <textarea id="{{ form.opening_crawl.id_for_label }}" name="{{ form.opening_crawl.name }}" maxlength="100" oninput="updateCharCount(this)"></textarea>
-        <div class="char-counter"><span id="charCount">0</span>/100</div>
+        <textarea id="{{ form.opening_crawl.id_for_label }}" name="{{ form.opening_crawl.name }}" maxlength="200" oninput="updateCharCount(this)"></textarea>
+        <div class="char-counter"><span id="charCount">0</span>/200</div>
         <button type="submit">Update</button>
     </form>
 
