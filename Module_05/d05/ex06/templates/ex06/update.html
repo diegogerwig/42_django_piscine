@@ -100,13 +100,13 @@
         <label for="{{ form.title.id_for_label }}">Select a movie to update:</label>
         <select id="{{ form.title.id_for_label }}" name="{{ form.title.name }}" required>
             <option value="" disabled selected>Choose a movie</option>
-            {% for choice in form.title.field.choices %}
-                <option value="{{ choice.0 }}">{{ choice.1 }}</option>
+            {% for movie in form.title.field.choices %}
+                <option value="{{ movie.0 }}">{{ movie.1 }}</option>
             {% endfor %}
         </select>
         <label for="{{ form.opening_crawl.id_for_label }}">Enter new opening crawl:</label>
-        <textarea id="{{ form.opening_crawl.id_for_label }}" name="{{ form.opening_crawl.name }}" maxlength="200" oninput="updateCharCount(this)"></textarea>
-        <div class="char-counter"><span id="charCount">0</span>/200</div>
+        <textarea id="{{ form.opening_crawl.id_for_label }}" name="{{ form.opening_crawl.name }}" maxlength="100" oninput="updateCharCount(this)"></textarea>
+        <div class="char-counter"><span id="charCount">0</span>/100</div>
         <button type="submit">Update</button>
     </form>
 

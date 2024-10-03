@@ -1,14 +1,15 @@
 #!/bin/sh
 
 project_name="d05"
-app_name="ex05"
+app_name="ex07"
 settings_file="$project_name/settings.py"
 views_file="$app_name/views.py"
 app_urls_file="$app_name/urls.py"
+app_forms_file="$app_name/forms.py"
 project_urls_file="$project_name/urls.py"
 app_models_file="$app_name/models.py"
 templates_dir_app="$app_name/templates/$app_name"
-templates_files="../templates/$app_name/display.html ../templates/$app_name/remove.html" 
+templates_files="../templates/$app_name/display.html ../templates/$app_name/remove.html ../templates/$app_name/update.html" 
 
 
 # Change to the project directory.
@@ -26,12 +27,13 @@ echo "✅ $app_name added to INSTALLED_APPS."
 
 
 # Create a view in the views.py file of the app.
-cat << EOL >> "$views_file"
+cat << 'EOL' >> "$views_file"
 from django.shortcuts import render
 from django.http import HttpRequest, HttpResponse
 from django.db import connection, OperationalError
 from .models import Movies
 from django.forms import Form
+from .forms import UpdateForm
 from django.shortcuts import redirect
 
 
@@ -118,7 +120,7 @@ def display(request: HttpRequest):
         print('❌ Error : ', e)
         return HttpResponse("❗ No data available")
     if response:
-        return render(request, 'ex05/display.html', {'movies': response})
+        return render(request, 'ex07/display.html', {'movies': response})
     else:
         return HttpResponse("❗ No data available")
 
@@ -133,16 +135,33 @@ def remove(request: HttpRequest):
 
     response = Movies.objects.all().order_by('episode_nb')
     if response:
-        return render(request, 'ex05/remove.html', {'movies': response, 'form': form})
+        return render(request, 'ex07/remove.html', {'movies': response, 'form': form})
     else:
         return HttpResponse("❗ No data available")
+
+
+def update(request: HttpRequest):
+    form = UpdateForm()
+    if request.method == 'POST':
+        form = UpdateForm(request.POST)
+        if form.is_valid() and request.POST['select'][0]:
+            obj = Movies.objects.get(pk=request.POST['select'][0])
+            obj.opening_crawl = request.POST['opening_crawl']
+            obj.save()
+
+    response = Movies.objects.all().order_by('episode_nb')
+    if response:
+        return render(request, 'ex07/update.html', {'data': response, 'form': form})
+    else:
+        return HttpResponse("❗ No data available")
+    return HttpResponse("❗ No data available")
 
 EOL
 echo "✅ View created."
 
 
 # Create a URL pattern in the urls.py file of the app.
-cat << EOL >> "$app_urls_file"
+cat << 'EOL' >> "$app_urls_file"
 from django.urls import path
 from . import views
 
@@ -151,9 +170,33 @@ urlpatterns = [
     path('populate/', views.populate),
     path('display/', views.display),
     path('remove/', views.remove, name='remove'),
+    path('update/', views.update, name='update'),
 ]
 EOL
 echo "✅ URL pattern created in $app_urls_file."
+
+
+# Create the forms.py file to the app.
+cat << 'EOL' >> "$app_forms_file"
+from django import forms
+
+class RemoveForm(forms.Form):
+    title = forms.ChoiceField(choices=(), required=True)
+
+    def __init__(self, choices, *args, **kwargs):
+        super(RemoveForm, self).__init__(*args, **kwargs)
+        self.fields['title'].choices = choices
+
+class UpdateForm(forms.Form):
+    title = forms.ChoiceField(choices=(), required=True)
+    opening_crawl = forms.CharField(widget=forms.Textarea, required=True)
+
+    def __init__(self, choices=None, *args, **kwargs):
+        super(UpdateForm, self).__init__(*args, **kwargs)
+        if choices:
+            self.fields['title'].choices = choices
+EOL
+echo "✅ FORMS file created in $app_forms_file."
 
 
 # Create a URL pattern in the urls.py file of the project.
@@ -166,7 +209,7 @@ echo "✅ URL pattern created in $project_urls_file."
 
 
 # Add a model to the app.
-cat << EOL > "$app_models_file"
+cat << 'EOL' > "$app_models_file"
 from django.db import models
 
 class Movies(models.Model):

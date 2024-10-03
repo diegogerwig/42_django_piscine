@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ex06: Update Information</title>
+    <title>Ex07
+        : Update Information</title>
     <style>
         html, body {
             font-family: Arial, sans-serif;
@@ -101,7 +102,7 @@
         <select id="{{ form.title.id_for_label }}" name="{{ form.title.name }}" required>
             <option value="" disabled selected>Choose a movie</option>
             {% for movie in form.title.field.choices %}
-                <option value="{{ movie.0 }}">{{ movie.1 }}</option>
+                <option value="{{ movie.episode_nb }}">{{ movie.title }}</option>
             {% endfor %}
         </select>
         <label for="{{ form.opening_crawl.id_for_label }}">Enter new opening crawl:</label>

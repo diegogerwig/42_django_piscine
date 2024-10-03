@@ -6,6 +6,7 @@ from django.http import HttpRequest, HttpResponse
 from django.db import connection, OperationalError
 from .models import Movies
 from django.forms import Form
+from .forms import UpdateForm
 from django.shortcuts import redirect
 
 
@@ -92,7 +93,7 @@ def display(request: HttpRequest):
         print('❌ Error : ', e)
         return HttpResponse("❗ No data available")
     if response:
-        return render(request, 'ex05/display.html', {'movies': response})
+        return render(request, 'ex07/display.html', {'movies': response})
     else:
         return HttpResponse("❗ No data available")
 
@@ -107,7 +108,24 @@ def remove(request: HttpRequest):
 
     response = Movies.objects.all().order_by('episode_nb')
     if response:
-        return render(request, 'ex05/remove.html', {'movies': response, 'form': form})
+        return render(request, 'ex07/remove.html', {'movies': response, 'form': form})
     else:
         return HttpResponse("❗ No data available")
+
+
+def update(request: HttpRequest):
+    form = UpdateForm()
+    if request.method == 'POST':
+        form = UpdateForm(request.POST)
+        if form.is_valid() and request.POST['select'][0]:
+            obj = Movies.objects.get(pk=request.POST['select'][0])
+            obj.opening_crawl = request.POST['opening_crawl']
+            obj.save()
+
+    response = Movies.objects.all().order_by('episode_nb')
+    if response:
+        return render(request, 'ex07/update.html', {'data': response, 'form': form})
+    else:
+        return HttpResponse("❗ No data available")
+    return HttpResponse("❗ No data available")
 
