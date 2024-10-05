@@ -106,7 +106,7 @@
             <select name="select" id="movie-select" required>
                 <option value="" disabled selected>Choose a movie</option>
                 {% for movie in movies %}
-                    <option value="{{ movie.title }}">{{ movie.episode_nb }}</option>
+                    <option value="{{ movie.episode_nb }}">{{ movie.title }}</option>
                 {% endfor %}
             </select>
             <button type="submit">Remove</button>

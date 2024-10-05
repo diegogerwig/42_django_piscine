@@ -1,122 +1,125 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ex07
-        : Update Information</title>
-    <style>
-        html, body {
-            font-family: Arial, sans-serif;
-        }
 
-        body {
-            background-color: #333;
-            color: #fff;
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            min-height: 100vh;
-        }
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Ex07
+            : Update Information</title>
+        <style>
+            html, body {
+                font-family: Arial, sans-serif;
+            }
 
-        form {
-            background-color: #555;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-            text-align: center;
-            margin-top: 50px;
-            width: 50%;
-            max-width: 500px;
-        }
+            body {
+                background-color: #333;
+                color: #fff;
+                margin: 0;
+                padding: 20px;
+                display: flex;
+                justify-content: center;
+                align-items: flex-start;
+                min-height: 100vh;
+            }
 
-        h1 {
-            color: #fff;
-            margin-bottom: 20px;
-        }
+            form {
+                background-color: #555;
+                padding: 20px;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+                text-align: center;
+                margin-top: 50px;
+                width: 50%;
+                max-width: 500px;
+            }
 
-        label {
-            display: block;
-            margin-bottom: 10px;
-            text-align: left;
-        }
+            h1 {
+                color: #fff;
+                margin-bottom: 20px;
+            }
 
-        select, textarea {
-            width: 100%;
-            padding: 10px;
-            border-radius: 4px;
-            border: 1px solid #888;
-            margin-bottom: 5px;
-            background-color: #666;
-            color: white;
-            box-sizing: border-box;
-        }
+            label {
+                display: block;
+                margin-bottom: 10px;
+                text-align: left;
+            }
 
-        select {
-            transition: color 0.3s;
-        }
+            select, textarea {
+                width: 100%;
+                padding: 10px;
+                border-radius: 4px;
+                border: 1px solid #888;
+                margin-bottom: 5px;
+                background-color: #666;
+                color: white;
+                box-sizing: border-box;
+            }
 
-        select:invalid {
-            color: #999;
-        }
+            select {
+                transition: color 0.3s;
+            }
 
-        select:valid {
-            color: white;
-        }
+            select:invalid {
+                color: #999;
+            }
 
-        textarea {
-            resize: vertical;
-            min-height: 100px;
-        }
+            select:valid {
+                color: white;
+            }
 
-        .char-counter {
-            text-align: right;
-            font-size: 0.8em;
-            margin-bottom: 15px;
-            color: #ccc;
-        }
+            textarea {
+                resize: vertical;
+                min-height: 100px;
+            }
 
-        button {
-            padding: 10px 15px;
-            background-color: #b33939;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
+            .char-counter {
+                text-align: right;
+                font-size: 0.8em;
+                margin-bottom: 15px;
+                color: #ccc;
+            }
 
-        button:hover {
-            background-color: #e55039;
-        }
-        
-    </style>
-</head>
-<body>
-    <form method="POST">
-        <h1>Update Information</h1>
-        {% csrf_token %}
-        <label for="{{ form.title.id_for_label }}">Select a movie to update:</label>
-        <select id="{{ form.title.id_for_label }}" name="{{ form.title.name }}" required>
-            <option value="" disabled selected>Choose a movie</option>
-            {% for movie in form.title.field.choices %}
-                <option value="{{ movie.episode_nb }}">{{ movie.title }}</option>
-            {% endfor %}
-        </select>
-        <label for="{{ form.opening_crawl.id_for_label }}">Enter new opening crawl:</label>
-        <textarea id="{{ form.opening_crawl.id_for_label }}" name="{{ form.opening_crawl.name }}" maxlength="100" oninput="updateCharCount(this)"></textarea>
-        <div class="char-counter"><span id="charCount">0</span>/100</div>
-        <button type="submit">Update</button>
-    </form>
+            button {
+                padding: 10px 15px;
+                background-color: #b33939;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                transition: background-color 0.3s;
+            }
 
-    <script>
-        function updateCharCount(textarea) {
-            var charCountSpan = document.getElementById('charCount');
-            var remainingChars = textarea.maxLength - textarea.value.length;
-            charCountSpan.textContent = textarea.value.length;
-        }
-    </script>
-</body>
+            button:hover {
+                background-color: #e55039;
+            }
+            
+        </style>
+    </head>
+
+    <body>
+        <form method="POST">
+            <h1>Update Information</h1>
+            {% csrf_token %}
+            <label for="movie-select">Select a movie to update:</label>
+            <select id="movie-select" name="select" required>
+                <option value="" disabled selected>Choose a movie</option>
+                {% for movie in movies %}
+                    <option value="{{ movie.episode_nb }}">{{ movie.title }}</option>
+                {% endfor %}
+            </select>
+            <label for="opening-crawl">Enter new opening crawl:</label>
+            <textarea id="opening-crawl" name="opening_crawl" maxlength="100" oninput="updateCharCount(this)"></textarea>
+            <div class="char-counter"><span id="charCount">0</span>/100</div>
+            <button type="submit">Update</button>
+        </form>
+
+        <script>
+            function updateCharCount(textarea) {
+                var charCountSpan = document.getElementById('charCount');
+                var remainingChars = textarea.maxLength - textarea.value.length;
+                charCountSpan.textContent = textarea.value.length;
+            }
+        </script>
+    </body>
+
 </html>

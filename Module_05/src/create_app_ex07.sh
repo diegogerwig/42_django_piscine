@@ -35,6 +35,7 @@ from .models import Movies
 from django.forms import Form
 from .forms import UpdateForm
 from django.shortcuts import redirect
+from django.utils import timezone
 
 
 def table_exists():
@@ -103,12 +104,21 @@ def populate(request: HttpRequest):
 
     for item in movies:
         try:
-            new_row = Movies(**item)
-            new_row.save()
-            temp += "✅ OK >> Data inserted successfully. <br>"
+            movie, created = Movies.objects.get_or_create(
+                episode_nb=item['episode_nb'],
+                defaults=item
+            )
+            if created:
+                temp += f"✅ OK >> Data inserted successfully for {item['title']}. <br>"
+            else:
+                temp += f"❗ Warning >> {item['title']} already exists. <br>"
+        except IntegrityError as e:
+            print('Error : ', e)
+            temp += f"❌ Error: {item['title']} :: {e} <br>"
         except Exception as e:
             print('Error : ', e)
-            temp += f"❌ Error: {item['title']} ::{e} <br>"
+            temp += f"❌ Unexpected error: {item['title']} :: {e} <br>"
+
     return HttpResponse(temp)
 
 
@@ -141,20 +151,28 @@ def remove(request: HttpRequest):
 
 
 def update(request: HttpRequest):
-    form = UpdateForm()
     if request.method == 'POST':
         form = UpdateForm(request.POST)
-        if form.is_valid() and request.POST['select'][0]:
-            obj = Movies.objects.get(pk=request.POST['select'][0])
-            obj.opening_crawl = request.POST['opening_crawl']
-            obj.save()
+        if form.is_valid():
+            episode_nb = form.cleaned_data['select']
+            new_opening_crawl = form.cleaned_data['opening_crawl']
+            try:
+                movie = Movies.objects.get(episode_nb=episode_nb)
+                movie.opening_crawl = new_opening_crawl
+                movie.updated = timezone.now()  # Explicitly set the updated time
+                movie.save()
+                print(f"Updated opening crawl for episode {episode_nb}: {new_opening_crawl}")
+                print(f"Updated time: {movie.updated}")
+            except Movies.DoesNotExist:
+                print(f"Movie with episode number {episode_nb} not found")
+    else:
+        form = UpdateForm()
 
-    response = Movies.objects.all().order_by('episode_nb')
-    if response:
-        return render(request, 'ex07/update.html', {'data': response, 'form': form})
+    movies = Movies.objects.all().order_by('episode_nb')
+    if movies:
+        return render(request, 'ex07/update.html', {'movies': movies, 'form': form})
     else:
         return HttpResponse("❗ No data available")
-    return HttpResponse("❗ No data available")
 
 EOL
 echo "✅ View created."
@@ -166,7 +184,6 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    # path('init/', views.init),
     path('populate/', views.populate),
     path('display/', views.display),
     path('remove/', views.remove, name='remove'),
@@ -179,6 +196,8 @@ echo "✅ URL pattern created in $app_urls_file."
 # Create the forms.py file to the app.
 cat << 'EOL' >> "$app_forms_file"
 from django import forms
+from .models import Movies
+
 
 class RemoveForm(forms.Form):
     title = forms.ChoiceField(choices=(), required=True)
@@ -187,14 +206,15 @@ class RemoveForm(forms.Form):
         super(RemoveForm, self).__init__(*args, **kwargs)
         self.fields['title'].choices = choices
 
+
 class UpdateForm(forms.Form):
-    title = forms.ChoiceField(choices=(), required=True)
+    select = forms.ChoiceField(choices=[], required=True)
     opening_crawl = forms.CharField(widget=forms.Textarea, required=True)
 
-    def __init__(self, choices=None, *args, **kwargs):
-        super(UpdateForm, self).__init__(*args, **kwargs)
-        if choices:
-            self.fields['title'].choices = choices
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['select'].choices = [(movie.episode_nb, f"Episode {movie.episode_nb}: {movie.title}") for movie in Movies.objects.all().order_by('episode_nb')]
+
 EOL
 echo "✅ FORMS file created in $app_forms_file."
 
@@ -211,6 +231,7 @@ echo "✅ URL pattern created in $project_urls_file."
 # Add a model to the app.
 cat << 'EOL' > "$app_models_file"
 from django.db import models
+from django.utils import timezone
 
 class Movies(models.Model):
     title = models.CharField(max_length=64, unique=True, null=False)
@@ -219,9 +240,18 @@ class Movies(models.Model):
     director = models.CharField(max_length=32, null=False)
     producer = models.CharField(max_length=128, null=False)
     release_date = models.DateField(null=False)
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.title
+
+    def save(self, *args, **kwargs):
+        if not self.pk:
+            self.created = timezone.now()
+        self.updated = timezone.now()
+        return super(Movies, self).save(*args, **kwargs)
+
 EOL
 echo "✅ MODEL created in $app_urls_file."
 
@@ -229,7 +259,7 @@ echo "✅ MODEL created in $app_urls_file."
 # Create templates in the templates directory of the app.
 mkdir -p "$templates_dir_app"
 cp $templates_files "$templates_dir_app/"
-echo "✅ Templates created in $templates_dir_app."
+echo "✅ TEMPLATES created in $templates_dir_app."
 
 
 echo -e "\n**********************\n"

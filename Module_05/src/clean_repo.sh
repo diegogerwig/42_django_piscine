@@ -3,7 +3,7 @@
 echo -e '\n🧹 Cleaning repository...'
 
 paths_to_remove=(
-    "~/sgoinfre/django_venv"
+    # "~/sgoinfre/django_venv"
     "./d05"
 )
 

@@ -8,6 +8,7 @@ from .models import Movies
 from django.forms import Form
 from .forms import UpdateForm
 from django.shortcuts import redirect
+from django.utils import timezone
 
 
 def table_exists():
@@ -76,12 +77,21 @@ def populate(request: HttpRequest):
 
     for item in movies:
         try:
-            new_row = Movies(**item)
-            new_row.save()
-            temp += "✅ OK >> Data inserted successfully. <br>"
+            movie, created = Movies.objects.get_or_create(
+                episode_nb=item['episode_nb'],
+                defaults=item
+            )
+            if created:
+                temp += f"✅ OK >> Data inserted successfully for {item['title']}. <br>"
+            else:
+                temp += f"❗ Warning: {item['title']} already exists. <br>"
+        except IntegrityError as e:
+            print('Error : ', e)
+            temp += f"❌ Error: {item['title']} :: {e} <br>"
         except Exception as e:
             print('Error : ', e)
-            temp += f"❌ Error: {item['title']} ::{e} <br>"
+            temp += f"❌ Unexpected error: {item['title']} :: {e} <br>"
+
     return HttpResponse(temp)
 
 
@@ -113,19 +123,47 @@ def remove(request: HttpRequest):
         return HttpResponse("❗ No data available")
 
 
+# def update(request: HttpRequest):
+#     form = UpdateForm()
+#     if request.method == 'POST':
+#         form = UpdateForm(request.POST)
+#         if form.is_valid() and request.POST['select'][0]:
+#             obj = Movies.objects.get(pk=request.POST['select'][0])
+#             obj.opening_crawl = request.POST['opening_crawl']
+#             obj.save()
+
+#     response = Movies.objects.all().order_by('episode_nb')
+#     if response:
+#         return render(request, 'ex07/update.html', {'movies': response, 'form': form})
+#     else:
+#         return HttpResponse("❗ No data available")
+#     return HttpResponse("❗ No data available")
+
+
+
 def update(request: HttpRequest):
-    form = UpdateForm()
     if request.method == 'POST':
         form = UpdateForm(request.POST)
-        if form.is_valid() and request.POST['select'][0]:
-            obj = Movies.objects.get(pk=request.POST['select'][0])
-            obj.opening_crawl = request.POST['opening_crawl']
-            obj.save()
+        if form.is_valid():
+            episode_nb = form.cleaned_data['select']
+            new_opening_crawl = form.cleaned_data['opening_crawl']
+            try:
+                movie = Movies.objects.get(episode_nb=episode_nb)
+                movie.opening_crawl = new_opening_crawl
+                movie.updated = timezone.now()  # Explicitly set the updated time
+                movie.save()
+                print(f"Updated opening crawl for episode {episode_nb}: {new_opening_crawl}")
+                print(f"Updated time: {movie.updated}")
+            except Movies.DoesNotExist:
+                print(f"Movie with episode number {episode_nb} not found")
+    else:
+        form = UpdateForm()
 
-    response = Movies.objects.all().order_by('episode_nb')
-    if response:
-        return render(request, 'ex07/update.html', {'data': response, 'form': form})
+    movies = Movies.objects.all().order_by('episode_nb')
+    if movies:
+        return render(request, 'ex07/update.html', {'movies': movies, 'form': form})
     else:
         return HttpResponse("❗ No data available")
-    return HttpResponse("❗ No data available")
+
+
 
