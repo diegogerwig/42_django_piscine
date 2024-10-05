@@ -36,5 +36,6 @@ bash ./src/create_app_ex04.sh
 bash ./src/create_app_ex05.sh
 bash ./src/create_app_ex06.sh
 bash ./src/create_app_ex07.sh
+bash ./src/create_app_ex08.sh
 
 bash ./src/run_project.sh
