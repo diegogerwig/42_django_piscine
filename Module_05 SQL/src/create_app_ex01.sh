@@ -42,7 +42,7 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path('init/', views.init, name='ex01'),
+    path('init/', views.init, name='ex01_init'),
 ]
 EOL
 echo "✅ URL pattern created in $app_urls_file."

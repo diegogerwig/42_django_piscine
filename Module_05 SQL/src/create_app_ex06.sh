@@ -264,7 +264,7 @@ def remove(request: HttpRequest):
             form = Form(request.POST)
             if form.is_valid() and request.POST.get('select'):
                 remove_row(conn, 'ex06_movies', 'episode_nb', request.POST['select'])
-                return redirect('remove') 
+                return redirect('ex06_remove') 
 
         with conn.cursor() as cursor:
             cursor.execute("""
@@ -352,10 +352,10 @@ from . import views
 
 urlpatterns = [
     path('init/', views.init),
-    path('populate/', views.populate),
-    path('display/', views.display),
-    path('remove/', views.remove, name='remove'),
-    path('update/', views.update, name='update'),
+    path('populate/', views.populate, name='ex06_populate'),
+    path('display/', views.display, name='ex06_display'),
+    path('remove/', views.remove, name='ex06_remove'),
+    path('update/', views.update, name='ex06_update'),
 ]
 EOL
 echo "✅ URL pattern created in $app_urls_file."

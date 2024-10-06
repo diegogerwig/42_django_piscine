@@ -23,6 +23,7 @@ Summary: After Python, Django!
 
 ## Module 05 SQL
 Summary: Today, we’ll tackle the ORM of Django.
+- https://www.youtube.com/watch?v=x1fCJ7sUXCM
 
 ## Module 06 SESSIONS
 

@@ -141,7 +141,7 @@ def remove(request: HttpRequest):
         form = Form(request.POST)
         if form.is_valid() and request.POST['select'][0]:
             Movies.objects.filter(pk=request.POST['select'][0]).delete()
-            return redirect('remove') 
+            return redirect('ex07_remove') 
 
     response = Movies.objects.all().order_by('episode_nb')
     if response:
@@ -184,10 +184,10 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path('populate/', views.populate),
-    path('display/', views.display),
-    path('remove/', views.remove, name='remove'),
-    path('update/', views.update, name='update'),
+    path('populate/', views.populate, name='ex07_populate'),
+    path('display/', views.display, name='ex07_display'),
+    path('remove/', views.remove, name='ex07_remove'),
+    path('update/', views.update, name='ex07_update'),
 ]
 EOL
 echo "✅ URL pattern created in $app_urls_file."

@@ -2,6 +2,14 @@
 
 echo -e '\n🧹 Cleaning repository and localhost cache...'
 
+# Clean Django cache
+if [ -d "../d05" ]; then
+    echo "🟢 The directory d05 exists. Cleaning Django cache..."
+    python3 ./d05/manage.py clearcache
+else
+    echo "🔴 The directory d05 does not exist. Cannot clean Django cache."
+fi
+
 # Paths to remove
 paths_to_remove=(
     # "~/sgoinfre/django_venv"
@@ -19,18 +27,4 @@ for path in "${paths_to_remove[@]}"; do
     fi
 done
 
-# Clean Django cache
-echo "🟢 Cleaning Django cache..."
-python manage.py clearcache
-
-# Clean Brave localhost cache
-echo "🟢 Cleaning Brave localhost cache..."
-brave_cache_dir="$HOME/.config/BraveSoftware/Brave-Browser/Default/Cache"
-if [ -d "$brave_cache_dir" ]; then
-    find "$brave_cache_dir" -type f -name "*localhost*" -delete
-    echo "   Brave localhost cache removed."
-else
-    echo "   Brave cache directory not found."
-fi
-
-echo -e '🗑️  Repository and localhost cache cleaned.\n'
+echo -e '🧹 Cleaning complete!\n'

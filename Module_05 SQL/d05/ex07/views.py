@@ -13,7 +13,7 @@ from django.utils import timezone
 
 def table_exists():
     with connection.cursor() as cursor:
-        cursor.execute("SELECT to_regclass('ex05_movies');")
+        cursor.execute("SELECT to_regclass('ex07_movies');")
         return cursor.fetchone()[0] is not None
 
 
