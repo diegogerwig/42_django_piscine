@@ -182,7 +182,19 @@ def populate(request: HttpRequest):
                     conn.rollback()
                     result.append(e)
         
-        return HttpResponse("<br>".join(str(i) for i in result))
+        warnings = []
+        for i in result:
+            if "OK" not in i:
+                warnings.append(f"❗ Warning >> {i} already exists.")
+
+
+        # warnings = []
+        # for i in result:
+        #     warnings.append(f"❗ Warning >> {i} already exists.")
+
+        return HttpResponse("<br>".join(warnings))
+
+        # return HttpResponse("<br>".join(str(i) for i in result))
     
     except Exception as e:
         return HttpResponse(f"❌ An error occurred: {e}")
@@ -238,7 +250,7 @@ def remove(request: HttpRequest):
             form = Form(request.POST)
             if form.is_valid() and request.POST.get('select'):
                 remove_row(conn, 'ex06_movies', 'episode_nb', request.POST['select'])
-                return redirect('remove') 
+                return redirect('ex06_remove') 
 
         with conn.cursor() as cursor:
             cursor.execute("""
@@ -293,7 +305,7 @@ def update(request: HttpRequest):
                     """, (opening_crawl, episode_nb))
                 updated_row = cursor.fetchone()
                 conn.commit()
-                return redirect('update')
+                return redirect('ex06_update')
         else:
             form = UpdateForm(choices=choices)
         

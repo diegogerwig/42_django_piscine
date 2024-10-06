@@ -258,9 +258,10 @@ from . import views
 urlpatterns = [
     path('init/', views.init, name='ex04_init'),
     path('populate/', views.populate, name='ex04_populate'),
-    path('display/', views.displayn name='ex04_display'),
-    path('remove/', views.remove, name='ex_04remove'),
+    path('display/', views.display, name='ex04_display'),
+    path('remove/', views.remove, name='ex04_remove'),
 ]
+
 EOL
 echo "✅ URL pattern created in $app_urls_file."
 

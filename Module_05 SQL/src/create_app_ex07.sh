@@ -189,6 +189,7 @@ urlpatterns = [
     path('remove/', views.remove, name='ex07_remove'),
     path('update/', views.update, name='ex07_update'),
 ]
+
 EOL
 echo "✅ URL pattern created in $app_urls_file."
 

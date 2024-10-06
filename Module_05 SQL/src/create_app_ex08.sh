@@ -212,7 +212,7 @@ def display(request: HttpRequest) -> HttpResponse:
         return HttpResponse('❗ WARNING >> No data available', status=200)
 
 EOL
-echo "✅ VIEWS created."
+echo "✅ VIEWS created in $views_file."
 
 
 # Create a URL pattern in the urls.py file of the app.

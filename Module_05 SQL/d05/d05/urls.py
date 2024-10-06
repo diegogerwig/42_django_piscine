@@ -7,6 +7,7 @@ from django.urls.conf import include
 from django.urls.conf import include
 from django.urls.conf import include
 from django.urls.conf import include
+from django.urls.conf import include
 """
 URL configuration for d05 project.
 
@@ -37,4 +38,5 @@ urlpatterns = [
     path('ex06/', include('ex06.urls')),
     path('ex07/', include('ex07.urls')),
     path('ex08/', include('ex08.urls')),
+    path('ex09/', include('ex09.urls')),
 ]

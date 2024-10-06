@@ -47,6 +47,7 @@
 	</head>
 
 	<body>
+		<h1>Star Wars Characters</h1>
 		<table>
 			<thead>
 				<tr>
@@ -56,9 +57,9 @@
 				</tr>
 			</thead>
 			<tbody>
-				{% for human in people %}
+				{% for character in people %}
 					<tr>
-						{% for elem in human %}
+						{% for elem in character %}
 							<td>{{ elem }}</td>
 						{% endfor %}
 					</tr>
