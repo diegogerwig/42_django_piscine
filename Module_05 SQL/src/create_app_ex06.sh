@@ -206,21 +206,14 @@ def populate(request: HttpRequest):
                     return HttpResponse("❗ The table does not exist. Please create the table first.")
                 except psycopg2.DatabaseError as e:
                     conn.rollback()
-                    result.append(e)
-        
-        warnings = []
-        for i in result:
-            if "OK" not in i:
-                warnings.append(f"❗ Warning >> {i} already exists.")
+                    result.append(f"❌ Error >> {e}")
 
-
-        # warnings = []
-        # for i in result:
-        #     warnings.append(f"❗ Warning >> {i} already exists.")
-
-        return HttpResponse("<br>".join(warnings))
-
-        # return HttpResponse("<br>".join(str(i) for i in result))
+        # Si no hay errores, devolvemos los mensajes de éxito
+        if all("OK" in res for res in result):
+            return HttpResponse("<br>".join(result))
+        else:
+            # Si hay algunos errores, los mostramos junto con los éxitos
+            return HttpResponse("<br>".join(result))
     
     except Exception as e:
         return HttpResponse(f"❌ An error occurred: {e}")
