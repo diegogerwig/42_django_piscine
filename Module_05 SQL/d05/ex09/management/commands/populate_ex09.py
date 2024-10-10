@@ -1,11 +1,11 @@
 import json
 import os
-from django.core.management.base import BaseCommand
 from django.conf import settings
+from django.core.management.base import BaseCommand
 from ex09.models import Planets, People
 
 class Command(BaseCommand):
-    help = 'Populate the database with initial data'
+    help = 'Populate the database with data from JSON'
 
     def handle(self, *args, **options):
         try:
@@ -14,24 +14,51 @@ class Command(BaseCommand):
             with open(json_file_path, 'r') as file:
                 data = json.load(file)
 
-            self.stdout.write(self.style.SUCCESS(f'Successfully loaded JSON data'))
+            # Limpiar datos existentes
+            Planets.objects.all().delete()
+            People.objects.all().delete()
 
             planets_count = 0
             people_count = 0
 
+            planet_map = {}
             for item in data:
                 if item['model'] == 'ex09.planets':
-                    fields = {k: v if v != '' else None for k, v in item['fields'].items()}
-                    Planets.objects.create(**fields)
+                    planet = Planets.objects.create(
+                        id=item['pk'],
+                        name=item['fields']['name'],
+                        climate=item['fields']['climate'],
+                        diameter=item['fields']['diameter'],
+                        orbital_period=item['fields']['orbital_period'],
+                        population=item['fields']['population'],
+                        rotation_period=item['fields']['rotation_period'],
+                        surface_water=item['fields']['surface_water'],
+                        terrain=item['fields']['terrain'],
+                        created=item['fields']['created'],
+                        updated=item['fields']['updated']
+                    )
+                    planet_map[item['pk']] = planet
                     planets_count += 1
-                elif item['model'] == 'ex09.people':
-                    fields = {k: v if v != '' else None for k, v in item['fields'].items()}
-                    homeworld_name = fields.pop('homeworld', None)
-                    if homeworld_name:
-                        homeworld, _ = Planets.objects.get_or_create(name=homeworld_name)
-                        fields['homeworld'] = homeworld
-                    People.objects.create(**fields)
+                    self.stdout.write(f"Added planet: {planet.name} (Climate: {planet.climate})")
+
+            for item in data:
+                if item['model'] == 'ex09.people':
+                    homeworld = planet_map.get(item['fields']['homeworld'])
+                    person = People.objects.create(
+                        id=item['pk'],
+                        name=item['fields']['name'],
+                        birth_year=item['fields']['birth_year'],
+                        gender=item['fields']['gender'],
+                        eye_color=item['fields']['eye_color'],
+                        hair_color=item['fields']['hair_color'],
+                        height=item['fields']['height'],
+                        mass=item['fields']['mass'],
+                        homeworld=homeworld,
+                        created=item['fields']['created'],
+                        updated=item['fields']['updated']
+                    )
                     people_count += 1
+                    self.stdout.write(f"Added person: {person.name} (Homeworld: {person.homeworld.name if person.homeworld else 'Unknown'})")
 
             self.stdout.write(self.style.SUCCESS(f'Successfully added {planets_count} planets'))
             self.stdout.write(self.style.SUCCESS(f'Successfully added {people_count} people'))

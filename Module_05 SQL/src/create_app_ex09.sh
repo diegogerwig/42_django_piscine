@@ -31,64 +31,43 @@ echo "✅ $app_name added to INSTALLED_APPS."
 
 # Create a view in the views.py file of the app.
 cat << 'EOL' >> "$views_file"
-
-
-
-
-# from django.shortcuts import render
-# from django.http import HttpResponse
-# from django.db.models import Q
-# from .models import People, Planets
-
-# def display(request):
-#     # Find planets with 'windy' in their climate description
-#     windy_planets = Planets.objects.filter(
-#         Q(climate__icontains='windy') |
-#         Q(climate__iregex=r'\bwindy\b')
-#     )
-
-#     # Find characters from windy planets
-#     characters = People.objects.filter(homeworld__in=windy_planets).order_by('name')
-    
-#     context = {
-#         'characters': [
-#             {
-#                 'name': char.name,
-#                 'homeworld': char.homeworld.name if char.homeworld else 'Unknown',
-#                 'climate': char.homeworld.climate if char.homeworld else 'Unknown',
-#             }
-#             for char in characters
-#         ],
-#     }
-    
-#     if Planets.objects.exists():
-#         if not windy_planets.exists():
-#             context['warning'] = "No planets with 'windy' in their climate description found."
-#         return render(request, 'ex09/display.html', context)
-#     else:
-#         command = "python ./d05/manage.py populate_ex09"
-#         return HttpResponse(f"❗ WARNING >> No data available.<br><br>Please use the following command line to populate the database:<br>{command}<br><br>After that run:<br>python ./d05/manage.py runserver", status=200)
-
-
-
-
 from django.shortcuts import render
 from django.http import HttpResponse
-
+from django.db.models import Q
 from .models import People, Planets
-
 
 def display(request):
     try:
-        people = People.objects.filter(homeworld__climate__contains='windy')\
-                .values('name', 'homeworld__name', 'homeworld__climate')\
-                .order_by('name')
-    except Exception as exception:
-        return HttpResponse(exception)
-    return render(request, 'ex09/display.html', {'people': people})
-
-
-
+        if People.objects.exists() and Planets.objects.exists():
+            # Encuentra planetas con 'windy' en su clima
+            windy_planets = Planets.objects.filter(
+                Q(climate__icontains='windy') | 
+                Q(climate__iregex=r'\bwindy\b') |
+                Q(climate__icontains='wind')
+            )
+            
+            # Encuentra personas de planetas ventosos
+            people = People.objects.filter(homeworld__in=windy_planets).select_related('homeworld').order_by('name')
+            
+            if people:
+                context = {
+                    'characters': [
+                        {
+                            'name': person.name,
+                            'homeworld': person.homeworld.name if person.homeworld else 'Unknown',
+                            'climate': person.homeworld.climate if person.homeworld else 'Unknown',
+                        }
+                        for person in people
+                    ]
+                }
+                return render(request, 'ex09/display.html', context)
+            else:
+                context = {'warning': "No characters found from windy planets."}
+                return render(request, 'ex09/display.html', context)
+        else:
+            return HttpResponse("❗ WARNING >> No data available.<br><br>Follow these steps:<br><br>1.- Stop the Django server.<br><br>2.- Use the following command line to populate the database: python ./d05/manage.py populate_ex09<br><br>3.- Run the Django server: python ./d05/manage.py runserver", status=200)
+    except Exception as e:
+        return HttpResponse(f"❌ Error: {str(e)}", status=500)
 
 EOL
 echo "✅ VIEWS created in $views_file."
@@ -107,68 +86,9 @@ EOL
 echo "✅ URL pattern created in $app_urls_file."
 
 
-# # Create the forms.py file to the app.
-# cat << 'EOL' >> "$app_forms_file"
-# from django import forms
-# from .models import Movies
-
-
-# class RemoveForm(forms.Form):
-#     title = forms.ChoiceField(choices=(), required=True)
-
-#     def __init__(self, choices, *args, **kwargs):
-#         super(RemoveForm, self).__init__(*args, **kwargs)
-#         self.fields['title'].choices = choices
-
-
-# class UpdateForm(forms.Form):
-#     select = forms.ChoiceField(choices=[], required=True)
-#     opening_crawl = forms.CharField(widget=forms.Textarea, required=True)
-
-#     def __init__(self, *args, **kwargs):
-#         super().__init__(*args, **kwargs)
-#         self.fields['select'].choices = [(movie.episode_nb, f"Episode {movie.episode_nb}: {movie.title}") for movie in Movies.objects.all().order_by('episode_nb')]
-
-# EOL
-# echo "✅ FORMS file created in $app_forms_file."
-
-
 # Create models in the models.py file of the app
 cat << 'EOL' > "$app_models_file"
-# from django.db import models
-
-# class Planets(models.Model):
-#     name = models.CharField(max_length=64, unique=True, null=False)
-#     climate = models.CharField(max_length=255, null=True, blank=True)
-#     diameter = models.IntegerField(null=True, blank=True)
-#     orbital_period = models.IntegerField(null=True, blank=True)
-#     population = models.BigIntegerField(null=True, blank=True)
-#     rotation_period = models.IntegerField(null=True, blank=True)
-#     surface_water = models.FloatField(null=True, blank=True)
-#     terrain = models.CharField(max_length=255, null=True, blank=True)
-#     created = models.DateTimeField(auto_now_add=True)
-#     updated = models.DateTimeField(auto_now=True)
-
-#     def __str__(self):
-#         return self.name
-
-# class People(models.Model):
-#     name = models.CharField(max_length=64, null=False)
-#     birth_year = models.CharField(max_length=32, null=True, blank=True)
-#     gender = models.CharField(max_length=32, null=True, blank=True)
-#     eye_color = models.CharField(max_length=32, null=True, blank=True)
-#     hair_color = models.CharField(max_length=32, null=True, blank=True)
-#     height = models.IntegerField(null=True, blank=True)
-#     mass = models.FloatField(null=True, blank=True)
-#     homeworld = models.ForeignKey(Planets, on_delete=models.SET_NULL, null=True, to_field='name')
-#     created = models.DateTimeField(auto_now_add=True)
-#     updated = models.DateTimeField(auto_now=True)
-
-#     def __str__(self):
-#         return self.name
-
 from django.db import models
-
 
 class Planets(models.Model):
     name = models.CharField(max_length=64, unique=True)
@@ -185,7 +105,6 @@ class Planets(models.Model):
     def __str__(self):
         return self.name
 
-
 class People(models.Model):
     name = models.CharField(max_length=64, unique=True)
     birth_year = models.CharField(max_length=32, null=True)
@@ -194,13 +113,12 @@ class People(models.Model):
     hair_color = models.CharField(max_length=32, null=True)
     height = models.IntegerField(null=True)
     mass = models.FloatField(null=True)
-    homeworld = models.ForeignKey('Planets', on_delete=models.PROTECT, max_length=64, null=True)
+    homeworld = models.ForeignKey(Planets, on_delete=models.PROTECT, null=True)
     created = models.DateTimeField(auto_now_add=True, null=True)
     updated = models.DateTimeField(auto_now=True, null=True)
 
     def __str__(self):
         return self.name
-
 
 EOL
 echo "✅ MODELS created in $app_models_file."
@@ -220,51 +138,9 @@ mkdir -p "$management_dir"
 touch "$management_dir/__init__.py"
 
 cat << 'EOL' > "$management_dir/populate_ex09.py"
-# import json
-# import os
-# from django.core.management.base import BaseCommand
-# from django.conf import settings
-# from ex09.models import Planets, People
-
-# class Command(BaseCommand):
-#     help = 'Populate the database with initial data'
-
-#     def handle(self, *args, **options):
-#         try:
-#             json_file_path = os.path.join(settings.BASE_DIR, 'ex09', 'resources', 'ex09_initial_data.json')
-            
-#             with open(json_file_path, 'r') as file:
-#                 data = json.load(file)
-
-#             self.stdout.write(self.style.SUCCESS(f'Successfully loaded JSON data'))
-
-#             planets_count = 0
-#             people_count = 0
-
-#             for item in data:
-#                 if item['model'] == 'ex09.planets':
-#                     fields = {k: v if v != '' else None for k, v in item['fields'].items()}
-#                     Planets.objects.create(**fields)
-#                     planets_count += 1
-#                 elif item['model'] == 'ex09.people':
-#                     fields = {k: v if v != '' else None for k, v in item['fields'].items()}
-#                     homeworld_name = fields.pop('homeworld', None)
-#                     if homeworld_name:
-#                         homeworld, _ = Planets.objects.get_or_create(name=homeworld_name)
-#                         fields['homeworld'] = homeworld
-#                     People.objects.create(**fields)
-#                     people_count += 1
-
-#             self.stdout.write(self.style.SUCCESS(f'Successfully added {planets_count} planets'))
-#             self.stdout.write(self.style.SUCCESS(f'Successfully added {people_count} people'))
-#             self.stdout.write(self.style.SUCCESS('Database population completed successfully'))
-
-#         except Exception as e:
-#             self.stdout.write(self.style.ERROR(f'An error occurred: {str(e)}'))
-#             import traceback
-#             self.stdout.write(self.style.ERROR(traceback.format_exc()))
-
 import json
+import os
+from django.conf import settings
 from django.core.management.base import BaseCommand
 from ex09.models import Planets, People
 
@@ -273,8 +149,17 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         try:
-            with open('ex09_initial_data.json', 'r') as file:
+            json_file_path = os.path.join(settings.BASE_DIR, 'ex09', 'resources', 'ex09_initial_data.json')
+            
+            with open(json_file_path, 'r') as file:
                 data = json.load(file)
+
+            # Limpiar datos existentes
+            Planets.objects.all().delete()
+            People.objects.all().delete()
+
+            planets_count = 0
+            people_count = 0
 
             planet_map = {}
             for item in data:
@@ -293,11 +178,13 @@ class Command(BaseCommand):
                         updated=item['fields']['updated']
                     )
                     planet_map[item['pk']] = planet
+                    planets_count += 1
+                    self.stdout.write(f"Added planet: {planet.name} (Climate: {planet.climate})")
 
             for item in data:
                 if item['model'] == 'ex09.people':
                     homeworld = planet_map.get(item['fields']['homeworld'])
-                    People.objects.create(
+                    person = People.objects.create(
                         id=item['pk'],
                         name=item['fields']['name'],
                         birth_year=item['fields']['birth_year'],
@@ -310,12 +197,12 @@ class Command(BaseCommand):
                         created=item['fields']['created'],
                         updated=item['fields']['updated']
                     )
+                    people_count += 1
+                    self.stdout.write(f"Added person: {person.name} (Homeworld: {person.homeworld.name if person.homeworld else 'Unknown'})")
 
             self.stdout.write(self.style.SUCCESS(f'Successfully added {planets_count} planets'))
             self.stdout.write(self.style.SUCCESS(f'Successfully added {people_count} people'))
             self.stdout.write(self.style.SUCCESS('Database population completed successfully'))
-
-            self.stdout.write(self.style.SUCCESS('Successfully populated the database'))
 
         except Exception as e:
             self.stdout.write(self.style.ERROR(f'An error occurred: {str(e)}'))

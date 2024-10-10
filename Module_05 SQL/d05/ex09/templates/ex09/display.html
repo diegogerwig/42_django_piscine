@@ -59,28 +59,28 @@
 
     <body>
         <h1>Star Wars Characters from Windy Planets</h1>
-        
+
         {% if warning %}
-        <p>{{ warning }}</p>
+            <p>{{ warning }}</p>
         {% endif %}
-        
+
         {% if characters %}
-        <table>
-            <tr>
-                <th>Name</th>
-                <th>Homeworld</th>
-                <th>Climate</th>
-            </tr>
-            {% for character in characters %}
-            <tr>
-                <td>{{ character.name }}</td>
-                <td>{{ character.homeworld }}</td>
-                <td>{{ character.climate }}</td>
-            </tr>
-            {% endfor %}
-        </table>
+            <table>
+                <tr>
+                    <th>Name</th>
+                    <th>Homeworld</th>
+                    <th>Climate</th>
+                </tr>
+                {% for character in characters %}
+                    <tr>
+                        <td>{{ character.name }}</td>
+                        <td>{{ character.homeworld }}</td>
+                        <td>{{ character.climate }}</td>
+                    </tr>
+                {% endfor %}
+            </table>
         {% else %}
-        <p>No characters found from windy planets.</p>
+            <p>No characters found from windy planets.</p>
         {% endif %}
     </body>
 
