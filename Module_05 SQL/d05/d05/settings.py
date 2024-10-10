@@ -1,3 +1,12 @@
+import environ
+import os
+from pathlib import Path
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+env = environ.Env()
+env_file_path = os.path.join(BASE_DIR, '..', '.env')
+environ.Env.read_env(env_file_path)
 """
 Django settings for d05 project.
 
@@ -20,7 +29,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-^5-40+(g#4m1v^bt6epx8p8w1q@f5qrtov+-_3=ye6h15eb$$x'
+SECRET_KEY = 'django-insecure-d9a67rd**!0*o=5knf#kd4o4&b9r8+@fqroa-=am-v3e$7lp6r'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -37,7 +46,17 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'ex00',
+    'ex01',
+    'ex02',
+    'ex03',
+    'ex04',
+    'ex05',
+    'ex06',
+    'ex07',
+    'ex08',
     'ex09',
+    'ex10',
 ]
 
 MIDDLEWARE = [
@@ -76,8 +95,12 @@ WSGI_APPLICATION = 'd05.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': env('POSTGRES_DB'),
+        'USER': env('POSTGRES_USER'),
+        'PASSWORD': env('POSTGRES_PASSWORD'),
+        'HOST': '127.0.0.1',
+        'PORT': '5432',
     }
 }
 

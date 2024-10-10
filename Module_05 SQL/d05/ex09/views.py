@@ -1,46 +1,6 @@
 from django.shortcuts import render
 
 # Create your views here.
-
-
-
-
-# from django.shortcuts import render
-# from django.http import HttpResponse
-# from django.db.models import Q
-# from .models import People, Planets
-
-# def display(request):
-#     # Find planets with 'windy' in their climate description
-#     windy_planets = Planets.objects.filter(
-#         Q(climate__icontains='windy') |
-#         Q(climate__iregex=r'\bwindy\b')
-#     )
-
-#     # Find characters from windy planets
-#     characters = People.objects.filter(homeworld__in=windy_planets).order_by('name')
-    
-#     context = {
-#         'characters': [
-#             {
-#                 'name': char.name,
-#                 'homeworld': char.homeworld.name if char.homeworld else 'Unknown',
-#                 'climate': char.homeworld.climate if char.homeworld else 'Unknown',
-#             }
-#             for char in characters
-#         ],
-#     }
-    
-#     if Planets.objects.exists():
-#         if not windy_planets.exists():
-#             context['warning'] = "No planets with 'windy' in their climate description found."
-#         return render(request, 'ex09/display.html', context)
-#     else:
-#         command = "python ./d05/manage.py populate_ex09"
-#         return HttpResponse(f"❗ WARNING >> No data available.<br><br>Please use the following command line to populate the database:<br>{command}<br><br>After that run:<br>python ./d05/manage.py runserver", status=200)
-
-
-
 from django.shortcuts import render
 from django.http import HttpResponse
 from django.db.models import Q

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Ex08: People from Windy Planets</title>
+		<style>
+			body {
+				font-family: Arial, sans-serif;
+				background-color: #444;
+				margin: 0;
+				padding: 20px;
+			}
+
+			table {
+				width: 95%;
+				border-collapse: collapse;
+				margin: 25px auto;
+				background-color: #ccc;
+				box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+			}
+
+			th, td {
+				padding: 12px 15px;
+				text-align: left;
+				border-bottom: 1px solid #ddd;
+			}
+
+			th {
+				background-color: #666; 
+				color: white; 
+			}
+
+			tr:nth-child(odd) {
+				background-color: #e0e0e0; 
+			}
+
+			tr:nth-child(even) {
+				background-color: #f5f5f5; 
+			}
+
+			tr:hover {
+				background-color: #b1c9ae; 
+			}
+
+			h1 {
+				color: white;
+				text-align: center;
+			}
+			
+		</style>
+	</head>
+
+	<body>
+		<h1>Star Wars Characters from Windy Planets</h1>
+		<table>
+			<thead>
+				<tr>
+					<th>Name</th>
+					<th>Homeworld</th>
+					<th>Climate</th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for character in people %}
+					<tr>
+						{% for elem in character %}
+							<td>{{ elem }}</td>
+						{% endfor %}
+					</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+	</body>
+
+</html>
