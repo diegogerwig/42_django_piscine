@@ -14,7 +14,6 @@ class Command(BaseCommand):
             with open(json_file_path, 'r') as file:
                 data = json.load(file)
 
-            # Limpiar datos existentes
             Planets.objects.all().delete()
             People.objects.all().delete()
 

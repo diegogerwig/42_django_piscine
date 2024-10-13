@@ -9,7 +9,7 @@ app_forms_file="$app_name/forms.py"
 project_urls_file="$project_name/urls.py"
 app_models_file="$app_name/models.py"
 templates_dir_app="$app_name/templates/$app_name"
-templates_files="../templates/$app_name/display.html"
+templates_files="../templates/$app_name/search.html"
 resources_dir_app="$app_name/resources"
 resources_files="../resources/ex10/ex10_initial_data.json"
 management_dir="$app_name/management/commands"
@@ -32,38 +32,91 @@ echo "✅ $app_name added to INSTALLED_APPS."
 # Create a view in the views.py file of the app.
 cat << 'EOL' >> "$views_file"
 from django.shortcuts import render
+from django.http import JsonResponse
 from .forms import MovieSearchForm
 from .models import People, Movies, Planets
+from django.db.models import Q
+from datetime import date
+
+def date_handler(obj):
+    if isinstance(obj, date):
+        return obj.isoformat()
+    raise TypeError(f"Object of type {type(obj)} is not JSON serializable")
 
 def movie_search(request):
+    no_data = not (People.objects.exists() and Movies.objects.exists() and Planets.objects.exists())
+
     if request.method == 'POST':
         form = MovieSearchForm(request.POST)
         if form.is_valid():
-            min_date = form.cleaned_data['min_release_date']
-            max_date = form.cleaned_data['max_release_date']
-            planet_diameter = form.cleaned_data['planet_diameter']
-            gender = form.cleaned_data['character_gender']
+            request.session['search_data'] = {
+                'min_release_date': form.cleaned_data['min_release_date'].isoformat(),
+                'max_release_date': form.cleaned_data['max_release_date'].isoformat(),
+                'planet_diameter': form.cleaned_data['planet_diameter'],
+                'character_gender': form.cleaned_data['character_gender'],
+            }
+            
+            results = perform_search(form.cleaned_data)
 
-            results = People.objects.filter(
-                gender=gender,
-                homeworld__diameter__gt=planet_diameter,
-                movies__release_date__range=[min_date, max_date]
-            ).distinct()
-
-            if not results:
-                message = "Nothing corresponding to your research"
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'results': results, 'message': "Nothing corresponding to your research" if not results else None}, json_dumps_params={'default': date_handler})
             else:
-                message = None
-
-            return render(request, 'ex10/results.html', {
-                'results': results,
-                'form': form,
-                'message': message
-            })
+                return render(request, 'ex10/search.html', {
+                    'form': form,
+                    'results': results,
+                    'message': "Nothing corresponding to your research" if not results else None,
+                    'no_data': no_data
+                })
     else:
-        form = MovieSearchForm()
+        search_data = request.session.get('search_data')
+        if search_data:
+            search_data['min_release_date'] = date.fromisoformat(search_data['min_release_date'])
+            search_data['max_release_date'] = date.fromisoformat(search_data['max_release_date'])
+            form = MovieSearchForm(search_data)
+            if form.is_valid():
+                results = perform_search(form.cleaned_data)
+                return render(request, 'ex10/search.html', {
+                    'form': form,
+                    'results': results,
+                    'message': "Nothing corresponding to your research" if not results else None,
+                    'no_data': no_data
+                })
+        else:
+            form = MovieSearchForm()
 
-    return render(request, 'ex10/search.html', {'form': form})
+    return render(request, 'ex10/search.html', {
+        'form': form,
+        'no_data': no_data
+    })
+
+def perform_search(data):
+    min_date = data['min_release_date']
+    max_date = data['max_release_date']
+    planet_diameter = data['planet_diameter']
+    gender = data['character_gender']
+
+    query = Q(
+        homeworld__diameter__gt=planet_diameter,
+        movies__release_date__range=[min_date, max_date]
+    )
+
+    if gender:
+        query &= Q(gender=gender)
+
+    people = People.objects.filter(query).distinct()
+
+    results = []
+    for person in people:
+        for movie in person.movies.filter(release_date__range=[min_date, max_date]):
+            results.append({
+                'movie_title': movie.title,
+                'character_name': person.name,
+                'gender': person.gender or 'Unknown',
+                'homeworld': person.homeworld.name if person.homeworld else 'Unknown',
+                'homeworld_diameter': person.homeworld.diameter if person.homeworld else 'Unknown'
+            })
+
+    return results
 
 EOL
 echo "✅ VIEWS created in $views_file."
@@ -85,18 +138,26 @@ echo "✅ URL pattern created in $app_urls_file."
 # Create the forms.py file to the app.
 cat << 'EOL' >> "$app_forms_file"
 from django import forms
+from django.core.exceptions import ValidationError
 from .models import People
 
 class MovieSearchForm(forms.Form):
     min_release_date = forms.DateField(label='Movies minimum release date')
     max_release_date = forms.DateField(label='Movies maximum release date')
-    planet_diameter = forms.IntegerField(label='Planet diameter greater than')
-    character_gender = forms.ChoiceField(label='Character gender')
+    planet_diameter = forms.IntegerField(label='Planet diameter greater than', min_value=0)
+    character_gender = forms.ChoiceField(label='Character gender', required=False)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        gender_choices = People.objects.values_list('gender', flat=True).distinct()
-        self.fields['character_gender'].choices = [(g, g) for g in gender_choices if g]
+        gender_choices = [('', 'all')]  # 'all' en minúsculas
+        gender_choices += [(g.lower(), g.lower()) for g in People.objects.values_list('gender', flat=True).distinct() if g]
+        self.fields['character_gender'].choices = gender_choices
+
+    def clean_planet_diameter(self):
+        diameter = self.cleaned_data.get('planet_diameter')
+        if diameter is not None and diameter < 0:
+            raise ValidationError("Planet diameter must be greater than or equal to zero.")
+        return diameter
 
 EOL
 echo "✅ FORMS file created in $app_forms_file."
@@ -164,11 +225,12 @@ echo "✅ URL pattern created in $project_urls_file."
 mkdir -p "$management_dir"
 touch "$management_dir/__init__.py"
 
-cat << 'EOL' > "$management_dir/populate_ex09.py"
+cat << 'EOL' > "$management_dir/populate_ex10.py"
 import json
 import os
 from django.conf import settings
 from django.core.management.base import BaseCommand
+from django.db import transaction
 from ex10.models import Planets, People, Movies
 
 class Command(BaseCommand):
@@ -190,7 +252,8 @@ class Command(BaseCommand):
 
                     # Create planets
                     planets = {item['pk']: Planets.objects.create(**item['fields']) 
-                            for item in data if item['model'] == 'ex10.planets'}
+                               for item in data if item['model'] == 'ex10.planets'}
+                    planets_count = len(planets)
 
                     # Create people
                     people = {}
@@ -200,16 +263,22 @@ class Command(BaseCommand):
                             if 'homeworld' in fields and fields['homeworld']:
                                 fields['homeworld'] = planets.get(fields['homeworld'])
                             people[item['pk']] = People.objects.create(**fields)
+                    people_count = len(people)
 
                     # Create movies and add characters
+                    movies_count = 0
                     for item in data:
                         if item['model'] == 'ex10.movies':
                             fields = item['fields'].copy()
                             characters = fields.pop('characters', [])
                             movie = Movies.objects.create(**fields)
                             movie.characters.set([people[char_id] for char_id in characters if char_id in people])
+                            movies_count += 1
 
-                self.stdout.write(self.style.SUCCESS('Successfully populated the database.'))
+                self.stdout.write(self.style.SUCCESS(f'Successfully added {planets_count} planets'))
+                self.stdout.write(self.style.SUCCESS(f'Successfully added {people_count} people'))
+                self.stdout.write(self.style.SUCCESS(f'Successfully added {movies_count} movies'))
+                self.stdout.write(self.style.SUCCESS('Database population completed successfully'))
             
             except Exception as e:
                 self.stdout.write(self.style.ERROR(f'An error occurred: {str(e)}'))
