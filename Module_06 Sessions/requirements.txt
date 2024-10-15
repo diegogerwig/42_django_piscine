@@ -1,0 +1,4 @@
+django==4.2
+psycopg2-binary==2.9.9
+django-environ
+django-bootstrap3==11.1.0
