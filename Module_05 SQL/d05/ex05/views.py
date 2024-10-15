@@ -103,7 +103,7 @@ def remove(request: HttpRequest):
         form = Form(request.POST)
         if form.is_valid() and request.POST['select'][0]:
             Movies.objects.filter(pk=request.POST['select'][0]).delete()
-            return redirect('remove') 
+            return redirect('ex05_remove') 
 
     response = Movies.objects.all().order_by('episode_nb')
     if response:

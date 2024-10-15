@@ -127,8 +127,20 @@ def populate(request: HttpRequest) -> HttpResponse:
                         'surface_water', 'terrain')
         cols_people = ('name', 'birth_year', 'gender', 'eye_color', 'hair_color', 'height',
                        'mass', 'homeworld')
-        
+
+        def table_exists(table_name):
+            cur.execute("""
+                SELECT EXISTS (
+                    SELECT FROM information_schema.tables 
+                    WHERE table_name = %s
+                );
+            """, (table_name,))
+            return cur.fetchone()[0]
+
         def insert_table_data(file_path, table_name, columns):
+            if not table_exists(table_name):
+                return f"❗ WARNING: {table_name} does not exist. Please create the table first."
+            
             try:
                 cur.execute(f"SELECT COUNT(*) FROM {table_name}")
                 count = cur.fetchone()[0]
@@ -138,8 +150,6 @@ def populate(request: HttpRequest) -> HttpResponse:
                 with open(file_path, 'r') as file:
                     cur.copy_from(file, table_name, columns=columns, null='NULL')
                 return f"✅ OK >> {table_name} created and data inserted successfully."
-            except psycopg2.errors.UndefinedTable:
-                return f"❗ WARNING: {table_name} does not exist. Please create the table first."
             except Exception as e:
                 return f"❌ Error inserting data into {table_name}: {str(e)}"
 

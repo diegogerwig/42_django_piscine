@@ -99,18 +99,6 @@ def execute_db_operation(operation):
             conn.close()
 
 
-# def init(request: HttpRequest) -> HttpResponse:
-#     def create_tables(cur):
-#         try:
-#             execute_sql_commands(cur, SQL_COMMANDS)
-#             return "✅ OK >> Tables created."
-#         except Exception as e:
-#             return f"❌ Error creating tables: {str(e)}"
-
-#     result = execute_db_operation(create_tables)
-#     return HttpResponse(result if result else "❗ WARNING >> Error creating tables", status=200)
-
-
 def init(request: HttpRequest) -> HttpResponse:
     def create_tables(cur):
         try:
@@ -131,23 +119,6 @@ def init(request: HttpRequest) -> HttpResponse:
     return HttpResponse(result, status=200)
 
 
-# def populate(request: HttpRequest) -> HttpResponse:
-#     def insert_data(cur):
-#         cols_planets = ('name', 'climate', 'diameter', 'orbital_period', 'population', 'rotation_period',
-#                         'surface_water', 'terrain')
-#         cols_people = ('name', 'birth_year', 'gender', 'eye_color', 'hair_color', 'height',
-#                        'mass', 'homeworld')
-        
-#         with open('ex08/resources/planets.csv', 'r') as file:
-#             cur.copy_from(file, 'ex08_planets', columns=cols_planets, null='NULL')
-#         with open('ex08/resources/people.csv', 'r') as file:
-#             cur.copy_from(file, 'ex08_people', columns=cols_people, null='NULL')
-#         return "✅ OK >> Data inserted successfully."
-
-#     result = execute_db_operation(insert_data)
-#     return HttpResponse(result if result else "❗ WARNING >> Error populating tables", status=200)
-
-
 def populate(request: HttpRequest) -> HttpResponse:
     def insert_data(cur) -> List[str]:
         messages = []
@@ -155,8 +126,20 @@ def populate(request: HttpRequest) -> HttpResponse:
                         'surface_water', 'terrain')
         cols_people = ('name', 'birth_year', 'gender', 'eye_color', 'hair_color', 'height',
                        'mass', 'homeworld')
-        
+
+        def table_exists(table_name):
+            cur.execute("""
+                SELECT EXISTS (
+                    SELECT FROM information_schema.tables 
+                    WHERE table_name = %s
+                );
+            """, (table_name,))
+            return cur.fetchone()[0]
+
         def insert_table_data(file_path, table_name, columns):
+            if not table_exists(table_name):
+                return f"❗ WARNING: {table_name} does not exist. Please create the table first."
+            
             try:
                 cur.execute(f"SELECT COUNT(*) FROM {table_name}")
                 count = cur.fetchone()[0]
@@ -166,8 +149,6 @@ def populate(request: HttpRequest) -> HttpResponse:
                 with open(file_path, 'r') as file:
                     cur.copy_from(file, table_name, columns=columns, null='NULL')
                 return f"✅ OK >> {table_name} created and data inserted successfully."
-            except psycopg2.errors.UndefinedTable:
-                return f"❗ WARNING: {table_name} does not exist. Please create the table first."
             except Exception as e:
                 return f"❌ Error inserting data into {table_name}: {str(e)}"
 
@@ -189,6 +170,7 @@ def populate(request: HttpRequest) -> HttpResponse:
     finally:
         if conn is not None:
             conn.close()
+
 
 def display(request: HttpRequest) -> HttpResponse:
     def fetch_data(cur) -> List[Tuple]:

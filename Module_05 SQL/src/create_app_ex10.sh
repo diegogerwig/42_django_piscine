@@ -203,7 +203,7 @@ class Movies(models.Model):
     director = models.CharField(max_length=32)
     producer = models.CharField(max_length=128)
     release_date = models.DateField()
-    characters = models.ManyToManyField(People, related_name='movies')
+    characters = models.ManyToManyField(People, related_name='movies')  # Many-to-many relationship
 
     def __str__(self):
         return self.title

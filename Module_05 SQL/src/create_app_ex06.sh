@@ -101,10 +101,6 @@ def init(request: HttpRequest):
 
             except psycopg2.errors.DuplicateTable:
                 return HttpResponse("✅ OK >> Table already exists.")
-            
-            # except psycopg2.Error as e:
-            #     conn.rollback()
-            #     return HttpResponse(f"❌ Database error: {e}")
     
     except Exception as e:
         return HttpResponse(f"❌ An error occurred: {e}")
@@ -208,11 +204,9 @@ def populate(request: HttpRequest):
                     conn.rollback()
                     result.append(f"❌ Error >> {e}")
 
-        # Si no hay errores, devolvemos los mensajes de éxito
         if all("OK" in res for res in result):
             return HttpResponse("<br>".join(result))
         else:
-            # Si hay algunos errores, los mostramos junto con los éxitos
             return HttpResponse("<br>".join(result))
     
     except Exception as e:

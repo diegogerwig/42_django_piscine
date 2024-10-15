@@ -198,7 +198,7 @@ def remove(request: HttpRequest):
             form = Form(request.POST)
             if form.is_valid() and request.POST.get('select'):
                 remove_row(conn, 'ex04_movies', 'episode_nb', request.POST['select'])
-                return redirect('remove') 
+                return redirect('ex04_remove') 
 
         with conn.cursor() as cursor:
             cursor.execute("""
