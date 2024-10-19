@@ -9,8 +9,7 @@ app_forms_file="$app_name/forms.py"
 project_urls_file="$project_name/urls.py"
 app_models_file="$app_name/models.py"
 templates_dir_app="$app_name/templates/$app_name"
-templates_files="../templates/$app_name/base.html  ../templates/$app_name/nav.html"
-
+templates_files="../templates/$app_name/base.html  ../templates/$app_name/nav.html ../templates/$app_name/index.html ../templates/$app_name/login.html ../templates/$app_name/signup.html"
 
 
 # Change to the project directory.
@@ -23,116 +22,254 @@ echo "✅ $app_name APP created."
 
 
 # Add the app to the INSTALLED_APPS list in the settings.py file of the project.
-sed -i "/INSTALLED_APPS = \[/,/]/ s/\(]\)/    '$app_name',\n&/" "$settings_file"
+sed -i "/INSTALLED_APPS = \[/,/]/ s/\(]\)/    '$app_name',\n    'django_bootstrap5',\n&/" "$settings_file"
 echo "✅ $app_name added to INSTALLED_APPS."
+
+
+# Create a URL pattern in the urls.py file of the project.
+sed -i "1i\\from django.urls.conf import include" "$project_urls_file"
+
+NEW_URL="path('/', include('$app_name.urls')),"
+sed -i "/urlpatterns = \[/,/]/ s|]|    $NEW_URL\n]|" "$project_urls_file"
+
+echo "✅ URL pattern created in $project_urls_file."
+
+
+# Create a new database configuration in the settings.py file of the project.
+env_code=$(cat << 'EOF'
+import environ
+import os
+from pathlib import Path
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+env = environ.Env()
+env_file_path = os.path.join(BASE_DIR, '..', '.env')
+environ.Env.read_env(env_file_path)
+
+EOF
+)
+
+echo "$env_code" | cat - "$settings_file" | tee "$settings_file" > /dev/null
+
+new_db_config="DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': env('POSTGRES_DB'),
+        'USER': env('POSTGRES_USER'),
+        'PASSWORD': env('POSTGRES_PASSWORD'),
+        'HOST': '127.0.0.1',
+        'PORT': '5432',
+    }
+}"
+
+temp_file=$(mktemp)
+
+in_databases_block=false
+
+while IFS= read -r line; do
+    if [[ "$line" == "DATABASES = {" ]]; then
+        in_databases_block=true
+        echo "$new_db_config" >> "$temp_file"
+        while IFS= read -r line && [[ "$line" != "}" ]]; do :; done
+    elif [[ "$line" == "}" ]] && $in_databases_block; then
+        in_databases_block=false
+    else
+        echo "$line" >> "$temp_file"
+    fi
+done < "$settings_file"
+
+mv "$temp_file" "$settings_file"
+
+echo "✅ Database configuration updated in $settings_file."
+
+
+# Add BOOTSTRAP5 settings to the settings.py file of the project.
+cat << 'EOL' >> "$settings_file"
+
+BOOTSTRAP5 = {
+    # The complete URL to the Bootstrap CSS file
+    "css_url": {
+        "url": "https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css",
+        "integrity": "sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN",
+        "crossorigin": "anonymous",
+    },
+
+    # The complete URL to the Bootstrap JavaScript file
+    "javascript_url": {
+        "url": "https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js",
+        "integrity": "sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL",
+        "crossorigin": "anonymous",
+    },
+
+    # The URL to the Popper JavaScript file (Bootstrap 5 uses Popper for dropdowns, tooltips, and popovers)
+    # Note: Bootstrap 5 bundles Popper with its JavaScript, so this might not be necessary
+    "popper_url": None,
+
+    # Put JavaScript in the HEAD section of the HTML document (only relevant if you use bootstrap5.html)
+    "javascript_in_head": False,
+
+    # Label class to use in horizontal forms
+    "horizontal_label_class": "col-sm-3",
+
+    # Field class to use in horizontal forms
+    "horizontal_field_class": "col-sm-9",
+
+    # Set placeholder attributes to label if no placeholder is provided
+    "set_placeholder": True,
+
+    # Class to indicate required (better to set this in your Django form)
+    "required_css_class": "",
+
+    # Class to indicate error (better to set this in your Django form)
+    "error_css_class": "is-invalid",
+
+    # Class to indicate success, meaning the field has valid input (better to set this in your Django form)
+    "success_css_class": "is-valid",
+
+    # Renderers (only set these if you have studied the source and understand the inner workings)
+    "formset_renderers":{
+        "default": "django_bootstrap5.renderers.FormsetRenderer",
+    },
+    "form_renderers": {
+        "default": "django_bootstrap5.renderers.FormRenderer",
+    },
+    "field_renderers": {
+        "default": "django_bootstrap5.renderers.FieldRenderer",
+        "inline": "django_bootstrap5.renderers.InlineFieldRenderer",
+    },
+}
+
+
+# settings for my app
+SESSION_COOKIE_AGE = 42
+SESSION_SAVE_EVERY_REQUEST = True 
+USER_NAMES = [
+    'visitor_1',
+    'visitor_2',
+    'visitor_3',
+    'visitor_4',
+    'visitor_5',
+    'visitor_6',
+    'visitor_7',
+    'visitor_8',
+    'visitor_9',
+    'visitor_10',  
+]
+
+EOL
+echo "✅ BOOTSTRAP CONFIG created in $settings_file."
 
 
 # Create a view in the views.py file of the app.
 cat << 'EOL' >> "$views_file"
-from django.shortcuts import render, HttpResponse, redirect
+from django.shortcuts import render, redirect
 from django.conf import settings
-import random
-from .forms import SignupForm, LoginForm, TipForm
+from django.utils import timezone
 from django.contrib import auth
 from django.contrib.auth.models import User
 from .models import Tip, Upvote, Downvote
+from .forms import SignupForm, LoginForm, TipForm
 from django.forms.models import model_to_dict
+import random
 
+def get_current_user(request):
+    if request.user.is_authenticated:
+        return request.user.username
+    start_time = timezone.now().timestamp()
+    cycle_duration = 42  # segundos
+    user_names = settings.USER_NAMES
+    current_cycle = int(start_time / cycle_duration) % len(user_names)
+    return user_names[current_cycle]
 
 def home(request):
-    tips = Tip.objects.all().order_by('date')
+    current_user = get_current_user(request)
+    time_remaining = 42 - (int(timezone.now().timestamp()) % 42)
+    
     if request.method == 'POST':
         if 'deletetip' in request.POST:
-            # print("removal request for a tip")
             if (request.user.has_perm('ex.deletetip') or
                     model_to_dict(Tip.objects.get(
                         id=request.POST['tipid'])).get('auteur') ==
                     request.user.username):
-                form = TipForm()
-                t = Tip.objects.filter(id=request.POST['tipid'])
-                t.delete()
+                Tip.objects.filter(id=request.POST['tipid']).delete()
         elif 'upvote' in request.POST:
-            # print("upvote request")
-            form = TipForm()
             ts = Tip.objects.filter(id=request.POST['tipid'])
-            if len(ts) > 0:
-                t = ts[0]
-                t.upvoteForUser(request.user.username)
+            if ts.exists():
+                ts.first().upvoteForUser(request.user.username)
         elif 'downvote' in request.POST:
-            # print("downvote request")
-            form = TipForm()
             ts = Tip.objects.filter(id=request.POST['tipid'])
-            if len(ts) > 0:
-                t = ts[0]
-                t.downvoteForUser(request.user.username)
+            if ts.exists():
+                ts.first().downvoteForUser(request.user.username)
         else:
             form = TipForm(request.POST)
             if form.is_valid():
-                data = form.cleaned_data
-                tip = Tip(content=data['content'], auteur=request.user.username)
+                tip = form.save(commit=False)
+                tip.auteur = request.user.username if request.user.is_authenticated else current_user
                 tip.save()
-                # print('New Tip Created',tip)
-            #return redirect('/')
-    else: # method 'GET':
-        # print("method 'GET':form = TipForm()")
-        form = TipForm()
-    if request.COOKIES.get('mycookie'):
-        # print("if request.COOKIES.get('mycookie')")
-        usador = request.COOKIES['mycookie']
-        response = render(request, 'ex/index.html', {'usador': usador, 'tips': tips, 'form': form})
+                return redirect('home')
     else:
-        # print("else: ...request.COOKIES.get('mycookie')")
-        usador = random.choice(settings.USER_NAMES)
-        response = render(request, 'ex/index.html', {'usador': usador, 'tips': tips, 'form': form})
-        response.set_cookie('mycookie', usador, max_age=settings.SESSION_COOKIE_DURATION)
-
-    return response
-
+        form = TipForm()
+    
+    tips = Tip.objects.all().order_by('-date')
+    for tip in tips:
+        tip.formatted_date = tip.date.strftime('%Y-%m-%d %H:%M:%S')
+    
+    context = {
+        'usador': current_user,
+        'tips': tips,
+        'form': form,
+        'session_time_remaining': time_remaining,
+        'is_authenticated': request.user.is_authenticated
+    }
+    
+    return render(request, 'ex/index.html', context)
 
 def login(request):
     if request.user.is_authenticated:
-        return redirect('/')
+        return redirect('home')
     if request.method == 'POST':
         form = LoginForm(request.POST)
         if form.is_valid():
             data = form.cleaned_data
-            u = auth.authenticate(username=data['username'], password=data['password'])
-            if u and u.is_active:
-                auth.login(request, u)
-                print('User logged in')
-                return redirect('/')
+            user = auth.authenticate(username=data['username'], password=data['password'])
+            if user and user.is_active:
+                auth.login(request, user)
+                return redirect('home')
             else:
-                print('Unknown or inactive user')
-                form._errors['username'] = ['Unknown or inactive user']
-    else: # method 'GET':
-        print("method 'GET': form = LoginForm()")
+                form.add_error(None, 'Unknown or inactive user')
+    else:
         form = LoginForm()
-
-    return render(request, 'ex/login.html', {'usador': request.user, 'form': form, })
+    return render(request, 'ex/login.html', {
+        'usador': get_current_user(request),
+        'form': form,
+        'is_authenticated': request.user.is_authenticated,
+        'session_time_remaining': 42 - (int(timezone.now().timestamp()) % 42)
+    })
 
 def signup(request):
     if request.user.is_authenticated:
-        return redirect('/')
+        return redirect('home')
     if request.method == 'POST':
         form = SignupForm(request.POST)
         if form.is_valid():
             data = form.cleaned_data
-            u = User.objects.create_user(username=data['username'], password=data['password'])
-            u.save()
-            auth.login(request, u)
-            # print('User created and logged in ', u)
-
-            return redirect('/')
-    else: # method 'GET':
-        # print("method 'GET': form = SignupForm()")
+            user = User.objects.create_user(username=data['username'], password=data['password'])
+            user.save()
+            auth.login(request, user)
+            return redirect('home')
+    else:
         form = SignupForm()
-
-    return render(request, 'ex/signup.html', {'usador': request.user, 'form': form, })
-
+    return render(request, 'ex/signup.html', {
+        'usador': get_current_user(request),
+        'form': form,
+        'is_authenticated': request.user.is_authenticated,
+        'session_time_remaining': 42 - (int(timezone.now().timestamp()) % 42)
+    })
 
 def logout(request):
     auth.logout(request)
-    return redirect('/')
+    return redirect('home')
 
 EOL
 echo "✅ VIEWS created in $views_file."
@@ -180,9 +317,12 @@ class LoginForm(forms.Form):
 
 
 class TipForm(forms.ModelForm):
-	class Meta:
-		model = Tip
-		fields = ['content']
+    class Meta:
+        model = Tip
+        fields = ['content']
+        widgets = {
+            'content': forms.Textarea(attrs={'rows': 3, 'placeholder': 'Enter your tip here...'}),
+        }
 
 EOL
 echo "✅ FORMS file created in $app_forms_file."
@@ -193,6 +333,7 @@ echo "✅ FORMS file created in $app_forms_file."
 cat << 'EOL' > "$app_models_file"
 from django.db import models
 from django.contrib.auth.models import User
+from django.utils import timezone
 
 
 class Upvote(models.Model):
@@ -206,7 +347,7 @@ class Downvote(models.Model):
 class Tip(models.Model):
     content = models.TextField()
     auteur = models.CharField(max_length=150)
-    date = models.DateTimeField(auto_now_add=True)
+    date = models.DateTimeField(default=timezone.now)
     upvote = models.ManyToManyField(Upvote)
     downvote = models.ManyToManyField(Downvote)
 

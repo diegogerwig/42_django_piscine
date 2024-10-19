@@ -1,0 +1,45 @@
+{% extends 'ex/base.html' %}
+
+{% block title %}Home sweet home{% endblock %}
+
+{% block headline %}Welcome to my site tips and tricks{% endblock %}
+
+{% block content %}
+{% if is_authenticated %}
+    <div class="card mb-4">
+        <div class="card-body">
+            <h2 class="card-title">Enter a new tip or trick</h2>
+            <form method="post">
+                {% csrf_token %}
+                {{ form.content }}
+                <button type="submit" class="btn btn-primary mt-2">Submit</button>
+            </form>
+        </div>
+    </div>
+{% endif %}
+
+<div class="card">
+    <div class="card-body">
+        <h2 class="card-title">All the tips and tricks of the site</h2>
+        <ul class="list-group">
+            {% for tip in tips %}
+                <li class="list-group-item bg-dark text-white">
+                    <p>{{ tip.content }}</p>
+                    <small class="text-muted">
+                        Posted by {{ tip.auteur }} on {{ tip.formatted_date }}
+                    </small>
+                    {% if is_authenticated %}
+                        {% if tip.auteur == usador or perms.ex.deletetip %}
+                            <form method="post" class="d-inline">
+                                {% csrf_token %}
+                                <input type="hidden" name="tipid" value="{{ tip.id }}">
+                                <button type="submit" name="deletetip" class="btn btn-sm btn-danger float-end">Delete</button>
+                            </form>
+                        {% endif %}
+                    {% endif %}
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+{% endblock %}

@@ -1,108 +1,111 @@
 from django.shortcuts import render
 
 # Create your views here.
-from django.shortcuts import render, HttpResponse, redirect
+from django.shortcuts import render, redirect
 from django.conf import settings
-import random
-from .forms import SignupForm, LoginForm, TipForm
+from django.utils import timezone
 from django.contrib import auth
 from django.contrib.auth.models import User
 from .models import Tip, Upvote, Downvote
+from .forms import SignupForm, LoginForm, TipForm
 from django.forms.models import model_to_dict
+import random
 
+def get_current_user(request):
+    if request.user.is_authenticated:
+        return request.user.username
+    start_time = timezone.now().timestamp()
+    cycle_duration = 42  # segundos
+    user_names = settings.USER_NAMES
+    current_cycle = int(start_time / cycle_duration) % len(user_names)
+    return user_names[current_cycle]
 
 def home(request):
-    tips = Tip.objects.all().order_by('date')
+    current_user = get_current_user(request)
+    time_remaining = 42 - (int(timezone.now().timestamp()) % 42)
+    
     if request.method == 'POST':
         if 'deletetip' in request.POST:
-            # print("removal request for a tip")
             if (request.user.has_perm('ex.deletetip') or
                     model_to_dict(Tip.objects.get(
                         id=request.POST['tipid'])).get('auteur') ==
                     request.user.username):
-                form = TipForm()
-                t = Tip.objects.filter(id=request.POST['tipid'])
-                t.delete()
+                Tip.objects.filter(id=request.POST['tipid']).delete()
         elif 'upvote' in request.POST:
-            # print("upvote request")
-            form = TipForm()
             ts = Tip.objects.filter(id=request.POST['tipid'])
-            if len(ts) > 0:
-                t = ts[0]
-                t.upvoteForUser(request.user.username)
+            if ts.exists():
+                ts.first().upvoteForUser(request.user.username)
         elif 'downvote' in request.POST:
-            # print("downvote request")
-            form = TipForm()
             ts = Tip.objects.filter(id=request.POST['tipid'])
-            if len(ts) > 0:
-                t = ts[0]
-                t.downvoteForUser(request.user.username)
+            if ts.exists():
+                ts.first().downvoteForUser(request.user.username)
         else:
             form = TipForm(request.POST)
             if form.is_valid():
-                data = form.cleaned_data
-                tip = Tip(content=data['content'], auteur=request.user.username)
+                tip = form.save(commit=False)
+                tip.auteur = request.user.username if request.user.is_authenticated else current_user
                 tip.save()
-                # print('New Tip Created',tip)
-            #return redirect('/')
-    else: # method 'GET':
-        # print("method 'GET':form = TipForm()")
-        form = TipForm()
-    if request.COOKIES.get('mycookie'):
-        # print("if request.COOKIES.get('mycookie')")
-        usador = request.COOKIES['mycookie']
-        response = render(request, 'ex/index.html', {'usador': usador, 'tips': tips, 'form': form})
+                return redirect('home')
     else:
-        # print("else: ...request.COOKIES.get('mycookie')")
-        usador = random.choice(settings.USER_NAMES)
-        response = render(request, 'ex/index.html', {'usador': usador, 'tips': tips, 'form': form})
-        response.set_cookie('mycookie', usador, max_age=settings.SESSION_COOKIE_DURATION)
-
-    return response
-
+        form = TipForm()
+    
+    tips = Tip.objects.all().order_by('-date')
+    for tip in tips:
+        tip.formatted_date = tip.date.strftime('%Y-%m-%d %H:%M:%S')
+    
+    context = {
+        'usador': current_user,
+        'tips': tips,
+        'form': form,
+        'session_time_remaining': time_remaining,
+        'is_authenticated': request.user.is_authenticated
+    }
+    
+    return render(request, 'ex/index.html', context)
 
 def login(request):
     if request.user.is_authenticated:
-        return redirect('/')
+        return redirect('home')
     if request.method == 'POST':
         form = LoginForm(request.POST)
         if form.is_valid():
             data = form.cleaned_data
-            u = auth.authenticate(username=data['username'], password=data['password'])
-            if u and u.is_active:
-                auth.login(request, u)
-                print('User logged in')
-                return redirect('/')
+            user = auth.authenticate(username=data['username'], password=data['password'])
+            if user and user.is_active:
+                auth.login(request, user)
+                return redirect('home')
             else:
-                print('Unknown or inactive user')
-                form._errors['username'] = ['Unknown or inactive user']
-    else: # method 'GET':
-        print("method 'GET': form = LoginForm()")
+                form.add_error(None, 'Unknown or inactive user')
+    else:
         form = LoginForm()
-
-    return render(request, 'ex/login.html', {'usador': request.user, 'form': form, })
+    return render(request, 'ex/login.html', {
+        'usador': get_current_user(request),
+        'form': form,
+        'is_authenticated': request.user.is_authenticated,
+        'session_time_remaining': 42 - (int(timezone.now().timestamp()) % 42)
+    })
 
 def signup(request):
     if request.user.is_authenticated:
-        return redirect('/')
+        return redirect('home')
     if request.method == 'POST':
         form = SignupForm(request.POST)
         if form.is_valid():
             data = form.cleaned_data
-            u = User.objects.create_user(username=data['username'], password=data['password'])
-            u.save()
-            auth.login(request, u)
-            # print('User created and logged in ', u)
-
-            return redirect('/')
-    else: # method 'GET':
-        # print("method 'GET': form = SignupForm()")
+            user = User.objects.create_user(username=data['username'], password=data['password'])
+            user.save()
+            auth.login(request, user)
+            return redirect('home')
+    else:
         form = SignupForm()
-
-    return render(request, 'ex/signup.html', {'usador': request.user, 'form': form, })
-
+    return render(request, 'ex/signup.html', {
+        'usador': get_current_user(request),
+        'form': form,
+        'is_authenticated': request.user.is_authenticated,
+        'session_time_remaining': 42 - (int(timezone.now().timestamp()) % 42)
+    })
 
 def logout(request):
     auth.logout(request)
-    return redirect('/')
+    return redirect('home')
 

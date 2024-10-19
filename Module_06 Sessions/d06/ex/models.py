@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.utils import timezone
 
 
 class Upvote(models.Model):
@@ -13,7 +14,7 @@ class Downvote(models.Model):
 class Tip(models.Model):
     content = models.TextField()
     auteur = models.CharField(max_length=150)
-    date = models.DateTimeField(auto_now_add=True)
+    date = models.DateTimeField(default=timezone.now)
     upvote = models.ManyToManyField(Upvote)
     downvote = models.ManyToManyField(Downvote)
 
