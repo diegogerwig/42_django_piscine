@@ -181,6 +181,7 @@ from .forms import SignupForm, LoginForm, TipForm
 from django.forms.models import model_to_dict
 import random
 
+
 def get_current_user(request):
     if request.user.is_authenticated:
         return request.user.username
@@ -189,6 +190,7 @@ def get_current_user(request):
     user_names = settings.USER_NAMES
     current_cycle = int(start_time / cycle_duration) % len(user_names)
     return user_names[current_cycle]
+
 
 def home(request):
     current_user = get_current_user(request)
@@ -254,6 +256,7 @@ def login(request):
         'session_time_remaining': 42 - (int(timezone.now().timestamp()) % 42)
     })
 
+
 def signup(request):
     if request.user.is_authenticated:
         return redirect('home')
@@ -273,7 +276,6 @@ def signup(request):
         'is_authenticated': request.user.is_authenticated,
         'session_time_remaining': 42 - (int(timezone.now().timestamp()) % 42)
     })
-
 
 
 def logout(request):
@@ -356,7 +358,6 @@ class TipForm(forms.ModelForm):
 
 EOL
 echo "✅ FORMS file created in $app_forms_file."
-
 
 
 # Create models in the models.py file of the app
@@ -442,7 +443,7 @@ sed -i "/urlpatterns = \[/,/]/ s|]|    $NEW_URL\n]|" "$project_urls_file"
 echo "✅ URL pattern created in $project_urls_file."
 
 
-
+# Create the templates directory and files for the app.
 mkdir -p "$templates_dir_app"
 for template in $templates_files; do
     if [ -f "$template" ]; then
