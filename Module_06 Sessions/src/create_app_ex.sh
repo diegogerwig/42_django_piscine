@@ -29,6 +29,21 @@ sed -i "/INSTALLED_APPS = \[/,/]/ s/\(]\)/    '$app_name',\n    'django_bootstra
 echo "✅ $app_name added to INSTALLED_APPS."
 
 
+# Check if ALLOWED_HOSTS exists, if not, create it with 'localhost'
+if ! grep -q "ALLOWED_HOSTS" "$settings_file"; then
+    echo "ALLOWED_HOSTS = ['localhost']" >> "$settings_file"
+    echo "✅ ALLOWED_HOSTS created with localhost."
+else
+    # If ALLOWED_HOSTS exists, add 'localhost' if it's not already there
+    if ! grep -q "'localhost'" "$settings_file"; then
+        sed -i "/ALLOWED_HOSTS = \[/,/]/ s/\(]\)/    'localhost',\n&/" "$settings_file"
+        echo "✅ localhost added to ALLOWED_HOSTS."
+    else
+        echo "❗ localhost already in ALLOWED_HOSTS. No changes made."
+    fi
+fi
+
+
 # Create a URL pattern in the urls.py file of the project.
 sed -i "1i\\from django.urls.conf import include" "$project_urls_file"
 

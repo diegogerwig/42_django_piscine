@@ -5,6 +5,12 @@
 {% block headline %}LIFE PRO TIPS{% endblock %}
 
 {% block content %}
+<style>
+    .tip-separator {
+        border-top: 1px solid #808080;  /* Gris medio */
+    }
+</style>
+
 {% if is_authenticated %}
     <div class="card mb-3">
         <div class="card-body">
@@ -23,7 +29,7 @@
         <h3 class="card-title mb-3">List of tips</h3>
         <ul class="list-group list-group-flush">
             {% for tip in tips %}
-                <li class="list-group-item p-0 border-top">
+                <li class="list-group-item p-0 tip-separator">
                     <div class="bg-dark text-white p-2">
                         <p class="mb-1 fs-5">{{ tip.content }}</p>
                         <p class="mb-1 fs-6">
