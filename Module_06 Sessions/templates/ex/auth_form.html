@@ -1,6 +1,3 @@
-
-
-
 {% extends 'ex/base.html' %}
 
 {% block title %}
@@ -38,14 +35,29 @@
                             {{ field.label_tag }}
                             {{ field }}
                             {% if field.errors %}
-                                <div class="invalid-feedback">
-                                    {{ field.errors }}
+                                <div class="alert alert-danger mt-2">
+                                    {% for error in field.errors %}
+                                        <p class="mb-0">{{ error }}</p>
+                                    {% endfor %}
                                 </div>
                             {% endif %}
                         </div>
                     {% endfor %}
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger mb-3">
+                            {% for error in form.non_field_errors %}
+                                <p class="mb-0">{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
                     <div class="d-grid">
-                        <button type="submit" class="btn btn-primary">Submit</button>
+                        <button type="submit" class="btn btn-primary">
+                            {% if 'login' in request.path %}
+                                Login
+                            {% else %}
+                                Sign Up
+                            {% endif %}
+                        </button>
                     </div>
                 </form>
             </div>

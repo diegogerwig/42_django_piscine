@@ -3,9 +3,9 @@
     <a class="navbar-brand" href="#">
       <span id="username-display" class="user-highlight">
         {% if is_authenticated %}
-          Hello {{ usador }}!
+          Hello {{ user_name }}!
         {% else %}
-          Hello {{ usador }}!
+          Hello {{ user_name }}!
         {% endif %}
       </span>
     </a>

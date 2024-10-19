@@ -28,15 +28,15 @@
                     <small>
                         Posted by <span class="text-info">{{ tip.author }}</span> on 
                         <span class="text-warning">
-                            {% if tip.date_created %}
-                                {{ tip.date_created|date:"Y-m-d H:i:s" }}
+                            {% if tip.date %}
+                                {{ tip.date|date:"Y-m-d H:i:s" }}
                             {% else %}
                                 (date unavailable)
                             {% endif %}
                         </span>
                     </small>
                     {% if is_authenticated %}
-                        {% if tip.author == usador or perms.ex.deletetip %}
+                        {% if tip.author == user_name or perms.ex.deletetip %}
                             <form method="post" class="d-inline">
                                 {% csrf_token %}
                                 <input type="hidden" name="tipid" value="{{ tip.id }}">

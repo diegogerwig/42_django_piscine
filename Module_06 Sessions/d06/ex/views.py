@@ -54,7 +54,7 @@ def home(request):
         tip.formatted_date = tip.date.strftime('%Y-%m-%d %H:%M:%S')
     
     context = {
-        'usador': current_user,
+        'user_name': current_user,
         'tips': tips,
         'form': form,
         'session_time_remaining': time_remaining,
@@ -62,6 +62,7 @@ def home(request):
     }
     
     return render(request, 'ex/index.html', context)
+
 
 def login(request):
     if request.user.is_authenticated:
@@ -74,12 +75,10 @@ def login(request):
             if user and user.is_active:
                 auth.login(request, user)
                 return redirect('home')
-            else:
-                form.add_error(None, 'Unknown or inactive user')
     else:
         form = LoginForm()
-    return render(request, 'ex/login.html', {
-        'usador': get_current_user(request),
+    return render(request, 'ex/auth_form.html', {
+        'user_name': get_current_user(request),
         'form': form,
         'is_authenticated': request.user.is_authenticated,
         'session_time_remaining': 42 - (int(timezone.now().timestamp()) % 42)
@@ -98,12 +97,14 @@ def signup(request):
             return redirect('home')
     else:
         form = SignupForm()
-    return render(request, 'ex/signup.html', {
-        'usador': get_current_user(request),
+    return render(request, 'ex/auth_form.html', {
+        'user_name': get_current_user(request),
         'form': form,
         'is_authenticated': request.user.is_authenticated,
         'session_time_remaining': 42 - (int(timezone.now().timestamp()) % 42)
     })
+
+
 
 def logout(request):
     auth.logout(request)

@@ -9,8 +9,11 @@ app_forms_file="$app_name/forms.py"
 project_urls_file="$project_name/urls.py"
 app_models_file="$app_name/models.py"
 templates_dir_app="$app_name/templates/$app_name"
-templates_files="../templates/$app_name/base.html  ../templates/$app_name/nav.html ../templates/$app_name/index.html ../templates/$app_name/login.html ../templates/$app_name/signup.html"
-
+templates_files="
+    ../templates/$app_name/base.html
+    ../templates/$app_name/nav.html
+    ../templates/$app_name/index.html
+    ../templates/$app_name/auth_form.html"
 
 # Change to the project directory.
 cd "$project_name"
@@ -230,6 +233,7 @@ def home(request):
     
     return render(request, 'ex/index.html', context)
 
+
 def login(request):
     if request.user.is_authenticated:
         return redirect('home')
@@ -241,11 +245,9 @@ def login(request):
             if user and user.is_active:
                 auth.login(request, user)
                 return redirect('home')
-            else:
-                form.add_error(None, 'Unknown or inactive user')
     else:
         form = LoginForm()
-    return render(request, 'ex/login.html', {
+    return render(request, 'ex/auth_form.html', {
         'user_name': get_current_user(request),
         'form': form,
         'is_authenticated': request.user.is_authenticated,
@@ -265,12 +267,14 @@ def signup(request):
             return redirect('home')
     else:
         form = SignupForm()
-    return render(request, 'ex/signup.html', {
+    return render(request, 'ex/auth_form.html', {
         'user_name': get_current_user(request),
         'form': form,
         'is_authenticated': request.user.is_authenticated,
         'session_time_remaining': 42 - (int(timezone.now().timestamp()) % 42)
     })
+
+
 
 def logout(request):
     auth.logout(request)
@@ -301,24 +305,45 @@ cat << 'EOL' >> "$app_forms_file"
 from django import forms
 from django.contrib.auth.models import User
 from .models import Tip
+from django.contrib.auth import authenticate
+
 
 class SignupForm(forms.Form):
-	username = forms.CharField(required=True)
-	password = forms.CharField(required=True, widget=forms.PasswordInput, initial='')
-	verif_password = forms.CharField(required=True, widget=forms.PasswordInput, initial='')
-	def clean(self):
-		form_data = super(SignupForm, self).clean()
-		u = User.objects.filter(username=form_data['username'])
-		if len(u) > 0:
-			self._errors['username'] = ["The name entered is already taken"]
-		if form_data['password'] != form_data['verif_password']:
-			self._errors['password'] = ["The password must be identical in the 2 password fields"]
-		return form_data
+    username = forms.CharField(required=True)
+    password = forms.CharField(required=True, widget=forms.PasswordInput)
+    verif_password = forms.CharField(required=True, widget=forms.PasswordInput)
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        username = cleaned_data.get('username')
+        password = cleaned_data.get('password')
+        verif_password = cleaned_data.get('verif_password')
+        
+        if username and User.objects.filter(username=username).exists():
+            self.add_error('username', "The name entered is already taken")
+        
+        if password and verif_password and password != verif_password:
+            self.add_error('password', "The password must be identical in the 2 password fields")
+            self.add_error('verif_password', "The password must be identical in the 2 password fields")
+        
+        return cleaned_data
 
 
 class LoginForm(forms.Form):
-	username = forms.CharField(required=True)
-	password = forms.CharField(required=True, widget=forms.PasswordInput, initial='')
+    username = forms.CharField(required=True)
+    password = forms.CharField(required=True, widget=forms.PasswordInput)
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        username = cleaned_data.get('username')
+        password = cleaned_data.get('password')
+        
+        if username and password:
+            user = authenticate(username=username, password=password)
+            if not user:
+                raise forms.ValidationError("Invalid username or password")
+        
+        return cleaned_data
 
 
 class TipForm(forms.ModelForm):
@@ -418,9 +443,15 @@ echo "✅ URL pattern created in $project_urls_file."
 
 
 
-# Create templates in the templates directory of the app.
 mkdir -p "$templates_dir_app"
-cp $templates_files "$templates_dir_app/"
+for template in $templates_files; do
+    if [ -f "$template" ]; then
+        cp "$template" "$templates_dir_app/"
+        echo "✅ Copied $template to $templates_dir_app/"
+    else
+        echo "❗ File not found: $template"
+    fi
+done
 echo "✅ TEMPLATES created in $templates_dir_app."
 
 

@@ -35,7 +35,7 @@
             color: #ffc107;
         }
         .user-highlight {
-            color: #ff6b6b;  /* Un rojo suave que destaca */
+            color: #ff6b6b;  
             font-weight: bold;
             text-shadow: 0 0 5px rgba(255, 107, 107, 0.5);
         }
@@ -61,7 +61,7 @@
                 let secondsLeft = 42 - (now % 42);
                 
                 if (timerElement) {
-                    timerElement.textContent = `Session: ${secondsLeft}s`;
+                    timerElement.textContent = `Session: ${secondsLeft} sec`;
                 }
                 
                 if (secondsLeft === 42 && !isAuthenticated) {
