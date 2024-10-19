@@ -15,16 +15,16 @@ fi
 
 pip install -r requirements.txt
 
-# echo -e "\n🐳 Starting Docker..."
-# docker stop $(docker ps -q)
-# docker rm $(docker ps -aq)
-# docker-compose up --build -d
+echo -e "\n🐳 Starting Docker..."
+docker stop $(docker ps -q)
+docker rm $(docker ps -aq)
+docker-compose up --build -d
 
-# if docker ps | grep -q "postgres" && docker ps | grep -q "adminer" && docker ps; then
-#     echo -e "✅ Docker is running.\n"
-# else
-#     echo -e "❌ Docker failed to start.\n"
-# fi
+if docker ps | grep -q "postgres" && docker ps | grep -q "adminer" && docker ps; then
+    echo -e "✅ Docker is running.\n"
+else
+    echo -e "❌ Docker failed to start.\n"
+fi
 
 bash ./src/create_django_project.sh
 
