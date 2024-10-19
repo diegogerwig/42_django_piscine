@@ -6,7 +6,7 @@
 
 {% block content %}
 {% if is_authenticated %}
-    <div class="card mb-4">
+    <div class="card mb-3">
         <div class="card-body">
             <h3 class="card-title">Enter a new tip</h3>
             <form method="post">
@@ -20,30 +20,53 @@
 
 <div class="card">
     <div class="card-body">
-        <h3 class="card-title">List of tips</h3>
-        <ul class="list-group">
+        <h3 class="card-title mb-3">List of tips</h3>
+        <ul class="list-group list-group-flush">
             {% for tip in tips %}
-                <li class="list-group-item bg-dark text-white">
-                    <p>{{ tip.content }}</p>
-                    <small>
-                        Posted by <span class="text-info">{{ tip.author }}</span> on 
-                        <span class="text-warning">
-                            {% if tip.date %}
-                                {{ tip.date|date:"Y-m-d H:i:s" }}
-                            {% else %}
-                                (date unavailable)
-                            {% endif %}
-                        </span>
-                    </small>
-                    {% if is_authenticated %}
-                        {% if tip.author == user_name or perms.ex.deletetip %}
-                            <form method="post" class="d-inline">
-                                {% csrf_token %}
-                                <input type="hidden" name="tipid" value="{{ tip.id }}">
-                                <button type="submit" name="deletetip" class="btn btn-sm btn-danger float-end">Delete</button>
-                            </form>
+                <li class="list-group-item p-0 border-top">
+                    <div class="bg-dark text-white p-2">
+                        <p class="mb-1 fs-5">{{ tip.content }}</p>
+                        <p class="mb-1 fs-6">
+                            Posted by <span class="text-info">{{ tip.author }}</span> on 
+                            <span class="text-warning">
+                                {% if tip.date %}
+                                    {{ tip.date|date:"Y-m-d H:i:s" }}
+                                {% else %}
+                                    (date unavailable)
+                                {% endif %}
+                            </span>
+                        </p>
+                        {% if is_authenticated %}
+                            <div class="mt-2">
+                                <form method="post" class="d-inline">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="tipid" value="{{ tip.id }}">
+                                    <button type="submit" name="upvote" class="btn btn-sm {% if tip.user_upvoted %}btn-success{% else %}btn-outline-success{% endif %}">
+                                        Upvote ({{ tip.upvote.count }})
+                                    </button>
+                                </form>
+                                <form method="post" class="d-inline">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="tipid" value="{{ tip.id }}">
+                                    <button type="submit" name="downvote" class="btn btn-sm {% if tip.user_downvoted %}btn-warning{% else %}btn-outline-warning{% endif %}">
+                                        Downvote ({{ tip.downvote.count }})
+                                    </button>
+                                </form>
+                                {% if tip.author == user_name or perms.ex.deletetip %}
+                                    <form method="post" class="d-inline float-end">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="tipid" value="{{ tip.id }}">
+                                        <button type="submit" name="deletetip" class="btn btn-sm btn-danger">Delete</button>
+                                    </form>
+                                {% endif %}
+                            </div>
+                        {% else %}
+                            <p class="mt-1 mb-0 fs-6">
+                                <span class="text-muted">Upvotes: {{ tip.upvote.count }}</span>
+                                <span class="text-muted ms-2">Downvotes: {{ tip.downvote.count }}</span>
+                            </p>
                         {% endif %}
-                    {% endif %}
+                    </div>
                 </li>
             {% endfor %}
         </ul>

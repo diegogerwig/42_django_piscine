@@ -66,3 +66,9 @@ class Tip(models.Model):
     def get_author(self):
         return self.author
 
+    def user_has_upvoted(self, username):
+        return self.upvote.filter(voted_user=username).exists()
+
+    def user_has_downvoted(self, username):
+        return self.downvote.filter(voted_user=username).exists()
+
