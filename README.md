@@ -26,8 +26,7 @@ Summary: Today, we’ll tackle the ORM of Django.
 - https://www.youtube.com/watch?v=x1fCJ7sUXCM
 
 ## Module 06 SESSIONS
-
-
+Summary: Or how a simple Django project can turn you into a black belt in permission and user management!
 
 ## Module 07 ADVANCED
 

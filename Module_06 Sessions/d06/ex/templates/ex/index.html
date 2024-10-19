@@ -1,18 +1,18 @@
 {% extends 'ex/base.html' %}
 
-{% block title %}Home sweet home{% endblock %}
+{% block title %}django SESSIONS{% endblock %}
 
-{% block headline %}Welcome to my site tips and tricks{% endblock %}
+{% block headline %}LIFE PRO TIPS{% endblock %}
 
 {% block content %}
 {% if is_authenticated %}
     <div class="card mb-4">
         <div class="card-body">
-            <h2 class="card-title">Enter a new tip or trick</h2>
+            <h3 class="card-title">Enter a new tip</h3>
             <form method="post">
                 {% csrf_token %}
                 {{ form.content }}
-                <button type="submit" class="btn btn-primary mt-2">Submit</button>
+                <button type="submit" class="btn btn-primary mt-2 d-block">Submit</button>
             </form>
         </div>
     </div>
@@ -20,16 +20,23 @@
 
 <div class="card">
     <div class="card-body">
-        <h2 class="card-title">All the tips and tricks of the site</h2>
+        <h3 class="card-title">List of tips</h3>
         <ul class="list-group">
             {% for tip in tips %}
                 <li class="list-group-item bg-dark text-white">
                     <p>{{ tip.content }}</p>
-                    <small class="text-muted">
-                        Posted by {{ tip.auteur }} on {{ tip.formatted_date }}
+                    <small>
+                        Posted by <span class="text-info">{{ tip.author }}</span> on 
+                        <span class="text-warning">
+                            {% if tip.date_created %}
+                                {{ tip.date_created|date:"Y-m-d H:i:s" }}
+                            {% else %}
+                                (date unavailable)
+                            {% endif %}
+                        </span>
                     </small>
                     {% if is_authenticated %}
-                        {% if tip.auteur == usador or perms.ex.deletetip %}
+                        {% if tip.author == usador or perms.ex.deletetip %}
                             <form method="post" class="d-inline">
                                 {% csrf_token %}
                                 <input type="hidden" name="tipid" value="{{ tip.id }}">

@@ -140,10 +140,15 @@ BOOTSTRAP5 = {
     },
 }
 
+EOL
+echo "✅ BOOTSTRAP CONFIG created in $settings_file."
 
-# settings for my app
+
+# Add USERS NAMES to the settings.py file of the project.
+cat << 'EOL' >> "$settings_file"
 SESSION_COOKIE_AGE = 42
 SESSION_SAVE_EVERY_REQUEST = True 
+
 USER_NAMES = [
     'visitor_1',
     'visitor_2',
@@ -158,7 +163,7 @@ USER_NAMES = [
 ]
 
 EOL
-echo "✅ BOOTSTRAP CONFIG created in $settings_file."
+echo "✅ USER NAMES created in $settings_file."
 
 
 # Create a view in the views.py file of the app.
@@ -190,7 +195,7 @@ def home(request):
         if 'deletetip' in request.POST:
             if (request.user.has_perm('ex.deletetip') or
                     model_to_dict(Tip.objects.get(
-                        id=request.POST['tipid'])).get('auteur') ==
+                        id=request.POST['tipid'])).get('author') ==
                     request.user.username):
                 Tip.objects.filter(id=request.POST['tipid']).delete()
         elif 'upvote' in request.POST:
@@ -205,7 +210,7 @@ def home(request):
             form = TipForm(request.POST)
             if form.is_valid():
                 tip = form.save(commit=False)
-                tip.auteur = request.user.username if request.user.is_authenticated else current_user
+                tip.author = request.user.username if request.user.is_authenticated else current_user
                 tip.save()
                 return redirect('home')
     else:
@@ -216,7 +221,7 @@ def home(request):
         tip.formatted_date = tip.date.strftime('%Y-%m-%d %H:%M:%S')
     
     context = {
-        'usador': current_user,
+        'user_name': current_user,
         'tips': tips,
         'form': form,
         'session_time_remaining': time_remaining,
@@ -241,7 +246,7 @@ def login(request):
     else:
         form = LoginForm()
     return render(request, 'ex/login.html', {
-        'usador': get_current_user(request),
+        'user_name': get_current_user(request),
         'form': form,
         'is_authenticated': request.user.is_authenticated,
         'session_time_remaining': 42 - (int(timezone.now().timestamp()) % 42)
@@ -261,7 +266,7 @@ def signup(request):
     else:
         form = SignupForm()
     return render(request, 'ex/signup.html', {
-        'usador': get_current_user(request),
+        'user_name': get_current_user(request),
         'form': form,
         'is_authenticated': request.user.is_authenticated,
         'session_time_remaining': 42 - (int(timezone.now().timestamp()) % 42)
@@ -281,10 +286,10 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path('', views.home),
-    path('login/', views.login),
-	path('signup/', views.signup),
-	path('logout/', views.logout),
+    path('', views.home, name='home'),
+    path('login/', views.login, name='login'),
+	path('signup/', views.signup, name='signup'),
+	path('logout/', views.logout, name='logout'),
 ]
 
 EOL
@@ -346,7 +351,7 @@ class Downvote(models.Model):
 
 class Tip(models.Model):
     content = models.TextField()
-    auteur = models.CharField(max_length=150)
+    author = models.CharField(max_length=150)
     date = models.DateTimeField(default=timezone.now)
     upvote = models.ManyToManyField(Upvote)
     downvote = models.ManyToManyField(Downvote)
@@ -392,13 +397,12 @@ class Tip(models.Model):
             self.save()
 
     def __str__(self):
-        return str(self.date.strftime('%Y-%m-%d %H:%M:%S')) + ' ' + self.content + ' by ' + self.auteur \
+        return str(self.date.strftime('%Y-%m-%d %H:%M:%S')) + ' ' + self.content + ' by ' + self.author \
                + ' upvotes : ' + str(len(self.upvote.all())) \
                + ' downvotes : ' + str(len(self.downvote.all()))
 
-    def get_auteur(self):
-        return self.auteur
-
+    def get_author(self):
+        return self.author
 
 EOL
 echo "✅ MODELS created in $app_models_file."

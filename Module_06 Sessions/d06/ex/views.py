@@ -28,7 +28,7 @@ def home(request):
         if 'deletetip' in request.POST:
             if (request.user.has_perm('ex.deletetip') or
                     model_to_dict(Tip.objects.get(
-                        id=request.POST['tipid'])).get('auteur') ==
+                        id=request.POST['tipid'])).get('author') ==
                     request.user.username):
                 Tip.objects.filter(id=request.POST['tipid']).delete()
         elif 'upvote' in request.POST:
@@ -43,7 +43,7 @@ def home(request):
             form = TipForm(request.POST)
             if form.is_valid():
                 tip = form.save(commit=False)
-                tip.auteur = request.user.username if request.user.is_authenticated else current_user
+                tip.author = request.user.username if request.user.is_authenticated else current_user
                 tip.save()
                 return redirect('home')
     else:

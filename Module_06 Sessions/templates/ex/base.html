@@ -45,7 +45,7 @@
     {% include 'ex/nav.html' %}
     
     <div class="container mt-4">
-        <h1 class="text-white">{% block headline %}{% endblock %}</h1>
+        <h2 class="text-white">{% block headline %}{% endblock %}</h2>
         {% block content %}{% endblock %}
     </div>
 
@@ -65,7 +65,6 @@
                 }
                 
                 if (secondsLeft === 42 && !isAuthenticated) {
-                    // Cambiar usuario solo si no está autenticado
                     fetch('/')
                         .then(response => response.text())
                         .then(html => {

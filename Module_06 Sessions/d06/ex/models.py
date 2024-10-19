@@ -13,7 +13,7 @@ class Downvote(models.Model):
 
 class Tip(models.Model):
     content = models.TextField()
-    auteur = models.CharField(max_length=150)
+    author = models.CharField(max_length=150)
     date = models.DateTimeField(default=timezone.now)
     upvote = models.ManyToManyField(Upvote)
     downvote = models.ManyToManyField(Downvote)
@@ -59,11 +59,10 @@ class Tip(models.Model):
             self.save()
 
     def __str__(self):
-        return str(self.date.strftime('%Y-%m-%d %H:%M:%S')) + ' ' + self.content + ' by ' + self.auteur \
+        return str(self.date.strftime('%Y-%m-%d %H:%M:%S')) + ' ' + self.content + ' by ' + self.author \
                + ' upvotes : ' + str(len(self.upvote.all())) \
                + ' downvotes : ' + str(len(self.downvote.all()))
 
-    def get_auteur(self):
-        return self.auteur
-
+    def get_author(self):
+        return self.author
 

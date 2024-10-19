@@ -3,9 +3,9 @@
     <a class="navbar-brand" href="#">
       <span id="username-display" class="user-highlight">
         {% if is_authenticated %}
-          Hello '{{ usador }}'!
+          Hello {{ user_name }}!
         {% else %}
-          Visitor: '{{ usador }}'
+          Hello {{ user_name }}!
         {% endif %}
       </span>
     </a>
@@ -28,10 +28,10 @@
           <li class="nav-item">
             <a class="nav-link" href="/login/">Login</a>
           </li>
+          <li class="nav-item">
+            <span class="nav-link" id="session-timer">Session: {{ session_time_remaining }} sec</span>
+          </li>
         {% endif %}
-        <li class="nav-item">
-          <span class="nav-link" id="session-timer">Session: {{ session_time_remaining }}s</span>
-        </li>
       </ul>
     </div>
   </div>
