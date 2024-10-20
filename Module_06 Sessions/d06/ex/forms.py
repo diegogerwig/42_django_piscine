@@ -1,8 +1,9 @@
 from django import forms
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from .models import Tip
 from django.contrib.auth import authenticate
 
+User = get_user_model()
 
 class SignupForm(forms.Form):
     username = forms.CharField(required=True)
@@ -24,7 +25,6 @@ class SignupForm(forms.Form):
         
         return cleaned_data
 
-
 class LoginForm(forms.Form):
     username = forms.CharField(required=True)
     password = forms.CharField(required=True, widget=forms.PasswordInput)
@@ -40,7 +40,6 @@ class LoginForm(forms.Form):
                 raise forms.ValidationError("Invalid username or password")
         
         return cleaned_data
-
 
 class TipForm(forms.ModelForm):
     class Meta:

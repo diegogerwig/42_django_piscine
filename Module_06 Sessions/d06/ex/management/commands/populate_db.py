@@ -1,10 +1,14 @@
 from django.core.management.base import BaseCommand
-from ex.models import CustomUser, Tip
+from django.contrib.auth import get_user_model
+from ex.models import Tip
+from ex.utils import toggle_vote
 from django.utils import timezone
 import random
 
+CustomUser = get_user_model()
+
 class Command(BaseCommand):
-    help = 'Populates the database with 10 tips from 5 different users'
+    help = 'Populates the database with 10 tips from 3 different users'
 
     def handle(self, *args, **kwargs):
         usernames = ['user1', 'user2', 'user3']
@@ -35,19 +39,16 @@ class Command(BaseCommand):
         for i in range(10):
             author = CustomUser.objects.get(username=random.choice(usernames))
             content = tips[i]
-            date = timezone.now() - timezone.timedelta(days=random.randint(0, 30))
             
             tip = Tip.objects.create(
                 content=content,
-                author=author,
-                date=date
+                author=author
             )
             
+            # Simulating upvotes and downvotes
             for _ in range(random.randint(0, 5)):
-                tip.upvoteForUser(random.choice(CustomUser.objects.all()))
-            
-            for _ in range(random.randint(0, 3)):
-                tip.downvoteForUser(random.choice(CustomUser.objects.all()))
+                voter = random.choice(CustomUser.objects.all())
+                toggle_vote(tip, voter, random.choice(['upvote', 'downvote']))
 
             self.stdout.write(self.style.SUCCESS(f'Successfully created tip: "{content}" by {author.username}'))
 

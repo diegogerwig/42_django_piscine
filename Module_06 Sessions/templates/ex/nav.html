@@ -3,7 +3,7 @@
     <a class="navbar-brand" href="#">
       <span id="username-display" class="user-highlight">
         {% if is_authenticated %}
-          Hello {{ user_name }}!    [rep: {{ user_reputation }}+]
+          Hello {{ user_name }}!    [rep: {{ user_reputation }}]
         {% else %}
           Hello {{ user_name }}!
         {% endif %}

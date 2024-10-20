@@ -34,7 +34,7 @@
                     <div class="bg-dark text-white p-2">
                         <p class="mb-1 fs-5">{{ tip.content }}</p>
                         <p class="mb-1 fs-6">
-                            Posted by <span class="text-info">{{ tip.author.username }} (rep: {{ tip.author.reputation }})</span> on 
+                            Posted by <span class="text-info">{{ tip.author.username }} [rep: {{ tip.author.reputation }}]</span> on 
                             <span class="text-warning">
                                 {% if tip.date %}
                                     {{ tip.formatted_date }}
@@ -48,7 +48,8 @@
                                 <form method="post" class="d-inline">
                                     {% csrf_token %}
                                     <input type="hidden" name="tipid" value="{{ tip.id }}">
-                                    <button type="submit" name="upvote" class="btn btn-sm {% if tip.user_upvoted %}btn-success{% else %}btn-outline-success{% endif %}">
+                                    <input type="hidden" name="vote" value="upvote">
+                                    <button type="submit" class="btn btn-sm {% if tip.user_upvoted %}btn-success{% else %}btn-outline-success{% endif %}">
                                         Upvote ({{ tip.upvote.count }})
                                     </button>
                                 </form>
@@ -56,7 +57,8 @@
                                     <form method="post" class="d-inline">
                                         {% csrf_token %}
                                         <input type="hidden" name="tipid" value="{{ tip.id }}">
-                                        <button type="submit" name="downvote" class="btn btn-sm {% if tip.user_downvoted %}btn-warning{% else %}btn-outline-warning{% endif %}">
+                                        <input type="hidden" name="vote" value="downvote">
+                                        <button type="submit" class="btn btn-sm {% if tip.user_downvoted %}btn-warning{% else %}btn-outline-warning{% endif %}">
                                             Downvote ({{ tip.downvote.count }})
                                         </button>
                                     </form>

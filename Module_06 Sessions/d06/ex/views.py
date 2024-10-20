@@ -1,21 +1,21 @@
 from django.shortcuts import render
 
 # Create your views here.
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.conf import settings
 from django.utils import timezone
 from django.contrib import auth
-from django.contrib.auth.models import User
-from .models import Tip, Upvote, Downvote
+from django.contrib.auth import get_user_model
+from .models import Tip
 from .forms import SignupForm, LoginForm, TipForm
 from django.forms.models import model_to_dict
 import random
-from django.shortcuts import get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
 from django.db.models import Prefetch
-from .models import CustomUser
+from .utils import update_user_reputation, toggle_vote
 
+CustomUser = get_user_model()
 
 def get_current_user(request):
     if request.user.is_authenticated:
@@ -25,7 +25,6 @@ def get_current_user(request):
     user_names = settings.USER_NAMES
     current_cycle = int(start_time / cycle_duration) % len(user_names)
     return user_names[current_cycle]
-
 
 def home(request):
     current_user = get_current_user(request)
@@ -42,35 +41,38 @@ def home(request):
         if 'deletetip' in request.POST:
             tip = get_object_or_404(Tip, id=request.POST['tipid'])
             if request.user.can_delete() or tip.author == request.user:
-                tip.remove_votes()
+                tip.upvote.clear()
+                tip.downvote.clear()
                 tip.delete()
-        elif 'upvote' in request.POST:
+                update_user_reputation(tip.author)
+        elif 'vote' in request.POST:
             tip = get_object_or_404(Tip, id=request.POST['tipid'])
-            tip.upvoteForUser(request.user)
-        elif 'downvote' in request.POST:
-            tip = get_object_or_404(Tip, id=request.POST['tipid'])
-            if request.user.can_downvote() or tip.author == request.user:
-                tip.downvoteForUser(request.user)
+            vote_type = request.POST['vote']
+            if vote_type in ['upvote', 'downvote']:
+                if vote_type == 'downvote' and not (request.user.can_downvote() or tip.author == request.user):
+                    # Handle the case where user doesn't have permission to downvote
+                    pass
+                else:
+                    toggle_vote(tip, request.user, vote_type)
+            return redirect('home')
         else:
             form = TipForm(request.POST)
             if form.is_valid():
                 tip = form.save(commit=False)
                 tip.author = request.user
                 tip.save()
-                request.user.update_reputation()
+                update_user_reputation(request.user)
                 return redirect('home')
     
     for tip in tips:
         tip.formatted_date = tip.date.strftime('%Y-%m-%d %H:%M:%S')
         if request.user.is_authenticated:
-            tip.user_upvoted = tip.user_has_upvoted(request.user)
-            tip.user_downvoted = tip.user_has_downvoted(request.user)
-        tip.author.update_reputation()
-        tip.author.update_user_permissions()
+            tip.user_upvoted = tip.upvote.filter(id=request.user.id).exists()
+            tip.user_downvoted = tip.downvote.filter(id=request.user.id).exists()
+        update_user_reputation(tip.author)
     
     if request.user.is_authenticated:
-        request.user.update_reputation()
-        request.user.update_user_permissions()
+        update_user_reputation(request.user)
     
     context = {
         'user_name': current_user.username if request.user.is_authenticated else current_user,
@@ -83,7 +85,6 @@ def home(request):
     }
     
     return render(request, 'ex/index.html', context)
-
 
 def login(request):
     if request.user.is_authenticated:
@@ -106,6 +107,8 @@ def login(request):
     })
 
 
+User = get_user_model()
+
 def signup(request):
     if request.user.is_authenticated:
         return redirect('home')
@@ -115,7 +118,7 @@ def signup(request):
             data = form.cleaned_data
             user = User.objects.create_user(username=data['username'], password=data['password'])
             user.save()
-            auth.login(request, user)
+            login(request, user)
             return redirect('home')
     else:
         form = SignupForm()
