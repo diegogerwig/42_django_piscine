@@ -20,7 +20,8 @@ class Tip(models.Model):
 
     class Meta:
         permissions = [
-            ("can_downvote", "Can downvote tips"),
+            ("can_delete", "Can delete tips from other users"),
+            ("can_downvote", "Can downvote tips from other users"),
         ]
 
     def upvoteForUser(self, username):

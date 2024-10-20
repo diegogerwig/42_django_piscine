@@ -34,7 +34,7 @@ def home(request):
     if request.method == 'POST' and request.user.is_authenticated:
         if 'deletetip' in request.POST:
             tip = get_object_or_404(Tip, id=request.POST['tipid'])
-            if request.user.has_perm('ex.deletetip') or tip.author == request.user.username:
+            if request.user.has_perm('ex.can_delete') or tip.author == request.user.username:
                 tip.delete()
         elif 'upvote' in request.POST:
             tip = get_object_or_404(Tip, id=request.POST['tipid'])
@@ -63,7 +63,8 @@ def home(request):
         'tips': tips,
         'form': form,
         'session_time_remaining': time_remaining,
-        'is_authenticated': request.user.is_authenticated
+        'is_authenticated': request.user.is_authenticated,
+        # 'user': request.user,
     }
     
     return render(request, 'ex/index.html', context)

@@ -202,7 +202,6 @@ def get_current_user(request):
     return user_names[current_cycle]
 
 
-@login_required
 def home(request):
     current_user = get_current_user(request)
     time_remaining = 42 - (int(timezone.now().timestamp()) % 42)
@@ -241,7 +240,8 @@ def home(request):
         'tips': tips,
         'form': form,
         'session_time_remaining': time_remaining,
-        'is_authenticated': request.user.is_authenticated
+        'is_authenticated': request.user.is_authenticated,
+        # 'user': request.user,
     }
     
     return render(request, 'ex/index.html', context)
