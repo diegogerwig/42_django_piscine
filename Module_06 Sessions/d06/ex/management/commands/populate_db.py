@@ -1,6 +1,5 @@
 from django.core.management.base import BaseCommand
-from django.contrib.auth.models import User
-from ex.models import Tip
+from ex.models import CustomUser, Tip
 from django.utils import timezone
 import random
 
@@ -12,7 +11,7 @@ class Command(BaseCommand):
         password = 'pwd'  
 
         for username in usernames:
-            user, created = User.objects.get_or_create(username=username)
+            user, created = CustomUser.objects.get_or_create(username=username)
             if created:
                 user.set_password(password)
                 user.save()
@@ -33,8 +32,8 @@ class Command(BaseCommand):
             "Take regular breaks to avoid burnout."
         ]
 
-        for i in range(5):
-            author = random.choice(usernames)
+        for i in range(10):
+            author = CustomUser.objects.get(username=random.choice(usernames))
             content = tips[i]
             date = timezone.now() - timezone.timedelta(days=random.randint(0, 30))
             
@@ -45,12 +44,12 @@ class Command(BaseCommand):
             )
             
             for _ in range(random.randint(0, 5)):
-                tip.upvoteForUser(random.choice(usernames))
+                tip.upvoteForUser(random.choice(CustomUser.objects.all()))
             
             for _ in range(random.randint(0, 3)):
-                tip.downvoteForUser(random.choice(usernames))
+                tip.downvoteForUser(random.choice(CustomUser.objects.all()))
 
-            self.stdout.write(self.style.SUCCESS(f'Successfully created tip: "{content}" by {author}'))
+            self.stdout.write(self.style.SUCCESS(f'Successfully created tip: "{content}" by {author.username}'))
 
         self.stdout.write(self.style.SUCCESS('Database population completed successfully.'))
 

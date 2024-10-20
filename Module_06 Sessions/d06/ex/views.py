@@ -13,11 +13,13 @@ import random
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
+from django.db.models import Prefetch
+from .models import CustomUser
 
 
 def get_current_user(request):
     if request.user.is_authenticated:
-        return request.user.username
+        return request.user
     start_time = timezone.now().timestamp()
     cycle_duration = 42  # segundos
     user_names = settings.USER_NAMES
@@ -29,42 +31,55 @@ def home(request):
     current_user = get_current_user(request)
     time_remaining = 42 - (int(timezone.now().timestamp()) % 42)
     
-    form = TipForm()  # Initialize form here
+    tips = Tip.objects.select_related('author').prefetch_related(
+        'upvote', 'downvote',
+        Prefetch('author', queryset=CustomUser.objects.all())
+    ).order_by('-date')
+    
+    form = TipForm()
     
     if request.method == 'POST' and request.user.is_authenticated:
         if 'deletetip' in request.POST:
             tip = get_object_or_404(Tip, id=request.POST['tipid'])
-            if request.user.has_perm('ex.can_delete') or tip.author == request.user.username:
+            if request.user.can_delete() or tip.author == request.user:
+                tip.remove_votes()
                 tip.delete()
         elif 'upvote' in request.POST:
             tip = get_object_or_404(Tip, id=request.POST['tipid'])
-            tip.upvoteForUser(request.user.username)
+            tip.upvoteForUser(request.user)
         elif 'downvote' in request.POST:
             tip = get_object_or_404(Tip, id=request.POST['tipid'])
-            if request.user.has_perm('ex.can_downvote') or tip.author == request.user.username:
-                tip.downvoteForUser(request.user.username)
+            if request.user.can_downvote() or tip.author == request.user:
+                tip.downvoteForUser(request.user)
         else:
             form = TipForm(request.POST)
             if form.is_valid():
                 tip = form.save(commit=False)
-                tip.author = request.user.username
+                tip.author = request.user
                 tip.save()
+                request.user.update_reputation()
                 return redirect('home')
     
-    tips = Tip.objects.all().order_by('-date')
     for tip in tips:
         tip.formatted_date = tip.date.strftime('%Y-%m-%d %H:%M:%S')
         if request.user.is_authenticated:
-            tip.user_upvoted = tip.user_has_upvoted(request.user.username)
-            tip.user_downvoted = tip.user_has_downvoted(request.user.username)
+            tip.user_upvoted = tip.user_has_upvoted(request.user)
+            tip.user_downvoted = tip.user_has_downvoted(request.user)
+        tip.author.update_reputation()
+        tip.author.update_user_permissions()
+    
+    if request.user.is_authenticated:
+        request.user.update_reputation()
+        request.user.update_user_permissions()
     
     context = {
-        'user_name': current_user,
+        'user_name': current_user.username if request.user.is_authenticated else current_user,
+        'user_reputation': current_user.reputation if request.user.is_authenticated else None,
         'tips': tips,
         'form': form,
         'session_time_remaining': time_remaining,
         'is_authenticated': request.user.is_authenticated,
-        # 'user': request.user,
+        'user': request.user if request.user.is_authenticated else None,
     }
     
     return render(request, 'ex/index.html', context)

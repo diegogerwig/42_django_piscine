@@ -1,19 +1,58 @@
 from django.db import models
-from django.contrib.auth.models import User
+from django.contrib.auth.models import AbstractUser, Permission, Group
 from django.utils import timezone
+from django.contrib.contenttypes.models import ContentType
 
+
+class CustomUser(AbstractUser):
+    reputation = models.IntegerField(default=0)
+
+    def update_reputation(self):
+        upvotes = sum(tip.upvote.count() for tip in self.tip_set.all())
+        downvotes = sum(tip.downvote.count() for tip in self.tip_set.all())
+        self.reputation = upvotes * 5 - downvotes * 2
+        self.save()
+
+    def can_downvote(self):
+        return self.reputation >= 15 or self.has_perm('ex.can_downvote')
+
+    def can_delete(self):
+        return self.reputation >= 30 or self.has_perm('ex.can_delete')
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        self.update_user_permissions()
+
+    def update_user_permissions(self):
+        content_type = ContentType.objects.get_for_model(Tip)
+        can_downvote = Permission.objects.get(
+            codename='can_downvote',
+            content_type=content_type,
+        )
+        can_delete = Permission.objects.get(
+            codename='can_delete',
+            content_type=content_type,
+        )
+        
+        if self.reputation >= 15:
+            self.user_permissions.add(can_downvote)
+        else:
+            self.user_permissions.remove(can_downvote)
+        
+        if self.reputation >= 30:
+            self.user_permissions.add(can_delete)
+        else:
+            self.user_permissions.remove(can_delete)
 
 class Upvote(models.Model):
-    voted_user = models.CharField(max_length=150)
-
+    voted_user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
 
 class Downvote(models.Model):
-    voted_user = models.CharField(max_length=150)
-
+    voted_user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
 
 class Tip(models.Model):
     content = models.TextField()
-    author = models.CharField(max_length=150)
+    author = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     date = models.DateTimeField(default=timezone.now)
     upvote = models.ManyToManyField(Upvote)
     downvote = models.ManyToManyField(Downvote)
@@ -24,57 +63,33 @@ class Tip(models.Model):
             ("can_downvote", "Can downvote tips from other users"),
         ]
 
-    def upvoteForUser(self, username):
-        votes = self.upvote.all()
-        found = False
-        for index in votes:
-            if index.voted_user == username:
-                found = True
-                index.delete()
-                break
-        if not found:
-            newvote = Upvote(voted_user=username)
-            newvote.save()
-            self.upvote.add(newvote)
+    def upvoteForUser(self, user):
+        if not self.upvote.filter(voted_user=user).exists():
+            new_upvote = Upvote(voted_user=user)
+            new_upvote.save()
+            self.upvote.add(new_upvote)
+            self.downvote.filter(voted_user=user).delete()
+            self.author.update_reputation()
 
-            downvotes = self.downvote.all()
-            for index in downvotes:
-                if index.voted_user == username:
-                    index.delete()
-                    break
-            self.save()
+    def downvoteForUser(self, user):
+        if not self.downvote.filter(voted_user=user).exists():
+            new_downvote = Downvote(voted_user=user)
+            new_downvote.save()
+            self.downvote.add(new_downvote)
+            self.upvote.filter(voted_user=user).delete()
+            self.author.update_reputation()
 
-    def downvoteForUser(self, username):
-        votes = self.downvote.all()
-        found = False
-        for index in votes:
-            if index.voted_user == username:
-                found = True
-                index.delete()
-                break
-        if not found:
-            newvote = Downvote(voted_user=username)
-            newvote.save()
-            self.downvote.add(newvote)
+    def remove_votes(self):
+        self.upvote.all().delete()
+        self.downvote.all().delete()
+        self.author.update_reputation()
 
-            upvotes = self.upvote.all()
-            for index in upvotes:
-                if index.voted_user == username:
-                    index.delete()
-                    break
-            self.save()
+    def user_has_upvoted(self, user):
+        return self.upvote.filter(voted_user=user).exists()
+
+    def user_has_downvoted(self, user):
+        return self.downvote.filter(voted_user=user).exists()
 
     def __str__(self):
-        return str(self.date.strftime('%Y-%m-%d %H:%M:%S')) + ' ' + self.content + ' by ' + self.author \
-               + ' upvotes : ' + str(len(self.upvote.all())) \
-               + ' downvotes : ' + str(len(self.downvote.all()))
-
-    def get_author(self):
-        return self.author
-
-    def user_has_upvoted(self, username):
-        return self.upvote.filter(voted_user=username).exists()
-
-    def user_has_downvoted(self, username):
-        return self.downvote.filter(voted_user=username).exists()
+        return f"{self.date.strftime('%Y-%m-%d %H:%M:%S')} {self.content} by {self.author.username} (rep: {self.author.reputation})"
 

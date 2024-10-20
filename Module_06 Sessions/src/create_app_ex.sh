@@ -15,6 +15,7 @@ templates_files="
     ../templates/$app_name/index.html
     ../templates/$app_name/auth_form.html"
 management_dir="$app_name/management/commands"
+app_admin_file="$app_name/admin.py"
 
 
 # Change to the project directory.
@@ -190,11 +191,13 @@ import random
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
+from django.db.models import Prefetch
+from .models import CustomUser
 
 
 def get_current_user(request):
     if request.user.is_authenticated:
-        return request.user.username
+        return request.user
     start_time = timezone.now().timestamp()
     cycle_duration = 42  # segundos
     user_names = settings.USER_NAMES
@@ -206,42 +209,55 @@ def home(request):
     current_user = get_current_user(request)
     time_remaining = 42 - (int(timezone.now().timestamp()) % 42)
     
-    form = TipForm()  # Initialize form here
+    tips = Tip.objects.select_related('author').prefetch_related(
+        'upvote', 'downvote',
+        Prefetch('author', queryset=CustomUser.objects.all())
+    ).order_by('-date')
+    
+    form = TipForm()
     
     if request.method == 'POST' and request.user.is_authenticated:
         if 'deletetip' in request.POST:
             tip = get_object_or_404(Tip, id=request.POST['tipid'])
-            if request.user.has_perm('ex.can_delete') or tip.author == request.user.username:
+            if request.user.can_delete() or tip.author == request.user:
+                tip.remove_votes()
                 tip.delete()
         elif 'upvote' in request.POST:
             tip = get_object_or_404(Tip, id=request.POST['tipid'])
-            tip.upvoteForUser(request.user.username)
+            tip.upvoteForUser(request.user)
         elif 'downvote' in request.POST:
             tip = get_object_or_404(Tip, id=request.POST['tipid'])
-            if request.user.has_perm('ex.can_downvote') or tip.author == request.user.username:
-                tip.downvoteForUser(request.user.username)
+            if request.user.can_downvote() or tip.author == request.user:
+                tip.downvoteForUser(request.user)
         else:
             form = TipForm(request.POST)
             if form.is_valid():
                 tip = form.save(commit=False)
-                tip.author = request.user.username
+                tip.author = request.user
                 tip.save()
+                request.user.update_reputation()
                 return redirect('home')
     
-    tips = Tip.objects.all().order_by('-date')
     for tip in tips:
         tip.formatted_date = tip.date.strftime('%Y-%m-%d %H:%M:%S')
         if request.user.is_authenticated:
-            tip.user_upvoted = tip.user_has_upvoted(request.user.username)
-            tip.user_downvoted = tip.user_has_downvoted(request.user.username)
+            tip.user_upvoted = tip.user_has_upvoted(request.user)
+            tip.user_downvoted = tip.user_has_downvoted(request.user)
+        tip.author.update_reputation()
+        tip.author.update_user_permissions()
+    
+    if request.user.is_authenticated:
+        request.user.update_reputation()
+        request.user.update_user_permissions()
     
     context = {
-        'user_name': current_user,
+        'user_name': current_user.username if request.user.is_authenticated else current_user,
+        'user_reputation': current_user.reputation if request.user.is_authenticated else None,
         'tips': tips,
         'form': form,
         'session_time_remaining': time_remaining,
         'is_authenticated': request.user.is_authenticated,
-        # 'user': request.user,
+        'user': request.user if request.user.is_authenticated else None,
     }
     
     return render(request, 'ex/index.html', context)
@@ -374,21 +390,60 @@ echo "✅ FORMS file created in $app_forms_file."
 # Create models in the models.py file of the app
 cat << 'EOL' > "$app_models_file"
 from django.db import models
-from django.contrib.auth.models import User
+from django.contrib.auth.models import AbstractUser, Permission, Group
 from django.utils import timezone
+from django.contrib.contenttypes.models import ContentType
 
+
+class CustomUser(AbstractUser):
+    reputation = models.IntegerField(default=0)
+
+    def update_reputation(self):
+        upvotes = sum(tip.upvote.count() for tip in self.tip_set.all())
+        downvotes = sum(tip.downvote.count() for tip in self.tip_set.all())
+        self.reputation = upvotes * 5 - downvotes * 2
+        self.save()
+
+    def can_downvote(self):
+        return self.reputation >= 15 or self.has_perm('ex.can_downvote')
+
+    def can_delete(self):
+        return self.reputation >= 30 or self.has_perm('ex.can_delete')
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        self.update_user_permissions()
+
+    def update_user_permissions(self):
+        content_type = ContentType.objects.get_for_model(Tip)
+        can_downvote = Permission.objects.get(
+            codename='can_downvote',
+            content_type=content_type,
+        )
+        can_delete = Permission.objects.get(
+            codename='can_delete',
+            content_type=content_type,
+        )
+        
+        if self.reputation >= 15:
+            self.user_permissions.add(can_downvote)
+        else:
+            self.user_permissions.remove(can_downvote)
+        
+        if self.reputation >= 30:
+            self.user_permissions.add(can_delete)
+        else:
+            self.user_permissions.remove(can_delete)
 
 class Upvote(models.Model):
-    voted_user = models.CharField(max_length=150)
-
+    voted_user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
 
 class Downvote(models.Model):
-    voted_user = models.CharField(max_length=150)
-
+    voted_user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
 
 class Tip(models.Model):
     content = models.TextField()
-    author = models.CharField(max_length=150)
+    author = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     date = models.DateTimeField(default=timezone.now)
     upvote = models.ManyToManyField(Upvote)
     downvote = models.ManyToManyField(Downvote)
@@ -399,62 +454,61 @@ class Tip(models.Model):
             ("can_downvote", "Can downvote tips from other users"),
         ]
 
-    def upvoteForUser(self, username):
-        votes = self.upvote.all()
-        found = False
-        for index in votes:
-            if index.voted_user == username:
-                found = True
-                index.delete()
-                break
-        if not found:
-            newvote = Upvote(voted_user=username)
-            newvote.save()
-            self.upvote.add(newvote)
+    def upvoteForUser(self, user):
+        if not self.upvote.filter(voted_user=user).exists():
+            new_upvote = Upvote(voted_user=user)
+            new_upvote.save()
+            self.upvote.add(new_upvote)
+            self.downvote.filter(voted_user=user).delete()
+            self.author.update_reputation()
 
-            downvotes = self.downvote.all()
-            for index in downvotes:
-                if index.voted_user == username:
-                    index.delete()
-                    break
-            self.save()
+    def downvoteForUser(self, user):
+        if not self.downvote.filter(voted_user=user).exists():
+            new_downvote = Downvote(voted_user=user)
+            new_downvote.save()
+            self.downvote.add(new_downvote)
+            self.upvote.filter(voted_user=user).delete()
+            self.author.update_reputation()
 
-    def downvoteForUser(self, username):
-        votes = self.downvote.all()
-        found = False
-        for index in votes:
-            if index.voted_user == username:
-                found = True
-                index.delete()
-                break
-        if not found:
-            newvote = Downvote(voted_user=username)
-            newvote.save()
-            self.downvote.add(newvote)
+    def remove_votes(self):
+        self.upvote.all().delete()
+        self.downvote.all().delete()
+        self.author.update_reputation()
 
-            upvotes = self.upvote.all()
-            for index in upvotes:
-                if index.voted_user == username:
-                    index.delete()
-                    break
-            self.save()
+    def user_has_upvoted(self, user):
+        return self.upvote.filter(voted_user=user).exists()
+
+    def user_has_downvoted(self, user):
+        return self.downvote.filter(voted_user=user).exists()
 
     def __str__(self):
-        return str(self.date.strftime('%Y-%m-%d %H:%M:%S')) + ' ' + self.content + ' by ' + self.author \
-               + ' upvotes : ' + str(len(self.upvote.all())) \
-               + ' downvotes : ' + str(len(self.downvote.all()))
-
-    def get_author(self):
-        return self.author
-
-    def user_has_upvoted(self, username):
-        return self.upvote.filter(voted_user=username).exists()
-
-    def user_has_downvoted(self, username):
-        return self.downvote.filter(voted_user=username).exists()
+        return f"{self.date.strftime('%Y-%m-%d %H:%M:%S')} {self.content} by {self.author.username} (rep: {self.author.reputation})"
 
 EOL
 echo "✅ MODELS created in $app_models_file."
+
+
+# Add AUTH_USER_MODEL to the settings.py file of the project.
+cat << 'EOL' >> "$settings_file"
+AUTH_USER_MODEL = 'ex.CustomUser'  
+
+EOL
+echo "✅ AUTH USER MODEL created in $settings_file."
+
+
+# Create the admin.py file to the app.
+cat << 'EOL' >> "$app_admin_file"
+from django.contrib import admin
+from django.contrib.auth.admin import UserAdmin
+from .models import CustomUser, Tip, Upvote, Downvote
+
+admin.site.register(CustomUser, UserAdmin)
+admin.site.register(Tip)
+admin.site.register(Upvote)
+admin.site.register(Downvote)
+
+EOL
+echo "✅ ADMIN file created in $app_admin_file."
 
 
 # Create a URL pattern in the urls.py file of the project.
@@ -485,8 +539,7 @@ touch "$management_dir/__init__.py"
 
 cat << 'EOL' > "$management_dir/populate_db.py"
 from django.core.management.base import BaseCommand
-from django.contrib.auth.models import User
-from ex.models import Tip
+from ex.models import CustomUser, Tip
 from django.utils import timezone
 import random
 
@@ -498,7 +551,7 @@ class Command(BaseCommand):
         password = 'pwd'  
 
         for username in usernames:
-            user, created = User.objects.get_or_create(username=username)
+            user, created = CustomUser.objects.get_or_create(username=username)
             if created:
                 user.set_password(password)
                 user.save()
@@ -519,8 +572,8 @@ class Command(BaseCommand):
             "Take regular breaks to avoid burnout."
         ]
 
-        for i in range(5):
-            author = random.choice(usernames)
+        for i in range(10):
+            author = CustomUser.objects.get(username=random.choice(usernames))
             content = tips[i]
             date = timezone.now() - timezone.timedelta(days=random.randint(0, 30))
             
@@ -531,12 +584,12 @@ class Command(BaseCommand):
             )
             
             for _ in range(random.randint(0, 5)):
-                tip.upvoteForUser(random.choice(usernames))
+                tip.upvoteForUser(random.choice(CustomUser.objects.all()))
             
             for _ in range(random.randint(0, 3)):
-                tip.downvoteForUser(random.choice(usernames))
+                tip.downvoteForUser(random.choice(CustomUser.objects.all()))
 
-            self.stdout.write(self.style.SUCCESS(f'Successfully created tip: "{content}" by {author}'))
+            self.stdout.write(self.style.SUCCESS(f'Successfully created tip: "{content}" by {author.username}'))
 
         self.stdout.write(self.style.SUCCESS('Database population completed successfully.'))
 
