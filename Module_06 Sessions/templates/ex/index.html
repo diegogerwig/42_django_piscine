@@ -7,7 +7,7 @@
 {% block content %}
 <style>
     .tip-separator {
-        border-top: 1px solid #808080;  /* Gris medio */
+        border-top: 1px solid #808080;
     }
 </style>
 
@@ -51,14 +51,20 @@
                                         Upvote ({{ tip.upvote.count }})
                                     </button>
                                 </form>
-                                <form method="post" class="d-inline">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="tipid" value="{{ tip.id }}">
-                                    <button type="submit" name="downvote" class="btn btn-sm {% if tip.user_downvoted %}btn-warning{% else %}btn-outline-warning{% endif %}">
-                                        Downvote ({{ tip.downvote.count }})
-                                    </button>
-                                </form>
-                                {% if tip.author == user_name or perms.ex.deletetip %}
+                                {% if perms.ex.can_downvote or tip.author == user.username %}
+                                    <form method="post" class="d-inline">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="tipid" value="{{ tip.id }}">
+                                        <button type="submit" name="downvote" class="btn btn-sm {% if tip.user_downvoted %}btn-warning{% else %}btn-outline-warning{% endif %}">
+                                            Downvote ({{ tip.downvote.count }})
+                                        </button>
+                                    </form>
+                                {% else %}
+                                    <span class="btn btn-sm btn-outline-secondary disabled">
+                                        Downvotes: {{ tip.downvote.count }}
+                                    </span>
+                                {% endif %}
+                                {% if tip.author == user.username or perms.ex.can_delete_others_tips %}
                                     <form method="post" class="d-inline float-end">
                                         {% csrf_token %}
                                         <input type="hidden" name="tipid" value="{{ tip.id }}">

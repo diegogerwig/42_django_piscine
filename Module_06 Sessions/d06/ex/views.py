@@ -41,7 +41,8 @@ def home(request):
             tip.upvoteForUser(request.user.username)
         elif 'downvote' in request.POST:
             tip = get_object_or_404(Tip, id=request.POST['tipid'])
-            tip.downvoteForUser(request.user.username)
+            if request.user.has_perm('ex.can_downvote') or tip.author == request.user.username:
+                tip.downvoteForUser(request.user.username)
         else:
             form = TipForm(request.POST)
             if form.is_valid():

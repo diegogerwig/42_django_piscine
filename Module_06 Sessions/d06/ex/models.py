@@ -18,6 +18,11 @@ class Tip(models.Model):
     upvote = models.ManyToManyField(Upvote)
     downvote = models.ManyToManyField(Downvote)
 
+    class Meta:
+        permissions = [
+            ("can_downvote", "Can downvote tips"),
+        ]
+
     def upvoteForUser(self, username):
         votes = self.upvote.all()
         found = False

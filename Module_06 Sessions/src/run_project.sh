@@ -16,6 +16,11 @@ python manage.py migrate
 echo "✅ Changes migrated."
 
 
+# Populate the database
+python manage.py populate_db
+echo "✅ Database populated."
+
+
 # Run the server
 echo "✅ Running server..."
 python manage.py runserver
