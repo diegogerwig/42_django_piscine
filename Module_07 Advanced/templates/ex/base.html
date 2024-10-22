@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}My Site{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { 
+            padding-top: 60px; 
+            background-color: #333333;
+            color: #ffffff;
+        }
+        .container { 
+            max-width: 800px; 
+        }
+        .card {
+            background-color: #444444;
+            color: #ffffff;
+        }
+        .navbar {
+            background-color: #222222 !important;
+        }
+        .navbar-dark .navbar-nav .nav-link {
+            color: #ffffff;
+        }
+        .navbar-dark .navbar-nav .nav-link:hover {
+            color: #17a2b8 !important;
+            text-shadow: 0 0 5px #17a2b8;
+        }
+        .navbar-dark .navbar-brand {
+            color: #ffffff;
+        }
+        #session-timer {
+            color: #ffc107;
+        }
+        .user-highlight {
+            color: #ff6b6b;  
+            font-weight: bold;
+            text-shadow: 0 0 5px rgba(255, 107, 107, 0.5);
+        }
+    </style>
+</head>
+<body>
+    {% include 'ex/nav.html' %}
+    
+    <div class="container mt-4">
+        <h2 class="text-white">{% block headline %}{% endblock %}</h2>
+        {% block content %}{% endblock %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function updateSessionTimerAndUser() {
+            const timerElement = document.getElementById('session-timer');
+            const usernameElement = document.getElementById('username-display');
+            const isAuthenticated = {{ is_authenticated|yesno:"true,false" }};
+            
+            function updateTimer() {
+                const now = Math.floor(Date.now() / 1000);
+                let secondsLeft = 42 - (now % 42);
+                
+                if (timerElement) {
+                    timerElement.textContent = `Session: ${secondsLeft} sec`;
+                }
+                
+                if (secondsLeft === 42 && !isAuthenticated) {
+                    fetch('/')
+                        .then(response => response.text())
+                        .then(html => {
+                            const parser = new DOMParser();
+                            const doc = parser.parseFromString(html, 'text/html');
+                            const newUsername = doc.getElementById('username-display').textContent;
+                            if (usernameElement && newUsername !== usernameElement.textContent) {
+                                usernameElement.textContent = newUsername;
+                            }
+                        });
+                }
+                
+                setTimeout(updateTimer, 1000);
+            }
+            
+            updateTimer();
+        }
+
+        document.addEventListener('DOMContentLoaded', updateSessionTimerAndUser);
+    </script>
+</body>
+</html>

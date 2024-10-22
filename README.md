@@ -29,10 +29,7 @@ Summary: Today, we’ll tackle the ORM of Django.
 Summary: Or how a simple Django project can turn you into a black belt in permission and user management!
 
 ## Module 07 ADVANCED
-
-
+Summary: Today, we will discover some of Django’s advanced functionalities.
 
 ## Module 08 FINAL
-
-
 
