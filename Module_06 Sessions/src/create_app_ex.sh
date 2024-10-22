@@ -195,18 +195,26 @@ from .utils import update_user_reputation, toggle_vote
 
 User = get_user_model()
 
+# views.py
+
 def get_current_user(request):
     if request.user.is_authenticated:
         return request.user
+    
     start_time = timezone.now().timestamp()
     cycle_duration = 42  # segundos
     user_names = settings.USER_NAMES
     current_cycle = int(start_time / cycle_duration) % len(user_names)
     return user_names[current_cycle]
 
+def get_session_time_remaining(request):
+    if request.user.is_authenticated:
+        return None
+    return 42 - (int(timezone.now().timestamp()) % 42)
+
 def home(request):
     current_user = get_current_user(request)
-    time_remaining = 42 - (int(timezone.now().timestamp()) % 42)
+    time_remaining = get_session_time_remaining(request)
     
     tips = Tip.objects.select_related('author').prefetch_related(
         'upvote', 'downvote',
@@ -228,7 +236,6 @@ def home(request):
             vote_type = request.POST['vote']
             if vote_type in ['upvote', 'downvote']:
                 if vote_type == 'downvote' and not (request.user.can_downvote() or tip.author == request.user):
-                    # Handle the case where user doesn't have permission to downvote
                     pass
                 else:
                     toggle_vote(tip, request.user, vote_type)
@@ -257,10 +264,12 @@ def home(request):
         'user_reputation': current_user.reputation if request.user.is_authenticated else None,
         'tips': tips,
         'form': form,
-        'session_time_remaining': time_remaining,
         'is_authenticated': request.user.is_authenticated,
         'user': request.user if request.user.is_authenticated else None,
     }
+    
+    if not request.user.is_authenticated:
+        context['session_time_remaining'] = time_remaining
     
     return render(request, 'ex/index.html', context)
 
@@ -277,12 +286,18 @@ def login(request):
                 return redirect('home')
     else:
         form = LoginForm()
-    return render(request, 'ex/auth_form.html', {
+    
+    context = {
         'user_name': get_current_user(request),
         'form': form,
         'is_authenticated': request.user.is_authenticated,
-        'session_time_remaining': 42 - (int(timezone.now().timestamp()) % 42)
-    })
+    }
+    
+    time_remaining = get_session_time_remaining(request)
+    if time_remaining is not None:
+        context['session_time_remaining'] = time_remaining
+        
+    return render(request, 'ex/auth_form.html', context)
 
 def signup(request):
     if request.user.is_authenticated:
@@ -293,17 +308,22 @@ def signup(request):
             data = form.cleaned_data
             user = User.objects.create_user(username=data['username'], password=data['password'])
             user.save()
-            login(request, user)
+            auth.login(request, user)
             return redirect('home')
     else:
         form = SignupForm()
-    return render(request, 'ex/auth_form.html', {
+    
+    context = {
         'user_name': get_current_user(request),
         'form': form,
         'is_authenticated': request.user.is_authenticated,
-        'session_time_remaining': 42 - (int(timezone.now().timestamp()) % 42)
-    })
-
+    }
+    
+    time_remaining = get_session_time_remaining(request)
+    if time_remaining is not None:
+        context['session_time_remaining'] = time_remaining
+        
+    return render(request, 'ex/auth_form.html', context)
 
 def logout(request):
     auth.logout(request)
@@ -354,7 +374,6 @@ class SignupForm(forms.Form):
         
         if password and verif_password and password != verif_password:
             self.add_error('password', "The password must be identical in the 2 password fields")
-            self.add_error('verif_password', "The password must be identical in the 2 password fields")
         
         return cleaned_data
 
@@ -489,7 +508,7 @@ def toggle_vote(tip, user, vote_type):
     if vote_type not in ['upvote', 'downvote']:
         raise ValueError("vote_type must be either 'upvote' or 'downvote'")
     
-    if vote_type == 'downvote' and not user.can_downvote():
+    if vote_type == 'downvote' and not (user.can_downvote() or tip.author == user):
         return False
     
     opposite_type = 'downvote' if vote_type == 'upvote' else 'upvote'

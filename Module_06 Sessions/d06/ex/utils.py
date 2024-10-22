@@ -15,7 +15,7 @@ def toggle_vote(tip, user, vote_type):
     if vote_type not in ['upvote', 'downvote']:
         raise ValueError("vote_type must be either 'upvote' or 'downvote'")
     
-    if vote_type == 'downvote' and not user.can_downvote():
+    if vote_type == 'downvote' and not (user.can_downvote() or tip.author == user):
         return False
     
     opposite_type = 'downvote' if vote_type == 'upvote' else 'upvote'

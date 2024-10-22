@@ -21,7 +21,6 @@ class SignupForm(forms.Form):
         
         if password and verif_password and password != verif_password:
             self.add_error('password', "The password must be identical in the 2 password fields")
-            self.add_error('verif_password', "The password must be identical in the 2 password fields")
         
         return cleaned_data
 
