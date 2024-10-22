@@ -4,13 +4,19 @@ def update_user_reputation(user):
     upvotes = user.tip_set.aggregate(total_upvotes=Count('upvote'))['total_upvotes']
     downvotes = user.tip_set.aggregate(total_downvotes=Count('downvote'))['total_downvotes']
     user.reputation = upvotes * 5 - downvotes * 2
+    
+    # Actualizar permisos basados en reputación
     user.can_downvote_by_reputation = user.reputation >= 15
     user.can_delete_by_reputation = user.reputation >= 30
+    
     user.save(update_fields=['reputation', 'can_downvote_by_reputation', 'can_delete_by_reputation'])
 
 def toggle_vote(tip, user, vote_type):
     if vote_type not in ['upvote', 'downvote']:
         raise ValueError("vote_type must be either 'upvote' or 'downvote'")
+    
+    if vote_type == 'downvote' and not user.can_downvote():
+        return False
     
     opposite_type = 'downvote' if vote_type == 'upvote' else 'upvote'
     vote_manager = getattr(tip, vote_type)
@@ -23,4 +29,5 @@ def toggle_vote(tip, user, vote_type):
         vote_manager.add(user)
     
     update_user_reputation(tip.author)
+    return True
 

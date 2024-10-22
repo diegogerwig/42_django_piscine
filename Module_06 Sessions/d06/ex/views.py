@@ -15,7 +15,7 @@ from django.views.decorators.http import require_POST
 from django.db.models import Prefetch
 from .utils import update_user_reputation, toggle_vote
 
-CustomUser = get_user_model()
+User = get_user_model()
 
 def get_current_user(request):
     if request.user.is_authenticated:
@@ -32,7 +32,7 @@ def home(request):
     
     tips = Tip.objects.select_related('author').prefetch_related(
         'upvote', 'downvote',
-        Prefetch('author', queryset=CustomUser.objects.all())
+        Prefetch('author', queryset=User.objects.all())
     ).order_by('-date')
     
     form = TipForm()
@@ -105,9 +105,6 @@ def login(request):
         'is_authenticated': request.user.is_authenticated,
         'session_time_remaining': 42 - (int(timezone.now().timestamp()) % 42)
     })
-
-
-User = get_user_model()
 
 def signup(request):
     if request.user.is_authenticated:

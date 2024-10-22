@@ -5,7 +5,7 @@ from ex.utils import toggle_vote
 from django.utils import timezone
 import random
 
-CustomUser = get_user_model()
+User = get_user_model()
 
 class Command(BaseCommand):
     help = 'Populates the database with 10 tips from 3 different users'
@@ -15,7 +15,7 @@ class Command(BaseCommand):
         password = 'pwd'  
 
         for username in usernames:
-            user, created = CustomUser.objects.get_or_create(username=username)
+            user, created = User.objects.get_or_create(username=username)
             if created:
                 user.set_password(password)
                 user.save()
@@ -37,7 +37,7 @@ class Command(BaseCommand):
         ]
 
         for i in range(10):
-            author = CustomUser.objects.get(username=random.choice(usernames))
+            author = User.objects.get(username=random.choice(usernames))
             content = tips[i]
             
             tip = Tip.objects.create(
@@ -47,7 +47,7 @@ class Command(BaseCommand):
             
             # Simulating upvotes and downvotes
             for _ in range(random.randint(0, 5)):
-                voter = random.choice(CustomUser.objects.all())
+                voter = random.choice(User.objects.all())
                 toggle_vote(tip, voter, random.choice(['upvote', 'downvote']))
 
             self.stdout.write(self.style.SUCCESS(f'Successfully created tip: "{content}" by {author.username}'))

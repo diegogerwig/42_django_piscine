@@ -98,7 +98,6 @@ echo "✅ Database configuration updated in $settings_file."
 
 # Add BOOTSTRAP5 settings to the settings.py file of the project.
 cat << 'EOL' >> "$settings_file"
-
 BOOTSTRAP5 = {
     # The complete URL to the Bootstrap CSS file
     "css_url": {
@@ -194,7 +193,7 @@ from django.views.decorators.http import require_POST
 from django.db.models import Prefetch
 from .utils import update_user_reputation, toggle_vote
 
-CustomUser = get_user_model()
+User = get_user_model()
 
 def get_current_user(request):
     if request.user.is_authenticated:
@@ -211,7 +210,7 @@ def home(request):
     
     tips = Tip.objects.select_related('author').prefetch_related(
         'upvote', 'downvote',
-        Prefetch('author', queryset=CustomUser.objects.all())
+        Prefetch('author', queryset=User.objects.all())
     ).order_by('-date')
     
     form = TipForm()
@@ -284,9 +283,6 @@ def login(request):
         'is_authenticated': request.user.is_authenticated,
         'session_time_remaining': 42 - (int(timezone.now().timestamp()) % 42)
     })
-
-
-User = get_user_model()
 
 def signup(request):
     if request.user.is_authenticated:
@@ -395,29 +391,37 @@ cat << 'EOL' > "$app_models_file"
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 
-class CustomUser(AbstractUser):
+class User(AbstractUser):
     reputation = models.IntegerField(default=0)
     can_downvote_by_reputation = models.BooleanField(default=False)
     can_delete_by_reputation = models.BooleanField(default=False)
+    manual_can_downvote = models.BooleanField(default=False, verbose_name="Can Downvote (Manual)")
+    manual_can_delete = models.BooleanField(default=False, verbose_name="Can Delete (Manual)")
 
     class Meta:
         permissions = [
             ("can_downvote", "Can downvote tips from other users"),
             ("can_delete", "Can delete tips from other users"),
         ]
+        verbose_name = 'User'
+        verbose_name_plural = 'Users'
 
     def can_downvote(self):
-        return self.has_perm('ex.can_downvote') or self.can_downvote_by_reputation
+        return (self.has_perm('ex.can_downvote') or 
+                self.can_downvote_by_reputation or 
+                self.manual_can_downvote)
 
     def can_delete(self):
-        return self.has_perm('ex.can_delete') or self.can_delete_by_reputation
+        return (self.has_perm('ex.can_delete') or 
+                self.can_delete_by_reputation or 
+                self.manual_can_delete)
 
 class Tip(models.Model):
     content = models.TextField()
-    author = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    author = models.ForeignKey(User, on_delete=models.CASCADE)
     date = models.DateTimeField(auto_now_add=True)
-    upvote = models.ManyToManyField(CustomUser, related_name='upvoted_tips')
-    downvote = models.ManyToManyField(CustomUser, related_name='downvoted_tips')
+    upvote = models.ManyToManyField(User, related_name='upvoted_tips')
+    downvote = models.ManyToManyField(User, related_name='downvoted_tips')
 
     def __str__(self):
         return f"{self.date.strftime('%Y-%m-%d %H:%M:%S')} {self.content} by {self.author.username}"
@@ -428,7 +432,7 @@ echo "✅ MODELS created in $app_models_file."
 
 # Add AUTH_USER_MODEL to the settings.py file of the project.
 cat << 'EOL' >> "$settings_file"
-AUTH_USER_MODEL = 'ex.CustomUser'  
+AUTH_USER_MODEL = 'ex.User'  
 
 EOL
 echo "✅ AUTH USER MODEL created in $settings_file."
@@ -438,19 +442,28 @@ echo "✅ AUTH USER MODEL created in $settings_file."
 cat << 'EOL' >> "$app_admin_file"
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import CustomUser, Tip
+from .models import User, Tip
 
-class CustomUserAdmin(UserAdmin):
+class UserAdmin(UserAdmin):
     fieldsets = UserAdmin.fieldsets + (
-        ('Custom Fields', {'fields': ('reputation', 'can_downvote_by_reputation', 'can_delete_by_reputation')}),
+        ('Custom Fields', {'fields': (
+            'reputation', 
+            'can_downvote_by_reputation', 
+            'can_delete_by_reputation',
+            'manual_can_downvote',
+            'manual_can_delete'
+        )}),
     )
     readonly_fields = ('reputation', 'can_downvote_by_reputation', 'can_delete_by_reputation')
+    list_display = ('username', 'email', 'reputation', 'can_downvote_by_reputation', 
+                   'can_delete_by_reputation', 'manual_can_downvote', 'manual_can_delete')
 
     def save_model(self, request, obj, form, change):
         super().save_model(request, obj, form, change)
-        obj.update_reputation_permissions()
+        from .utils import update_user_reputation
+        update_user_reputation(obj)
 
-admin.site.register(CustomUser, CustomUserAdmin)
+admin.site.register(User, UserAdmin)
 admin.site.register(Tip)
 
 EOL
@@ -465,13 +478,19 @@ def update_user_reputation(user):
     upvotes = user.tip_set.aggregate(total_upvotes=Count('upvote'))['total_upvotes']
     downvotes = user.tip_set.aggregate(total_downvotes=Count('downvote'))['total_downvotes']
     user.reputation = upvotes * 5 - downvotes * 2
+    
+    # Actualizar permisos basados en reputación
     user.can_downvote_by_reputation = user.reputation >= 15
     user.can_delete_by_reputation = user.reputation >= 30
+    
     user.save(update_fields=['reputation', 'can_downvote_by_reputation', 'can_delete_by_reputation'])
 
 def toggle_vote(tip, user, vote_type):
     if vote_type not in ['upvote', 'downvote']:
         raise ValueError("vote_type must be either 'upvote' or 'downvote'")
+    
+    if vote_type == 'downvote' and not user.can_downvote():
+        return False
     
     opposite_type = 'downvote' if vote_type == 'upvote' else 'upvote'
     vote_manager = getattr(tip, vote_type)
@@ -484,6 +503,7 @@ def toggle_vote(tip, user, vote_type):
         vote_manager.add(user)
     
     update_user_reputation(tip.author)
+    return True
 
 EOL
 echo "✅ UTILS file created in $app_utils_file."
@@ -523,7 +543,7 @@ from ex.utils import toggle_vote
 from django.utils import timezone
 import random
 
-CustomUser = get_user_model()
+User = get_user_model()
 
 class Command(BaseCommand):
     help = 'Populates the database with 10 tips from 3 different users'
@@ -533,7 +553,7 @@ class Command(BaseCommand):
         password = 'pwd'  
 
         for username in usernames:
-            user, created = CustomUser.objects.get_or_create(username=username)
+            user, created = User.objects.get_or_create(username=username)
             if created:
                 user.set_password(password)
                 user.save()
@@ -555,7 +575,7 @@ class Command(BaseCommand):
         ]
 
         for i in range(10):
-            author = CustomUser.objects.get(username=random.choice(usernames))
+            author = User.objects.get(username=random.choice(usernames))
             content = tips[i]
             
             tip = Tip.objects.create(
@@ -565,7 +585,7 @@ class Command(BaseCommand):
             
             # Simulating upvotes and downvotes
             for _ in range(random.randint(0, 5)):
-                voter = random.choice(CustomUser.objects.all())
+                voter = random.choice(User.objects.all())
                 toggle_vote(tip, voter, random.choice(['upvote', 'downvote']))
 
             self.stdout.write(self.style.SUCCESS(f'Successfully created tip: "{content}" by {author.username}'))

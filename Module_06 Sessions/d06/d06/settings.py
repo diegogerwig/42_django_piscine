@@ -29,7 +29,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-xan!mfvvk7y5ppz*7@8wq+%ve4)_wvqgxpv&*pg-__-lf(-91g'
+SECRET_KEY = 'django-insecure-69ejkz+$z0od3kcp4x=$3pg)tj9i(-p9db=^@45um^abhz32u+'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -136,7 +136,6 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
 BOOTSTRAP5 = {
     # The complete URL to the Bootstrap CSS file
     "css_url": {
@@ -206,5 +205,5 @@ USER_NAMES = [
     'visitor_10',  
 ]
 
-AUTH_USER_MODEL = 'ex.CustomUser'  
+AUTH_USER_MODEL = 'ex.User'  
 
