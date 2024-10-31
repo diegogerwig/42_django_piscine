@@ -247,9 +247,9 @@ if [ -d "$templates_source_dir" ]; then
             done
         fi
     done
-    echo "✅ All templates copied successfully to $templates_dir_app/"
+    echo "⭐ TEMPLATES copied successfully to $templates_dir_app/"
 else
-    echo "❗ Templates source directory not found: $templates_source_dir"
+    echo "❗ TEMPLATES source directory not found: $templates_source_dir"
 fi
 
 
@@ -259,6 +259,7 @@ cat << 'EOL' >> "$app_admin_file"
 
 EOL
 echo "✅ ADMIN file created in $app_admin_file."
+
 
 
 # Create the utils.py file to the app.
@@ -272,12 +273,11 @@ echo "✅ UTILS file created in $app_utils_file."
 # Create a management command to populate the database
 mkdir -p "$management_dir"
 touch "$management_dir/__init__.py"
-
 cat << 'EOL' > "$management_dir/populate_db.py"
-
 
 EOL
 echo "✅ MANAGEMENT COMMAND created to populate the database."
+
 
 
 echo -e "\n**********************\n"
