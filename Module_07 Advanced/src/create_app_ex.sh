@@ -19,15 +19,8 @@ models_dir_app="$app_name/models"
 models_source_dir="../models"
 # app_models_file="$app_name/models.py"
 
-templates_dir_app="$app_name/templates/$app_name"
+templates_dir_app="$app_name/templates"
 templates_source_dir="../templates"
-# templates_files="
-#     ../templates/base.html
-#     ../templates/nav.html
-#     ../templates/index.html
-#     ../templates/articles.html
-#     ../templates/login.html
-# "
 
 app_admin_file="$app_name/admin.py"
 app_utils_file="$app_name/utils.py"
@@ -52,16 +45,16 @@ echo "✅ <$app_name> added to INSTALLED_APPS."
 
 
 
-# Add 'localhost' to the ALLOWED_HOSTS list in the settings.py file of the project.
-sed -i "s/ALLOWED_HOSTS = \[.*\]/ALLOWED_HOSTS = ['localhost']/" "$settings_file"
-echo "✅ <localhost> added to ALLOWED_HOSTS."
+# Add 'localhost' & '127.0.0.1' to the ALLOWED_HOSTS list in the settings.py file of the project.
+sed -i "s/ALLOWED_HOSTS = \[.*\]/ALLOWED_HOSTS = ['localhost', '127.0.0.1']/" "$settings_file"
+echo "✅ <localhost> and <127.0.0.1> added to ALLOWED_HOSTS."
 
 
 
 # Create a URL pattern in the urls.py file of the project.
 sed -i "1i\\from django.urls.conf import include" "$project_urls_file"
 
-NEW_URL="path('/', include('$app_name.urls')),"
+NEW_URL="path('', include('$app_name.urls')),"
 sed -i "/urlpatterns = \[/,/]/ s|]|    $NEW_URL\n]|" "$project_urls_file"
 
 echo "✅ URL pattern created in $project_urls_file."
@@ -201,82 +194,99 @@ echo "✅ BOOTSTRAP CONFIG created in $settings_file."
 
 
 
-# Create a view in the views.py file of the app.
-cat << 'EOL' >> "$views_file"
+# Function to copy files from source to destination directory
+copy_directory_contents() {
+    local source_dir=$1
+    local dest_dir=$2
+    local dir_type=$3
+    local had_errors=false
 
-EOL
-echo "✅ VIEWS created in $views_file."
-
-
-
-# Create the forms.py file to the app.
-cat << 'EOL' >> "$app_forms_file"
-
-EOL
-echo "✅ FORMS file created in $app_forms_file."
-
-
-
-# Create models in the models.py file of the app
-cat << 'EOL' > "$app_models_file"
-
-EOL
-echo "✅ MODELS created in $app_models_file."
-
-
-
-# Create the templates directory and copy all template files with detailed listing
-mkdir -p "$templates_dir_app"
-if [ -d "$templates_source_dir" ]; then
-    echo "📁 Copying templates from $templates_source_dir:"
-    for file in "$templates_source_dir"/*; do
-        if [ -f "$file" ]; then
-            filename=$(basename "$file")
-            cp "$file" "$templates_dir_app/"
-            echo "   ✅ Copied: $filename"
-        elif [ -d "$file" ]; then
-            dirname=$(basename "$file")
-            cp -r "$file" "$templates_dir_app/"
-            echo "   📂 Copied directory: $dirname"
-            # List files in subdirectory
-            for subfile in "$file"/*; do
-                if [ -f "$subfile" ]; then
-                    subfilename=$(basename "$subfile")
-                    echo "      📄 Copied: $dirname/$subfilename"
+    mkdir -p "$dest_dir"
+    
+    if [ -d "$source_dir" ]; then
+        echo -e "\n📁 Copying $dir_type files from $source_dir:"
+        
+        for file in "$source_dir"/*; do
+            if [ -f "$file" ]; then
+                filename=$(basename "$file")
+                if cp "$file" "$dest_dir/"; then
+                    echo "   ✅ Copied: $filename"
+                else
+                    echo "   ❌ Failed to copy: $filename"
+                    had_errors=true
                 fi
-            done
+            elif [ -d "$file" ]; then
+                dirname=$(basename "$file")
+                if cp -r "$file" "$dest_dir/"; then
+                    echo "   📂 Copied directory: $dirname"
+                    for subfile in "$file"/*; do
+                        if [ -f "$subfile" ]; then
+                            subfilename=$(basename "$subfile")
+                            if [ -f "$dest_dir/$dirname/$subfilename" ]; then
+                                echo "      📄 Copied: $dirname/$subfilename"
+                            else
+                                echo "      ❌ Failed to copy: $dirname/$subfilename"
+                                had_errors=true
+                            fi
+                        fi
+                    done
+                else
+                    echo "   ❌ Failed to copy directory: $dirname"
+                    had_errors=true
+                fi
+            fi
+        done
+        
+        if [ "$had_errors" = true ]; then
+            echo "❌ Some $dir_type files failed to copy"
+            return 1
+        else
+            echo "⭐ $dir_type copied successfully to $dest_dir/"
+            return 0
         fi
-    done
-    echo "⭐ TEMPLATES copied successfully to $templates_dir_app/"
-else
-    echo "❗ TEMPLATES source directory not found: $templates_source_dir"
-fi
+    else
+        echo "❗ $dir_type source directory not found: $source_dir"
+        return 1
+    fi
+}
+
+# Copy VIEWS
+copy_directory_contents "$views_source_dir" "$views_dir_app" "VIEWS"
+
+# Copy FORMS
+copy_directory_contents "$forms_source_dir" "$forms_dir_app" "FORMS"
+
+# Copy MODELS
+copy_directory_contents "$models_source_dir" "$models_dir_app" "MODELS"
+
+# Copy TEMPLATES
+copy_directory_contents "$templates_source_dir" "$templates_dir_app" "TEMPLATES"
 
 
 
-# Create the admin.py file to the app.
-cat << 'EOL' >> "$app_admin_file"
+# # Create the admin.py file to the app.
+# cat << 'EOL' >> "$app_admin_file"
 
-EOL
-echo "✅ ADMIN file created in $app_admin_file."
-
-
-
-# Create the utils.py file to the app.
-cat << 'EOL' >> "$app_utils_file"
-
-EOL
-echo "✅ UTILS file created in $app_utils_file."
+# EOL
+# echo "✅ ADMIN file created in $app_admin_file."
 
 
 
-# Create a management command to populate the database
-mkdir -p "$management_dir"
-touch "$management_dir/__init__.py"
-cat << 'EOL' > "$management_dir/populate_db.py"
+# # Create the utils.py file to the app.
+# cat << 'EOL' >> "$app_utils_file"
 
-EOL
-echo "✅ MANAGEMENT COMMAND created to populate the database."
+# EOL
+# echo "✅ UTILS file created in $app_utils_file."
+
+
+
+# # Create a MANAGEMENT COMMAND to populate the database
+# mkdir -p "$management_dir"
+# touch "$management_dir/__init__.py"
+# cat << 'EOL' > "$management_dir/populate_db.py"
+
+# EOL
+# echo "✅ MANAGEMENT COMMAND created to populate the database."
 
 
 

@@ -1,11 +1,13 @@
 {% extends 'base.html' %}
 {% load django_bootstrap5 %}
-{% block title %}{{ user.username }}'s Publications | {% endblock title %}
+{% block title %}Django: Articles{% endblock title %}
 {% block content %}
-<h1>{{ user.username }}'s Publications</h1>
-{% include 'nav.html' %}
-
 <div>
+    <h1 id="articles" style="display: inline-block">Articles</h1>
+    <h3 id="share-your-writings" style="display: inline-block; margin-left: 10px; color: rgb(125, 125, 125)">Share your writings</h3>
+
+    {% include 'nav.html' %}
+
     <div class="table-responsive">
         <table class="table">
             <thead>
@@ -35,4 +37,4 @@
         </table>
     </div>
 </div>
-{% endblock content %}
+{% endblock %}

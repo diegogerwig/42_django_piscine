@@ -1,16 +1,17 @@
 {% extends 'base.html' %}
-{% load bootstrap3 %}
+{% load django_bootstrap5 %}
 
-{% block title %}Register | {% endblock %}
+{% block title %}💫 django: User Register{% endblock %}
 
 {% block content %}
-<div>
-  <h1>Register</h1>
-  {% include 'nav.html' %}
-  <form action="{% url 'register' %}" method="post" class="form">
-    {% csrf_token %}
-    {% bootstrap_form form %}
-    {% buttons submit='OK' reset="Cancel" %}{% endbuttons %}
-  </form>
+<div class="row justify-content-center">
+	<div class="col-md-6">
+		<h2 class="text-light mb-4">User register</h2>
+		<form method="post" novalidate>
+			{% csrf_token %}
+			{% bootstrap_form form %}
+			{% bootstrap_button "Sign up" button_type="submit" button_class="btn-primary" %}
+		</form>
+	</div>
 </div>
 {% endblock content %}
