@@ -8,7 +8,6 @@ paths_to_remove=(
     "./d07"
 )
 
-
 # Clean specified paths
 for path in "${paths_to_remove[@]}"; do
     expanded_path=$(eval echo $path)
@@ -20,4 +19,4 @@ for path in "${paths_to_remove[@]}"; do
     fi
 done
 
-echo -e '🧹 Cleaning complete!\n'
+echo -e '💫 Cleaning complete!\n'
