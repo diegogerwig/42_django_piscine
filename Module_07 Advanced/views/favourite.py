@@ -3,13 +3,13 @@ from django.forms.forms import BaseForm
 from django.db import DatabaseError
 from django.shortcuts import redirect
 from django.views.generic.list import ListView
-from ex.models.article import Article, UserFavouriteArticle
 from django.contrib.auth.mixins import LoginRequiredMixin
-from ex.forms.favourite import FavouriteForm
 from django.contrib import messages
 from django.contrib.auth.forms import AuthenticationForm
 from django.views.generic import FormView
 from django.urls import reverse_lazy
+from ex.models.article import Article, UserFavouriteArticle
+from ex.forms.favourite import FavouriteForm
 
 
 class Favourite(LoginRequiredMixin, ListView, FormView):
