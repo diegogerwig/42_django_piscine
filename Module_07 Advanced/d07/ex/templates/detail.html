@@ -1,6 +1,8 @@
 {% extends 'base.html' %}
 {% load django_bootstrap5 %}
-{% block title %}{{ object.title }} | {% endblock title %}
+
+{% block title %}💫 django: Detail {{ object.title }}{% endblock title %}
+
 {% block content %}
 <h1>Detail</h1>
 {% include 'nav.html' %}

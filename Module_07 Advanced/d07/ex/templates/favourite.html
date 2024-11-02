@@ -1,16 +1,20 @@
 {% extends 'base.html' %}
 {% load django_bootstrap5 %}
-{% block title %}Favourite | {% endblock title %}
+
+{% block title %}💫 django: Favourites{% endblock title %}
+
 {% block content %}
 <div>
-    <h1 id="favourite" style="display: inline-block">Favourite</h1>
+    <h1 id="favourite" style="display: inline-block">Favourites</h1>
+
     {% include 'nav.html' %}
 
     <div class="table-responsive">
         <table class="table">
             <thead>
                 <tr>
-                    <th>Title</th>
+                    <th>TITLE</th>
+                    <th>🔍</th>
                 </tr>
             </thead>
             <tbody>
@@ -21,6 +25,9 @@
                             {{ favourite.article.title }}-{{ favourite.article.author }}
                         </a>
                     </td>
+                    <td>
+						<a href="{% url 'articles_detail' article.id %}" class="btn btn-info">DETAIL</a>
+					</td>
                 </tr>
                 {% endfor %}
             </tbody>

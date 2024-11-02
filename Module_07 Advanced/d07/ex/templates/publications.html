@@ -1,6 +1,8 @@
 {% extends 'base.html' %}
 {% load django_bootstrap5 %}
+
 {% block title %}{{ user.username }}'s Publications | {% endblock title %}
+
 {% block content %}
 <h1>{{ user.username }}'s Publications</h1>
 {% include 'nav.html' %}
@@ -10,24 +12,24 @@
         <table class="table">
             <thead>
                 <tr>
-                    <th>title</th>
-                    <th>synopsis</th>
-                    <th>author</th>
-                    <th>created</th>
-                    <th>when</th>
-                    <th></th>
+					<th>TITLE</th>
+					<th>AUTHOR</th>
+					<th>SYNOPSIS</th>
+					<th>CREATED</th>
+					<th>⏳</th>
+					<th>🔍</th>
                 </tr>
             </thead>
             <tbody>
                 {% for article in object_list %}
                 <tr>
-                    <td>{{ article.title|truncatechars:20 }}</td>
-                    <td>{{ article.synopsis|truncatechars:20 }}</td>
+                    <td>{{ article.title|truncatechars:50 }}</td>
                     <td>{{ article.author }}</td>
-                    <td>{{ article.created }}</td>
+                    <td>{{ article.synopsis|truncatechars:100 }}</td>
+					<td>{{ article.created|date:"d-M-Y H:i"|upper }}</td>
                     <td>{{ article.created|timesince}}</td>
                     <td>
-                        <a href="{% url 'articles_detail' article.id %}" class="btn btn-info">Read</a>
+                        <a href="{% url 'articles_detail' article.id %}" class="btn btn-info">DETAIL</a>
                     </td>
                 </tr>
                 {% endfor %}

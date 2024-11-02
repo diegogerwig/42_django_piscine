@@ -6,7 +6,6 @@
 {% block content %}
 <div>
 	<h1 id="articles" style="display: inline-block">Articles</h1>
-	<h3 id="share-your-writings" style="display: inline-block; margin-left: 10px; color: rgb(125, 125, 125)">Share your writings</h3>
 
 	{% include 'nav.html' %}
 
@@ -14,24 +13,24 @@
 		<table class="table">
 			<thead>
 				<tr>
-					<th>title</th>
-					<th>synopsis</th>
-					<th>author</th>
-					<th>created</th>
-					<th>when</th>
-					<th></th>
+					<th>TITLE</th>
+					<th>AUTHOR</th>
+					<th>SYNOPSIS</th>
+					<th>CREATED</th>
+					<th>⏳</th>
+					<th>🔍</th>
 				</tr>
 			</thead>
 			<tbody>
 				{% for article in object_list %}
 				<tr>
-					<td>{{ article.title|truncatechars:20 }}</td>
-					<td>{{ article.synopsis|truncatechars:20 }}</td>
+					<td>{{ article.title|truncatechars:50 }}</td>
 					<td>{{ article.author }}</td>
-					<td>{{ article.created }}</td>
+					<td>{{ article.synopsis|truncatechars:100 }}</td>
+					<td>{{ article.created|date:"d-M-Y H:i"|upper }}</td>
 					<td>{{ article.created|timesince}}</td>
 					<td>
-						<a href="{% url 'articles_detail' article.id %}" class="btn btn-info">Read</a>
+						<a href="{% url 'articles_detail' article.id %}" class="btn btn-info fs-6">DETAIL</a>
 					</td>
 				</tr>
 				{% endfor %}

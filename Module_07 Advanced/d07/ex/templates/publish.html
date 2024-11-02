@@ -1,15 +1,19 @@
 {% extends 'base.html' %}
 {% load django_bootstrap5 %}
-{% block title %}Publish | {% endblock %}
+
+{% block title %}💫 django: Publish{% endblock %}
+
 {% block content %}
 <div>
     <h1>Publish</h1>
+
     {% include 'nav.html' %}
+
     <form method="post">
         {% csrf_token %}
         {% bootstrap_form form %}
-        {% bootstrap_button "OK" button_type="submit" %}
-        {% bootstrap_button "Cancel" button_type="reset" %}
+        {% bootstrap_button "PUBLISH" button_type="submit" button_class="btn btn-success px-4 fw-bold me-2" %}
+        {% bootstrap_button "CANCEL" button_type="reset" button_class="btn btn-danger px-4 fw-bold" %}
     </form>
 </div>
 {% endblock content %}

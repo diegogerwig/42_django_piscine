@@ -12,35 +12,32 @@
                 <a class="navbar-brand" href="{% url 'index' %}">
                     <span class="visually-hidden">(current)</span>
                 </a>
-                
-                {% if last_article %}
-                <a class="nav-link text-light" href="{% url 'articles_detail' last_article.id %}">Last Articles</a>
-                {% endif %}
-                
+                               
                 {% if user.is_authenticated %}
-                <a class="nav-link text-light" href="{% url 'favourite' %}">Favourites</a>
-                <a class="nav-link text-light" href="{% url 'publish' %}">Publish</a>
-                <a class="nav-link text-light" href="{% url 'publications' %}">Publications</a>
-                {% else %}
-                <a class="nav-link text-light" href="{% url 'register' %}">Sign Up</a>
+                <a class="btn btn-primary px-4 me-2" href="{% url 'articles' %}">Articles</a>
+                <a class="btn btn-primary px-4 me-2" href="{% url 'favourite' %}">Favourites</a>
+                <a class="btn btn-primary px-4 me-2" href="{% url 'publish' %}">Publish</a>
+                <a class="btn btn-primary px-4 me-2" href="{% url 'publications' %}">Publications</a>
                 {% endif %}
             </div>
 
             <div class="ms-auto">
                 {% if user.is_authenticated %}
-                <span class="nav-link text-light me-3 d-inline-block">
-                    User Connect ->  {{request.user.username}}
+                <span class="badge bg-light text-dark px-3 py-2 me-3 fs-6">
+                    LOGGED AS:  <span class="fw-bold text-primary">{{request.user.username}}</span>
                 </span>
-                <a class="nav-link text-light d-inline-block" href="{% url 'logout' %}">
-                    Log OUT
-                    <span class="visually-hidden">logout</span>
+                <a class="btn btn-danger px-4 fw-bold" href="{% url 'logout' %}">
+                    LOG OUT
                 </a>
                 {% else %}
                 <form class="d-flex align-items-center" method="post" action="{% url 'login' %}">
                     {% csrf_token %}
-                    <div class="d-flex gap-2">
+                    <div class="d-flex align-items-center">
                         {% bootstrap_form login_form %}
-                        {% bootstrap_button "Log IN" button_type="submit" button_class="btn-outline-light" %}
+                        <div class="ms-4">
+                            {% bootstrap_button "LOG IN" button_type="submit" button_class="btn btn-success px-4 fw-bold me-3" %}
+                            <a href="{% url 'register' %}" class="btn btn-warning px-4 fw-bold">SIGN UP</a>
+                        </div>
                     </div>
                 </form>
                 {% endif %}
