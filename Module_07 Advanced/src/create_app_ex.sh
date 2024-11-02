@@ -9,15 +9,12 @@ app_urls_file="$app_name/urls.py"
 
 views_dir_app="$app_name/views"
 views_source_dir="../views"
-# views_file="$app_name/views.py"
 
 forms_dir_app="$app_name/forms"
 forms_source_dir="../forms"
-# app_forms_file="$app_name/forms.py"
 
 models_dir_app="$app_name/models"
 models_source_dir="../models"
-# app_models_file="$app_name/models.py"
 
 templates_dir_app="$app_name/templates"
 templates_source_dir="../templates"
