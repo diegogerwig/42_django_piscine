@@ -13,22 +13,23 @@ class Login(FormView):
     form_class = LoginForm
     success_url = reverse_lazy('index')
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['request'] = self.request  # AuthenticationForm necesita el request
+        return kwargs
+
     def get(self, request: HttpRequest, *args: str, **kwargs: Any) -> HttpResponse:
         if self.request.user.is_authenticated:
-            messages.error(self.request, 'You already logined!')
+            messages.error(self.request, 'You already logged in!')
             return redirect('index')
         return super().get(request, *args, **kwargs)
 
     def form_valid(self, form: LoginForm):
-        username = form.cleaned_data.get('username')
-        password = form.cleaned_data.get('password')
-        user = authenticate(self.request, username=username, password=password)
-        if user is None:
-            messages.error(self.request, "Invalid username or password.")
-            return
+        user = form.get_user()  # AuthenticationForm proporciona get_user()
         login(self.request, user)
-        messages.info(self.request, f"You are now logged in as {username}.")
+        messages.info(self.request, f"You are now logged in as {user.username}.")
         return super().form_valid(form)
 
     def form_invalid(self, form):
+        messages.error(self.request, "Invalid username or password.")
         return super().form_invalid(form)

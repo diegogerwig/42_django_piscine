@@ -1,37 +1,46 @@
 {% extends 'base.html' %}
 {% load django_bootstrap5 %}
 
-{% block title %}💫 django: Favourites{% endblock title %}
+{% block title %}💫 django: {{ user.username }}'s Favourites {% endblock title %}
 
 {% block content %}
 <div>
-    <h1 id="favourite" style="display: inline-block">Favourites</h1>
-
+    <h1>Favourites</h1>
     {% include 'nav.html' %}
 
-    <div class="table-responsive">
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>TITLE</th>
-                    <th>🔍</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for favourite in object_list %}
-                <tr>
-                    <td>
-                        <a href="{% url 'articles_detail' favourite.article.id %}">
-                            {{ favourite.article.title }}-{{ favourite.article.author }}
-                        </a>
-                    </td>
-                    <td>
-						<a href="{% url 'articles_detail' article.id %}" class="btn btn-info">DETAIL</a>
-					</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    <div>
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>TITLE</th>
+                        <th>SYNOPSIS</th>
+                        <th>AUTHOR</th>
+                        <th>CREATED</th>
+                        <th>⏳</th>
+                        <th>🔍</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for favourite in object_list %}
+                    <tr>
+                        <td>{{ favourite.article.title|truncatechars:20 }}</td>
+                        <td>{{ favourite.article.synopsis|truncatechars:100 }}</td>
+                        <td>{{ favourite.article.author }}</td>
+                        <td>{{ favourite.article.created|date:"d-M-Y H:i"|upper }}</td>
+                        <td>{{ favourite.article.created|timesince}}</td>
+                        <td>
+                            <a href="{% url 'articles_detail' favourite.article.id %}" class="btn btn-secondary btn-sm text-white small">DETAIL</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center">No favourites yet</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
-{% endblock %}
+{% endblock content %}

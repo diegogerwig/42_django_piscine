@@ -1,36 +1,53 @@
+{# detail.html #}
 {% extends 'base.html' %}
 {% load django_bootstrap5 %}
 
-{% block title %}💫 django: Detail {{ object.title }}{% endblock title %}
+{% block title %}💫 django: Detail >> {{ object.title }}{% endblock title %}
 
 {% block content %}
-<h1>Detail</h1>
-{% include 'nav.html' %}
-
 <div>
-    <h1>{{ object.title }}</h1>
-    <div style="display: flex; justify-content: space-between">
-        <div>
-            <h3 id="object.author" style="display: inline-flex; color: rgb(125, 125, 125)">{{ object.author }}</h3>
-            <h5 id="object.created" style="display: inline-flex">- {{ object.created }}</h5>
+    <h1>Detail</h1>
+    
+    {% include 'nav.html' %}
+
+    <div>
+        <h2 class="text-uppercase fw-bold mb-3">{{ object.title }}</h2>
+        <div class="d-flex justify-content-between align-items-start">
+            <div>
+                <h4 id="object.author" class="text-secondary mb-0">Author: {{ object.author }}</h4>
+                <h4 id="object.created" class="text-secondary">Created: {{ object.created|date:"d-M-Y H:i"|upper }}</h4>
+            </div>
+
+            {% if user.is_authenticated %}
+            <form method="post">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline-warning btn-lg" data-bs-toggle="tooltip" 
+                        data-bs-title="{% if is_favourite %}Remove from{% else %}Add to{% endif %} favourites">
+                    <span class="fs-4">{% if is_favourite %}⭐{% else %}☆{% endif %}</span>
+                </button>
+            </form>
+            {% endif %}
         </div>
 
-        {% if user.is_authenticated %}
-        <form method="post">
-            {% csrf_token %}
-            {% bootstrap_form favouriteForm %}
-            {% bootstrap_button "🔖" button_type="submit" %}
-        </form>
-        {% endif %}
-    </div>
+        <hr>
 
-    <hr>
-
-    <div class="lead">
-        <blockquote>{{ object.synopsis }}</blockquote>
-        <div>
-            {{ object.content }}
+        <div class="lead">
+            <h5 class="text-uppercase fw-bold mb-3">SYNOPSIS</h5>
+            <blockquote>{{ object.synopsis }}</blockquote>
+            <h5 class="text-uppercase fw-bold mb-3">CONTENT</h5>
+            <div>
+                {{ object.content }}
+            </div>
         </div>
     </div>
 </div>
+{% endblock content %}
+
+{% block extra_js %}
+{% if user.is_authenticated %}
+<script>
+    const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
+    const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
+</script>
+{% endif %}
 {% endblock %}

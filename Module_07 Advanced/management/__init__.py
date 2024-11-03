@@ -1,1 +1,1 @@
-from populate_db import *
+from .populate_db import *

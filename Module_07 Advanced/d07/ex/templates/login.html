@@ -1,15 +1,69 @@
 {% extends 'base.html' %}
 {% load django_bootstrap5 %}
-{% block title %}💫 django: LogIN{% endblock %}
+
 {% block content %}
-<div>
-    <h1>Login</h1>
-    {% include 'nav.html' %}
-    <form method="post">
-        {% csrf_token %}
-        {% bootstrap_form form %}
-        {% bootstrap_button "OK" button_type="submit" %}
-        {% bootstrap_button "Cancel" button_type="reset" %}
-    </form>
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="text-light mb-4">Login</h2>
+                </div>
+                <div class="card-body">
+                    <form method="post" id="loginForm">
+                        {% csrf_token %}
+                        {% bootstrap_form form %}
+                        <div class="d-flex gap-2">
+                            {% bootstrap_button "LOG IN" button_type="submit" button_class="btn btn-success px-4 fw-bold" %}
+                            <button type="button" class="btn btn-warning px-4 fw-bold" onclick="clearForm()">CLEAR</button>
+                            <a href="{% url 'articles' %}" class="btn btn-danger px-4 fw-bold">CANCEL</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
-{% endblock content %}
+
+<script>
+function clearForm() {
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    
+    const form = document.getElementById('loginForm');
+    
+    form.querySelectorAll('input').forEach(input => {
+        if (input.type !== 'hidden') {  
+            input.value = '';
+        }
+    });
+
+    const usernameInput = form.querySelector('input[name="username"]');
+    if (usernameInput) {
+        usernameInput.value = '';
+    }
+
+    const passwordInput = form.querySelector('input[name="password"]');
+    if (passwordInput) {
+        passwordInput.value = '';
+    }
+    
+    document.querySelector('[name=csrfmiddlewaretoken]').value = csrfToken;
+    
+    form.querySelectorAll('.form-control').forEach(input => {
+        input.classList.remove('is-valid', 'is-invalid');
+    });
+    
+    form.querySelectorAll('.invalid-feedback').forEach(feedback => {
+        feedback.remove();
+    });
+    
+    document.querySelectorAll('.alert').forEach(alert => {
+        alert.remove();
+    });
+
+    form.querySelectorAll('.help-text, .error-text').forEach(text => {
+        text.textContent = '';
+    });
+}
+</script>
+{% endblock %}

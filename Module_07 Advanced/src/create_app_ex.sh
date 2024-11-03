@@ -19,7 +19,7 @@ models_source_dir="../models"
 templates_dir_app="$app_name/templates"
 templates_source_dir="../templates"
 
-management_dir="$app_name/management"
+management_dir_app="$app_name/management/commands"
 management_source_dir="../management"
 # management_dir="$app_name/management/commands"
 
@@ -62,24 +62,68 @@ echo "✅ URL pattern created in $project_urls_file."
 
 # Create a URL pattern in the urls.py file of the app.
 cat << 'EOL' >> "$app_urls_file"
-from ex.views.favourite import Favourite
 from django.urls import path
-from . import views
+from django.views.generic import RedirectView
+from .views import Login, Logout, Register, ArticlesView, Detail, Publish, Publications, Favourite
 
 urlpatterns = [
-    path('', views.Home.as_view(), name='index'),
-    path('login/', views.Login.as_view(), name='login'),
-    path('logout/', views.Logout.as_view(), name='logout'),
-    path('register/', views.Register.as_view(), name='register'),
-    path('articles/', views.ArticlesView.as_view(), name='articles'),
-    path('articles/<slug:pk>/', views.Detail.as_view(), name='articles_detail'),
-    path('publish/', views.Publish.as_view(), name='publish'),
-    path('publications/', views.Publications.as_view(), name='publications'),
-    path('favourite/', views.Favourite.as_view(), name='favourite')
+    path('', RedirectView.as_view(url='articles/', permanent=False), name='index'),
+    path('articles/', ArticlesView.as_view(), name='articles'),
+    path('login/', Login.as_view(), name='login'),
+    path('logout/', Logout.as_view(), name='logout'),
+    path('register/', Register.as_view(), name='register'),
+    path('articles/<slug:pk>/', Detail.as_view(), name='articles_detail'),
+    path('publish/', Publish.as_view(), name='publish'),
+    path('publications/', Publications.as_view(), name='publications'),
+    path('favourite/', Favourite.as_view(), name='favourite')
 ]
 
 EOL
 echo "✅ URL pattern created in $app_urls_file."
+
+
+
+# Create a middleware file in the app.
+middleware_file="$app_name/middleware.py"
+cat << 'EOL' > "$middleware_file"
+from django.shortcuts import redirect
+from django.urls import resolve, Resolver404
+from django.contrib.auth.forms import AuthenticationForm
+
+class LoginFormMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        if not request.user.is_authenticated:
+            request.login_form = AuthenticationForm()
+        response = self.get_response(request)
+        return response
+
+class RedirectToArticlesMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        try:
+            # No redirigir si es una petición POST
+            if request.method == 'POST':
+                return self.get_response(request)
+            
+            resolve(request.path)
+            response = self.get_response(request)
+            return response
+        except Resolver404:
+            return redirect('articles')
+EOL
+echo "✅ Middleware file created with both middlewares in $middleware_file"
+
+
+
+# Add the middlewares to the MIDDLEWARE list in the settings.py file of the project.
+sed -i "/MIDDLEWARE = \[/a\    '$app_name.middleware.RedirectToArticlesMiddleware'," "$settings_file"
+sed -i "/django.contrib.auth.middleware.AuthenticationMiddleware/a\    '$app_name.middleware.LoginFormMiddleware'," "$settings_file"
+echo "✅ Middlewares added to MIDDLEWARE in settings.py"
 
 
 
@@ -136,56 +180,23 @@ echo "✅ Database configuration updated in $settings_file."
 # Add BOOTSTRAP5 settings to the settings.py file of the project.
 cat << 'EOL' >> "$settings_file"
 BOOTSTRAP5 = {
-    # The complete URL to the Bootstrap CSS file
     "css_url": {
         "url": "https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css",
         "integrity": "sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN",
         "crossorigin": "anonymous",
     },
-
-    # The complete URL to the Bootstrap JavaScript file
     "javascript_url": {
         "url": "https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js",
         "integrity": "sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL",
         "crossorigin": "anonymous",
     },
-
-    # The URL to the Popper JavaScript file (Bootstrap 5 uses Popper for dropdowns, tooltips, and popovers)
-    # Note: Bootstrap 5 bundles Popper with its JavaScript, so this might not be necessary
-    "popper_url": None,
-
-    # Put JavaScript in the HEAD section of the HTML document (only relevant if you use bootstrap5.html)
     "javascript_in_head": False,
-
-    # Label class to use in horizontal forms
     "horizontal_label_class": "col-sm-3",
-
-    # Field class to use in horizontal forms
     "horizontal_field_class": "col-sm-9",
-
-    # Set placeholder attributes to label if no placeholder is provided
     "set_placeholder": True,
-
-    # Class to indicate required (better to set this in your Django form)
     "required_css_class": "",
-
-    # Class to indicate error (better to set this in your Django form)
     "error_css_class": "is-invalid",
-
-    # Class to indicate success, meaning the field has valid input (better to set this in your Django form)
-    "success_css_class": "is-valid",
-
-    # Renderers (only set these if you have studied the source and understand the inner workings)
-    "formset_renderers":{
-        "default": "django_bootstrap5.renderers.FormsetRenderer",
-    },
-    "form_renderers": {
-        "default": "django_bootstrap5.renderers.FormRenderer",
-    },
-    "field_renderers": {
-        "default": "django_bootstrap5.renderers.FieldRenderer",
-        "inline": "django_bootstrap5.renderers.InlineFieldRenderer",
-    },
+    "success_css_class": "",  
 }
 
 EOL
@@ -262,7 +273,8 @@ copy_directory_contents "$models_source_dir" "$models_dir_app" "MODELS"
 copy_directory_contents "$templates_source_dir" "$templates_dir_app" "TEMPLATES"
 
 # Copy MANAGEMENT
-copy_directory_contents "$templates_source_dir" "$templates_dir_app" "MANAGEMENT COMMANDS"
+copy_directory_contents "$management_source_dir" "$management_dir_app" "MANAGEMENT COMMANDS"
+
 
 
 # # Create the admin.py file to the app.
@@ -278,114 +290,6 @@ copy_directory_contents "$templates_source_dir" "$templates_dir_app" "MANAGEMENT
 
 # EOL
 # echo "✅ UTILS file created in $app_utils_file."
-
-
-
-# # Create a MANAGEMENT COMMAND to populate the database
-# mkdir -p "$management_dir"
-# touch "$management_dir/__init__.py"
-# cat << 'EOL' > "$management_dir/populate_db.py"
-# from django.core.management.base import BaseCommand
-# from django.contrib.auth.models import User
-# from ex.models import Article 
-# from django.utils import timezone
-
-# class Command(BaseCommand):
-#     help = 'Populate database with sample data'
-
-#     def handle(self, *args, **kwargs):
-#         # Limpiar la base de datos
-#         self.stdout.write('Cleaning database...')
-#         Article.objects.all().delete()
-#         User.objects.all().delete()
-
-#         # Crear usuarios
-#         self.stdout.write('Creating users...')
-#         users = []
-#         user_data = [
-#             {
-#                 'username': 'writer1',
-#                 'password': 'urduliz42'
-#             },
-#             {
-#                 'username': 'writer2',
-#                 'password': 'urduliz42'
-#             },
-#             {
-#                 'username': 'writer3',
-#                 'password': 'urduliz42'
-#             }
-#         ]
-
-#         for data in user_data:
-#             user = User.objects.create_user(
-#                 username=data['username'],
-#                 password=data['password']
-#             )
-#             users.append(user)
-#             self.stdout.write(f'Created user: {user.username}')
-
-#         # Crear artículos
-#         self.stdout.write('Creating articles...')
-#         articles_data = [
-#             {
-#                 'title': 'First Article: Introduction to Programming',
-#                 'author': users[0],
-#                 'synopsis': 'A beginner\'s guide to programming concepts and best practices',
-#                 'content': '''Lorem ipsum dolor sit amet, consectetur adipiscing elit. 
-#                           Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. 
-#                           Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris 
-#                           nisi ut aliquip ex ea commodo consequat.'''
-#             },
-#             {
-#                 'title': 'Web Development Trends 2024',
-#                 'author': users[0],
-#                 'synopsis': 'Exploring the latest trends in web development for 2024',
-#                 'content': '''Duis aute irure dolor in reprehenderit in voluptate velit 
-#                           esse cillum dolore eu fugiat nulla pariatur. Excepteur sint 
-#                           occaecat cupidatat non proident, sunt in culpa qui officia 
-#                           deserunt mollit anim id est laborum.'''
-#             },
-#             {
-#                 'title': 'Data Science Fundamentals',
-#                 'author': users[1],
-#                 'synopsis': 'Understanding the basics of data science and analytics',
-#                 'content': '''Sed ut perspiciatis unde omnis iste natus error sit voluptatem 
-#                           accusantium doloremque laudantium, totam rem aperiam, eaque ipsa 
-#                           quae ab illo inventore veritatis et quasi architecto beatae 
-#                           vitae dicta sunt explicabo.'''
-#             },
-#             {
-#                 'title': 'Artificial Intelligence in 2024',
-#                 'author': users[2],
-#                 'synopsis': 'How AI is transforming industries and our daily lives',
-#                 'content': '''Nemo enim ipsam voluptatem quia voluptas sit aspernatur 
-#                           aut odit aut fugit, sed quia consequuntur magni dolores eos 
-#                           qui ratione voluptatem sequi nesciunt.'''
-#             },
-#             {
-#                 'title': 'Cybersecurity Best Practices',
-#                 'author': users[2],
-#                 'synopsis': 'Essential security practices for modern applications',
-#                 'content': '''At vero eos et accusamus et iusto odio dignissimos ducimus 
-#                           qui blanditiis praesentium voluptatum deleniti atque corrupti 
-#                           quos dolores et quas molestias excepturi sint occaecati 
-#                           cupiditate non provident.'''
-#             }
-#         ]
-
-#         for data in articles_data:
-#             article = Article.objects.create(
-#                 title=data['title'],
-#                 author=data['author'],
-#                 synopsis=data['synopsis'],
-#                 content=data['content']
-#             )
-#             self.stdout.write(f'Created article: {article.title}')
-
-#         self.stdout.write(self.style.SUCCESS('Successfully populated database'))
-# EOL
-# echo "✅ MANAGEMENT COMMAND created to populate the database."
 
 
 

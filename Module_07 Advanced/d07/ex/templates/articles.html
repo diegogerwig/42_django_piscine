@@ -24,13 +24,13 @@
 			<tbody>
 				{% for article in object_list %}
 				<tr>
-					<td>{{ article.title|truncatechars:50 }}</td>
+					<td>{{ article.title|truncatechars:20 }}</td>
 					<td>{{ article.author }}</td>
 					<td>{{ article.synopsis|truncatechars:100 }}</td>
 					<td>{{ article.created|date:"d-M-Y H:i"|upper }}</td>
 					<td>{{ article.created|timesince}}</td>
 					<td>
-						<a href="{% url 'articles_detail' article.id %}" class="btn btn-info fs-6">DETAIL</a>
+						<a href="{% url 'articles_detail' article.id %}" class="btn btn-secondary btn-sm text-white small">DETAIL</a>
 					</td>
 				</tr>
 				{% endfor %}

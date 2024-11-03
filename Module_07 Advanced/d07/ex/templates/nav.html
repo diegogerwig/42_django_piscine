@@ -3,6 +3,11 @@
 
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm mb-4">
     <div class="container-fluid">
+        <!-- Logo Home con icono Bootstrap -->
+        <a class="navbar-brand me-3" href="{% url 'articles' %}">
+            <i class="bi bi-house" style="font-size: 1.5rem; color: white;"></i>
+        </a>
+        
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent" aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
@@ -12,34 +17,34 @@
                 <a class="navbar-brand" href="{% url 'index' %}">
                     <span class="visually-hidden">(current)</span>
                 </a>
-                               
+
                 {% if user.is_authenticated %}
-                <a class="btn btn-primary px-4 me-2" href="{% url 'articles' %}">Articles</a>
-                <a class="btn btn-primary px-4 me-2" href="{% url 'favourite' %}">Favourites</a>
-                <a class="btn btn-primary px-4 me-2" href="{% url 'publish' %}">Publish</a>
-                <a class="btn btn-primary px-4 me-2" href="{% url 'publications' %}">Publications</a>
+                    <a class="btn btn-primary px-4 me-2" href="{% url 'articles' %}">Articles</a>
+                    <a class="btn btn-primary px-4 me-2" href="{% url 'publications' %}">Publications</a>
+                    <a class="btn btn-primary px-4 me-2" href="{% url 'favourite' %}">Favourites</a>
+                    <a class="btn btn-primary px-4 me-2" href="{% url 'publish' %}">Publish</a>
                 {% endif %}
             </div>
 
             <div class="ms-auto">
                 {% if user.is_authenticated %}
-                <span class="badge bg-light text-dark px-3 py-2 me-3 fs-6">
-                    LOGGED AS:  <span class="fw-bold text-primary">{{request.user.username}}</span>
-                </span>
-                <a class="btn btn-danger px-4 fw-bold" href="{% url 'logout' %}">
-                    LOG OUT
-                </a>
+                    <span class="badge bg-dark text-white px-3 py-2 me-3 fs-6 border border-secondary">
+                        LOGGED AS: <span class="fw-bold fs-5" style="color: #00f7ff; text-shadow: 0 0 5px #00f7ff;">{{ request.user.username }}</span>
+                    </span>
+                    <a class="btn btn-danger px-4 fw-bold" href="{% url 'logout' %}">
+                        LOG OUT
+                    </a>
                 {% else %}
-                <form class="d-flex align-items-center" method="post" action="{% url 'login' %}">
-                    {% csrf_token %}
-                    <div class="d-flex align-items-center">
-                        {% bootstrap_form login_form %}
-                        <div class="ms-4">
-                            {% bootstrap_button "LOG IN" button_type="submit" button_class="btn btn-success px-4 fw-bold me-3" %}
-                            <a href="{% url 'register' %}" class="btn btn-warning px-4 fw-bold">SIGN UP</a>
+                    <form class="d-flex align-items-center" method="post" action="{% url 'login' %}">
+                        {% csrf_token %}
+                        <div class="d-flex align-items-center">
+                            {% bootstrap_form login_form %}
+                            <div class="ms-4">
+                                {% bootstrap_button "LOG IN" button_type="submit" button_class="btn btn-success px-4 fw-bold me-3" %}
+                                <a href="{% url 'register' %}" class="btn btn-warning px-4 fw-bold">SIGN UP</a>
+                            </div>
                         </div>
-                    </div>
-                </form>
+                    </form>
                 {% endif %}
             </div>
         </div>

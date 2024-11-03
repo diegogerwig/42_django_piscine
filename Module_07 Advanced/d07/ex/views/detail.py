@@ -1,48 +1,47 @@
-# from typing import Any, Dict
-# from django.http import Http404
-# from django.views.generic import DetailView
-# from django.contrib.auth.mixins import LoginRequiredMixin
-# from ex.forms import FavouriteForm
-# from ex.models.article import Article
-
-# class Detail(DetailView):
-#     template_name = "detail.html"
-#     model = Article
-#     context_object_name = 'article'  
-
-#     def get_object(self, queryset=None):
-#         try:
-#             return Article.objects.select_related('author').get(pk=self.kwargs['pk'])
-#         except Article.DoesNotExist:
-#             raise Http404("Article does not exist")
-
-#     def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
-#         context = super().get_context_data(**kwargs)
-#         article = context['article']  
-#         context['favouriteForm'] = FavouriteForm(initial={'article': article.id})
-#         return context
-
-
-
-from typing import Any, Dict
 from django.views.generic import DetailView
-from django.contrib.auth.mixins import LoginRequiredMixin
-from ex.forms import FavouriteForm
-from ex.models.article import Article
+from django.contrib import messages
+from django.shortcuts import redirect
+from django.db import DatabaseError
+from ex.models.article import Article, UserFavouriteArticle
 
 class Detail(DetailView):
-    template_name = "detail.html"
     model = Article
-    context_object_name = 'article'
-
-    def get_queryset(self):
-        return Article.objects.select_related('author')
-
-    def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
+    template_name = 'detail.html'
+    
+    def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        article = context['article']
-        context.update({
-            'favouriteForm': FavouriteForm(article=article),
-            'is_favourite': hasattr(article, 'is_favourite') and article.is_favourite(self.request.user) if self.request.user.is_authenticated else False,
-        })
+        if self.request.user.is_authenticated:
+            context['is_favourite'] = UserFavouriteArticle.objects.filter(
+                article=self.object,
+                user=self.request.user
+            ).exists()
+        # Añadir el formulario de login del request al contexto
+        if hasattr(self.request, 'login_form'):
+            context['login_form'] = self.request.login_form
         return context
+
+    def post(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            messages.error(request, "You must be logged in to manage favorites.")
+            return redirect('login')
+
+        self.object = self.get_object()
+            
+        try:
+            favourite = UserFavouriteArticle.objects.get(
+                article=self.object,
+                user=request.user
+            )
+            favourite.delete()
+            messages.success(request, "Successfully removed from favourites.")
+        except UserFavouriteArticle.DoesNotExist:
+            try:
+                UserFavouriteArticle.objects.create(
+                    user=request.user,
+                    article=self.object
+                )
+                messages.success(request, "Successfully added to favourites.")
+            except DatabaseError:
+                messages.error(request, "Database error occurred.")
+                
+        return redirect('articles_detail', pk=self.object.pk)

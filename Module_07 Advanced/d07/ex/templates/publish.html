@@ -9,11 +9,38 @@
 
     {% include 'nav.html' %}
 
-    <form method="post">
+    <form method="post" id="publishForm">
         {% csrf_token %}
         {% bootstrap_form form %}
-        {% bootstrap_button "PUBLISH" button_type="submit" button_class="btn btn-success px-4 fw-bold me-2" %}
-        {% bootstrap_button "CANCEL" button_type="reset" button_class="btn btn-danger px-4 fw-bold" %}
+        <div class="d-flex gap-2">
+            {% bootstrap_button "PUBLISH" button_type="submit" button_class="btn btn-success px-4 fw-bold" %}
+            <button type="button" class="btn btn-warning px-4 fw-bold" onclick="clearForm()">CLEAR</button>
+            <a href="{% url 'articles' %}" class="btn btn-danger px-4 fw-bold">CANCEL</a>
+        </div>
     </form>
 </div>
+
+<script>
+    function clearForm() {
+        document.getElementById('publishForm').reset();
+        
+        document.querySelectorAll('.form-control').forEach(input => {
+            input.classList.remove('is-valid', 'is-invalid');
+            
+            const feedbackDiv = input.nextElementSibling;
+            if (feedbackDiv && feedbackDiv.classList.contains('invalid-feedback')) {
+                feedbackDiv.textContent = '';
+            }
+        });
+
+        document.querySelectorAll('textarea').forEach(textarea => {
+            textarea.classList.remove('is-valid', 'is-invalid');
+            textarea.value = '';
+        });
+
+        document.querySelectorAll('.alert').forEach(alert => {
+            alert.remove();
+        });
+    }
+</script>
 {% endblock content %}
