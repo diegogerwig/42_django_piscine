@@ -528,15 +528,6 @@ EOL
 echo "✅ UTILS file created in $app_utils_file."
 
 
-# Create a URL pattern in the urls.py file of the project.
-sed -i "1i\\from django.urls.conf import include" "$project_urls_file"
-
-NEW_URL="path('', include('$app_name.urls')),"
-sed -i "/urlpatterns = \[/,/]/ s|]|    $NEW_URL\n]|" "$project_urls_file"
-
-echo "✅ URL pattern created in $project_urls_file."
-
-
 # Create the templates directory and files for the app.
 mkdir -p "$templates_dir_app"
 for template in $templates_files; do

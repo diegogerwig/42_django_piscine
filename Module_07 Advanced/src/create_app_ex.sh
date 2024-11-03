@@ -52,7 +52,8 @@ echo "✅ <localhost> and <127.0.0.1> added to ALLOWED_HOSTS."
 
 
 # Create a URL pattern in the urls.py file of the project.
-sed -i "1i\\from django.urls.conf import include" "$project_urls_file"
+sed -i '/from django.urls.conf import include/d' "$project_urls_file"
+sed -i 's/from django.urls import path/from django.urls import path, include/' "$project_urls_file"
 NEW_URL="path('', include('$app_name.urls')),"
 sed -i "/urlpatterns = \[/,/]/ s|]|    $NEW_URL\n]|" "$project_urls_file"
 echo "✅ URL pattern created in $project_urls_file."
