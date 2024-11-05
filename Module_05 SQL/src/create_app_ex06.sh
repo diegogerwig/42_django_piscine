@@ -332,7 +332,7 @@ def update(request: HttpRequest):
         return render(request, 'ex06/update.html', {'movies': movies, 'form': form})
     
     except Exception as e:
-        return HttpResponse(f"❗ An error occurred: {str(e)}")
+        return HttpResponse(f"❗ No data available")
     
     finally:
         if cursor:

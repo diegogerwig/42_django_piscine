@@ -71,18 +71,6 @@ def execute_db_operation(operation):
             conn.close()
 
 
-# def init(request: HttpRequest) -> HttpResponse:
-#     def create_tables(cur):
-#         try:
-#             execute_sql_commands(cur, SQL_COMMANDS)
-#             return "✅ OK >> Tables created."
-#         except Exception as e:
-#             return f"❌ Error creating tables: {str(e)}"
-
-#     result = execute_db_operation(create_tables)
-#     return HttpResponse(result if result else "❗ WARNING >> Error creating tables", status=200)
-
-
 def init(request: HttpRequest) -> HttpResponse:
     def create_tables(cur):
         try:
@@ -101,23 +89,6 @@ def init(request: HttpRequest) -> HttpResponse:
 
     result = execute_db_operation(create_tables)
     return HttpResponse(result, status=200)
-
-
-# def populate(request: HttpRequest) -> HttpResponse:
-#     def insert_data(cur):
-#         cols_planets = ('name', 'climate', 'diameter', 'orbital_period', 'population', 'rotation_period',
-#                         'surface_water', 'terrain')
-#         cols_people = ('name', 'birth_year', 'gender', 'eye_color', 'hair_color', 'height',
-#                        'mass', 'homeworld')
-        
-#         with open('ex08/resources/planets.csv', 'r') as file:
-#             cur.copy_from(file, 'ex08_planets', columns=cols_planets, null='NULL')
-#         with open('ex08/resources/people.csv', 'r') as file:
-#             cur.copy_from(file, 'ex08_people', columns=cols_people, null='NULL')
-#         return "✅ OK >> Data inserted successfully."
-
-#     result = execute_db_operation(insert_data)
-#     return HttpResponse(result if result else "❗ WARNING >> Error populating tables", status=200)
 
 
 def populate(request: HttpRequest) -> HttpResponse:
@@ -171,6 +142,7 @@ def populate(request: HttpRequest) -> HttpResponse:
     finally:
         if conn is not None:
             conn.close()
+
 
 def display(request: HttpRequest) -> HttpResponse:
     def fetch_data(cur) -> List[Tuple]:
