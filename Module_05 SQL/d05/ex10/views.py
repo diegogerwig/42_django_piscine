@@ -5,7 +5,7 @@ from django.shortcuts import render
 from django.http import JsonResponse
 from .forms import MovieSearchForm
 from .models import People, Movies, Planets
-from django.db.models import Q
+# from django.db.models import Q
 from datetime import date
 
 def date_handler(obj):
@@ -65,15 +65,15 @@ def perform_search(data):
     planet_diameter = data['planet_diameter']
     gender = data['character_gender']
 
-    query = Q(
+    people = People.objects.filter(
         homeworld__diameter__gt=planet_diameter,
         movies__release_date__range=[min_date, max_date]
     )
-
+    
     if gender:
-        query &= Q(gender=gender)
+        people = people.filter(gender=gender)
 
-    people = People.objects.filter(query).distinct()
+    people = people.distinct()
 
     results = []
     for person in people:

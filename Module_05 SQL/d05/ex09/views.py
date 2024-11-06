@@ -3,18 +3,10 @@ from django.shortcuts import render
 # Create your views here.
 from django.shortcuts import render
 from django.http import HttpResponse
-# from django.db.models import Q
 from .models import People, Planets
 
 def display(request):
     try:
-        # if People.objects.exists() and Planets.objects.exists():
-        #     windy_planets = Planets.objects.filter(
-        #         Q(climate__icontains='windy') | 
-        #         Q(climate__iregex=r'\bwindy\b') |
-        #         Q(climate__icontains='wind')
-        #     )
-
         if People.objects.exists() and Planets.objects.exists():
             windy_planets = Planets.objects.filter(climate__icontains='windy')
             

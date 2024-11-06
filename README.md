@@ -32,4 +32,4 @@ Summary: Or how a simple Django project can turn you into a black belt in permis
 Summary: Today, we will discover some of Django’s advanced functionalities.
 
 ## Module 08 FINAL
-
+Summary: Today, we’re gonna learn how to use AJAX and Websockets with Django.

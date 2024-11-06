@@ -1,6 +1,6 @@
 #!/bin/sh
 
-project_name="d07"
+project_name="d08"
 app_name="ex"
 
 settings_file="$project_name/settings.py"
@@ -21,6 +21,7 @@ templates_source_dir="../templates"
 
 management_dir_app="$app_name/management/commands"
 management_source_dir="../management"
+# management_dir="$app_name/management/commands"
 
 app_admin_file="$app_name/admin.py"
 app_utils_file="$app_name/utils.py"
@@ -62,20 +63,6 @@ echo "✅ URL pattern created in $project_urls_file."
 # Create a URL pattern in the urls.py file of the app.
 cat << 'EOL' >> "$app_urls_file"
 from django.urls import path
-from django.views.generic import RedirectView
-from .views import Login, Logout, Register, ArticlesView, Detail, Publish, Publications, Favourite
-
-urlpatterns = [
-    path('', RedirectView.as_view(url='articles/', permanent=False), name='index'),
-    path('articles/', ArticlesView.as_view(), name='articles'),
-    path('login/', Login.as_view(), name='login'),
-    path('logout/', Logout.as_view(), name='logout'),
-    path('register/', Register.as_view(), name='register'),
-    path('articles/<slug:pk>/', Detail.as_view(), name='articles_detail'),
-    path('publish/', Publish.as_view(), name='publish'),
-    path('publications/', Publications.as_view(), name='publications'),
-    path('favourite/', Favourite.as_view(), name='favourite')
-]
 
 EOL
 echo "✅ URL pattern created in $app_urls_file."
@@ -85,35 +72,7 @@ echo "✅ URL pattern created in $app_urls_file."
 # Create a middleware file in the app.
 middleware_file="$app_name/middleware.py"
 cat << 'EOL' > "$middleware_file"
-from django.shortcuts import redirect
-from django.urls import resolve, Resolver404
-from django.contrib.auth.forms import AuthenticationForm
 
-class LoginFormMiddleware:
-    def __init__(self, get_response):
-        self.get_response = get_response
-
-    def __call__(self, request):
-        if not request.user.is_authenticated:
-            request.login_form = AuthenticationForm()
-        response = self.get_response(request)
-        return response
-
-class RedirectToArticlesMiddleware:
-    def __init__(self, get_response):
-        self.get_response = get_response
-
-    def __call__(self, request):
-        try:
-            # No redirigir si es una petición POST
-            if request.method == 'POST':
-                return self.get_response(request)
-            
-            resolve(request.path)
-            response = self.get_response(request)
-            return response
-        except Resolver404:
-            return redirect('articles')
 EOL
 echo "✅ Middleware file created with both middlewares in $middleware_file"
 

@@ -7,21 +7,21 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #2c3e50;
+            background-color: #808080;
             margin: 0;
             padding: 20px;
             color: #ecf0f1;
         }
         .container {
-            max-width: 800px;
+            max-width: 1000px;
             margin: 0 auto;
-            background-color: #34495e;
+            background-color: #4a4a4a;
             padding: 20px;
             border-radius: 8px;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
         h1 {
-            color: #3498db;
+            color: #ffffff;
             text-align: center;
             margin-bottom: 30px;
         }
@@ -31,18 +31,23 @@
         }
         label {
             margin-bottom: 5px;
-            color: #bdc3c7;
+            color: #ffffff;
         }
         input, select {
             margin-bottom: 15px;
             padding: 10px;
-            border: 1px solid #7f8c8d;
+            border: 1px solid #666666;
             border-radius: 4px;
-            background-color: #ecf0f1;
-            color: #2c3e50;
+            background-color: #e0e0e0;
+            color: #333333;
         }
+        
+        input[type="date"] {
+            width: 250px;
+        }
+
         button {
-            background-color: #2ecc71;
+            background-color: #2ecc71;  /* Verde original */
             color: white;
             border: none;
             padding: 10px 20px;
@@ -52,46 +57,47 @@
             transition: background-color 0.3s;
             margin-top: 20px;
             align-self: center;
+            min-width: 120px;
         }
         button:hover {
-            background-color: #27ae60;
+            background-color: #27ae60;  /* Verde más oscuro al hover */
         }
         table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 30px;
-            background-color: #ecf0f1;
+            background-color: #e0e0e0;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
         th, td {
             padding: 12px 15px;
             text-align: left;
             border-bottom: 1px solid #bdc3c7;
-            color: #2c3e50;  /* Texto oscuro para mejor legibilidad */
+            color: #333333;
         }
         th {
-            background-color: #3498db;
+            background-color: #666666;
             color: white;
         }
         tr:nth-child(even) {
-            background-color: #d5d8dc;
+            background-color: #d5d5d5;
         }
         tr:nth-child(odd) {
-            background-color: #ecf0f1;
+            background-color: #e0e0e0;
         }
         tr:hover {
-            background-color: #bdc3c7;
+            background-color: #c0c0c0;
         }
         .message {
             text-align: center;
             font-weight: bold;
-            color: #e74c3c;
+            color: #ff6b6b;
             margin-top: 20px;
         }
         .message-container {
             width: 100%;
             margin-bottom: 20px;
-            border: 2px solid #e74c3c;
+            border: 2px solid #ff6b6b;
             border-radius: 5px;
             overflow: hidden;
         }
@@ -99,51 +105,51 @@
             text-align: center;
             font-weight: bold;
             color: #fff;
-            background-color: #e74c3c;
+            background-color: #ff6b6b;
             padding: 10px;
             margin: 0;
         }
         .instructions {
             font-size: 0.9em;
-            color: #bdc3c7;
+            color: #ffffff;
             text-align: left;
             padding: 10px;
             margin: 0;
-            background-color: #2c3e50;
+            background-color: #333333;
         }
         .form-field {
             display: flex;
             flex-wrap: wrap;
             align-items: center;
             margin-bottom: 15px;
+            gap: 10px;
         }
         .form-field label {
-            flex: 0 0 200px;
+            flex: 0 0 300px;
             margin-right: 10px;
         }
         .form-field input,
         .form-field select {
             flex: 1;
-            min-width: 200px;
+            min-width: 300px;
             margin-bottom: 0;
         }
         .errorlist {
             flex: 0 0 100%;
             list-style-type: none;
             padding: 0;
-            margin: 5px 0 0 210px;
+            margin: 5px 0 0 310px;
         }
         .errorlist li {
-            background-color: #e74c3c;
+            background-color: #ff6b6b;
             color: white;
             padding: 5px 10px;
             border-radius: 4px;
             font-size: 0.9em;
             margin-top: 5px;
-            border: 1px solid #c0392b;
+            border: 1px solid #ff5252;
             display: inline-block;
         }
-
     </style>
 </head>
 <body>
