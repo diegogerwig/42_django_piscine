@@ -62,8 +62,12 @@ echo "✅ URL pattern created in $project_urls_file."
 
 # Create a URL pattern in the urls.py file of the app.
 cat << 'EOL' >> "$app_urls_file"
+from django.contrib import admin
 from django.urls import path
-
+from ex import views
+urlpatterns = [
+    path('', views.Index.as_view(), name='index'),
+]
 EOL
 echo "✅ URL pattern created in $app_urls_file."
 
