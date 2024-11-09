@@ -5,7 +5,6 @@ def update_user_reputation(user):
     downvotes = user.tip_set.aggregate(total_downvotes=Count('downvote'))['total_downvotes']
     user.reputation = upvotes * 5 - downvotes * 2
     
-    # Actualizar permisos basados en reputación
     user.can_downvote_by_reputation = user.reputation >= 15
     user.can_delete_by_reputation = user.reputation >= 30
     

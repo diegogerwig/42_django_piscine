@@ -6,7 +6,7 @@ echo -e '\n✨ Cleaning repository'
 # Paths to remove
 paths_to_remove=(
     "~/sgoinfre/django_venv"
-    "./d08"
+    "./d09"
 )
 
 

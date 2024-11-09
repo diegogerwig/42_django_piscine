@@ -19,8 +19,10 @@ app_admin_file="$app_name/admin.py"
 app_utils_file="$app_name/utils.py"
 
 
+
 # Change to the project directory.
 cd "$project_name"
+
 
 
 # Create a Django app in the project.
@@ -28,23 +30,27 @@ python manage.py startapp "$app_name"
 echo "✅ $app_name APP created."
 
 
+
 # Add the app to the INSTALLED_APPS list in the settings.py file of the project.
 sed -i "/INSTALLED_APPS = \[/,/]/ s/\(]\)/    '$app_name',\n    'django_bootstrap5',\n&/" "$settings_file"
 echo "✅ $app_name added to INSTALLED_APPS."
 
 
-# Add 'localhost' to the ALLOWED_HOSTS list in the settings.py file of the project.
-sed -i "s/ALLOWED_HOSTS = \[.*\]/ALLOWED_HOSTS = ['localhost']/" "$settings_file"
-echo "✅ localhost added to ALLOWED_HOSTS."
+
+# Add 'localhost' & '127.0.0.1' to the ALLOWED_HOSTS list in the settings.py file of the project.
+sed -i "s/ALLOWED_HOSTS = \[.*\]/ALLOWED_HOSTS = ['localhost', '127.0.0.1']/" "$settings_file"
+echo "✅ <localhost> and <127.0.0.1> added to ALLOWED_HOSTS."
+
 
 
 # Create a URL pattern in the urls.py file of the project.
 sed -i "1i\\from django.urls.conf import include" "$project_urls_file"
 
-NEW_URL="path('/', include('$app_name.urls')),"
+NEW_URL="path('', include('$app_name.urls')),"
 sed -i "/urlpatterns = \[/,/]/ s|]|    $NEW_URL\n]|" "$project_urls_file"
 
 echo "✅ URL pattern created in $project_urls_file."
+
 
 
 # Create a new database configuration in the settings.py file of the project.
@@ -94,6 +100,7 @@ done < "$settings_file"
 mv "$temp_file" "$settings_file"
 
 echo "✅ Database configuration updated in $settings_file."
+
 
 
 # Add BOOTSTRAP5 settings to the settings.py file of the project.
@@ -155,6 +162,7 @@ EOL
 echo "✅ BOOTSTRAP CONFIG created in $settings_file."
 
 
+
 # Add USERS NAMES to the settings.py file of the project.
 cat << 'EOL' >> "$settings_file"
 SESSION_COOKIE_AGE = 42
@@ -177,6 +185,7 @@ EOL
 echo "✅ USER NAMES created in $settings_file."
 
 
+
 # Create a view in the views.py file of the app.
 cat << 'EOL' >> "$views_file"
 from django.shortcuts import render, redirect, get_object_or_404
@@ -194,8 +203,6 @@ from django.db.models import Prefetch
 from .utils import update_user_reputation, toggle_vote
 
 User = get_user_model()
-
-# views.py
 
 def get_current_user(request):
     if request.user.is_authenticated:
@@ -333,6 +340,7 @@ EOL
 echo "✅ VIEWS created in $views_file."
 
 
+
 # Create a URL pattern in the urls.py file of the app.
 cat << 'EOL' >> "$app_urls_file"
 from django.urls import path
@@ -347,6 +355,7 @@ urlpatterns = [
 
 EOL
 echo "✅ URL pattern created in $app_urls_file."
+
 
 
 # Create the forms.py file to the app.
@@ -405,10 +414,19 @@ EOL
 echo "✅ FORMS file created in $app_forms_file."
 
 
+
 # Create models in the models.py file of the app
 cat << 'EOL' > "$app_models_file"
 from django.db import models
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractUser, Group
+
+class CustomGroup(Group):
+    manual_can_downvote = models.BooleanField(default=False, verbose_name="Can Downvote (Group)")
+    manual_can_delete = models.BooleanField(default=False, verbose_name="Can Delete (Group)")
+
+    class Meta:
+        verbose_name = 'Custom Group'
+        verbose_name_plural = 'Custom Groups'
 
 class User(AbstractUser):
     reputation = models.IntegerField(default=0)
@@ -425,15 +443,34 @@ class User(AbstractUser):
         verbose_name = 'User'
         verbose_name_plural = 'Users'
 
+    def get_group_permissions_status(self):
+        """Obtiene los permisos de los grupos del usuario"""
+        can_downvote = False
+        can_delete = False
+        for group in self.groups.all():
+            try:
+                custom_group = CustomGroup.objects.get(id=group.id)
+                if custom_group.manual_can_downvote:
+                    can_downvote = True
+                if custom_group.manual_can_delete:
+                    can_delete = True
+            except CustomGroup.DoesNotExist:
+                continue
+        return can_downvote, can_delete
+
     def can_downvote(self):
+        group_can_downvote, _ = self.get_group_permissions_status()
         return (self.has_perm('ex.can_downvote') or 
                 self.can_downvote_by_reputation or 
-                self.manual_can_downvote)
+                self.manual_can_downvote or 
+                group_can_downvote)
 
     def can_delete(self):
+        _, group_can_delete = self.get_group_permissions_status()
         return (self.has_perm('ex.can_delete') or 
                 self.can_delete_by_reputation or 
-                self.manual_can_delete)
+                self.manual_can_delete or
+                group_can_delete)
 
 class Tip(models.Model):
     content = models.TextField()
@@ -449,6 +486,7 @@ EOL
 echo "✅ MODELS created in $app_models_file."
 
 
+
 # Add AUTH_USER_MODEL to the settings.py file of the project.
 cat << 'EOL' >> "$settings_file"
 AUTH_USER_MODEL = 'ex.User'  
@@ -457,11 +495,41 @@ EOL
 echo "✅ AUTH USER MODEL created in $settings_file."
 
 
+
 # Create the admin.py file to the app.
 cat << 'EOL' >> "$app_admin_file"
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import User, Tip
+from django.contrib.auth.models import Group
+from django.urls import reverse
+from django.utils.html import format_html
+from .models import User, Tip, CustomGroup
+
+class CustomGroupAdmin(admin.ModelAdmin):
+    list_display = ('name', 'manual_can_downvote', 'manual_can_delete', 'get_members')
+    fieldsets = (
+        (None, {'fields': ('name',)}),
+        ('Permissions', {
+            'fields': (
+                'manual_can_downvote',
+                'manual_can_delete',
+                'permissions',
+            ),
+        }),
+    )
+
+    def get_members(self, obj):
+        members = User.objects.filter(groups__id=obj.id)
+        return format_html(
+            '<br>'.join(
+                '<a href="{}">{}</a>'.format(
+                    reverse('admin:ex_user_change', args=[member.id]),
+                    member.username
+                )
+                for member in members
+            )
+        ) if members.exists() else 'No members'
+    get_members.short_description = 'Group Members'
 
 class UserAdmin(UserAdmin):
     fieldsets = UserAdmin.fieldsets + (
@@ -482,11 +550,14 @@ class UserAdmin(UserAdmin):
         from .utils import update_user_reputation
         update_user_reputation(obj)
 
+admin.site.unregister(Group)
+admin.site.register(CustomGroup, CustomGroupAdmin)
 admin.site.register(User, UserAdmin)
 admin.site.register(Tip)
 
 EOL
 echo "✅ ADMIN file created in $app_admin_file."
+
 
 
 # Create the utils.py file to the app.
@@ -498,7 +569,6 @@ def update_user_reputation(user):
     downvotes = user.tip_set.aggregate(total_downvotes=Count('downvote'))['total_downvotes']
     user.reputation = upvotes * 5 - downvotes * 2
     
-    # Actualizar permisos basados en reputación
     user.can_downvote_by_reputation = user.reputation >= 15
     user.can_delete_by_reputation = user.reputation >= 30
     
@@ -528,6 +598,7 @@ EOL
 echo "✅ UTILS file created in $app_utils_file."
 
 
+
 # Create the templates directory and files for the app.
 mkdir -p "$templates_dir_app"
 for template in $templates_files; do
@@ -541,6 +612,7 @@ done
 echo "✅ TEMPLATES created in $templates_dir_app."
 
 
+
 # Create a management command to populate the database
 mkdir -p "$management_dir"
 touch "$management_dir/__init__.py"
@@ -548,7 +620,7 @@ touch "$management_dir/__init__.py"
 cat << 'EOL' > "$management_dir/populate_db.py"
 from django.core.management.base import BaseCommand
 from django.contrib.auth import get_user_model
-from ex.models import Tip
+from ex.models import Tip, CustomGroup
 from ex.utils import toggle_vote
 from django.utils import timezone
 import random
@@ -556,20 +628,44 @@ import random
 User = get_user_model()
 
 class Command(BaseCommand):
-    help = 'Populates the database with 10 tips from 3 different users'
+    help = 'Populates the database with superuser, users, group and tips'
 
     def handle(self, *args, **kwargs):
+        admin_username = 'admin'
+        admin_password = 'pwd'
+        
+        User.objects.filter(username=admin_username).delete()
+        
+        superuser = User.objects.create_superuser(
+            username=admin_username,
+            password=admin_password,
+            email='admin@example.com'
+        )
+        self.stdout.write(self.style.SUCCESS(f'Superuser created: {admin_username}'))
+
+        CustomGroup.objects.filter(name='Privileged Users').delete()
+        
+        privileged_group = CustomGroup.objects.create(
+            name='Privileged Users',
+            manual_can_downvote=True,
+            manual_can_delete=True
+        )
+        self.stdout.write(self.style.SUCCESS(f'Group created: Privileged Users with special permissions'))
+
         usernames = ['user1', 'user2', 'user3']
-        password = 'pwd'  
+        password = 'pwd'
 
         for username in usernames:
-            user, created = User.objects.get_or_create(username=username)
-            if created:
-                user.set_password(password)
-                user.save()
-                self.stdout.write(self.style.SUCCESS(f'User created: {username}'))
-            else:
-                self.stdout.write(self.style.WARNING(f'User already exists: {username}'))
+            User.objects.filter(username=username).delete()
+            
+            user = User.objects.create_user(
+                username=username,
+                password=password
+            )
+            user.groups.add(privileged_group)
+            user.save()
+            
+            self.stdout.write(self.style.SUCCESS(f'User created and added to group: {username}'))
 
         tips = [
             "Always comment your code.",
@@ -593,7 +689,6 @@ class Command(BaseCommand):
                 author=author
             )
             
-            # Simulating upvotes and downvotes
             for _ in range(random.randint(0, 5)):
                 voter = random.choice(User.objects.all())
                 toggle_vote(tip, voter, random.choice(['upvote', 'downvote']))
@@ -601,6 +696,8 @@ class Command(BaseCommand):
             self.stdout.write(self.style.SUCCESS(f'Successfully created tip: "{content}" by {author.username}'))
 
         self.stdout.write(self.style.SUCCESS('Database population completed successfully.'))
+        self.stdout.write(self.style.SUCCESS(f'\nSuperuser credentials:\nUsername: {admin_username}\nPassword: {admin_password}'))
+        self.stdout.write(self.style.SUCCESS(f'Regular users password: {password}'))
 
 EOL
 echo "✅ MANAGEMENT COMMAND created to populate the database."

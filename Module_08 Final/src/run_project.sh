@@ -1,6 +1,6 @@
 #!/bin/sh
 
-project_name="d08"
+project_name="d09"
 
 # Change to the project directory.
 cd "$project_name"

@@ -1,6 +1,6 @@
 #!/bin/sh
 
-project_name="d08"
+project_name="d09"
 settings_file="$project_name/$project_name/settings.py"
 
 

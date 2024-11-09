@@ -17,8 +17,6 @@ from .utils import update_user_reputation, toggle_vote
 
 User = get_user_model()
 
-# views.py
-
 def get_current_user(request):
     if request.user.is_authenticated:
         return request.user
