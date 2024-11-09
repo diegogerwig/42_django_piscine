@@ -54,7 +54,7 @@ case "$1" in
         echo "❌ Invalid argument: $1"
         echo "Usage: source $0 [-up]"
         echo "  no args  : Full initialization"
-        echo "  -up     : Just activate venv and run project"
+        echo "  -up      : Just activate venv and run project"
         return 1  
         ;;
 esac
