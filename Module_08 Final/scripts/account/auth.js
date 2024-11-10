@@ -146,6 +146,7 @@ const FormModule = {
 
     async handleFormSubmit(formType, form) {
         if (!form.checkValidity() || form.querySelectorAll('.is-invalid').length > 0) {
+            NotificationModule.showNotification('Please check the form for errors', 'danger');
             return;
         }
 
@@ -163,14 +164,26 @@ const FormModule = {
             if (response.ok) {
                 const data = await response.json();
                 if (data.status === 'success') {
+                    NotificationModule.showNotification(
+                        formType === 'login' ? 'Welcome back!' : 'Registration successful!', 
+                        'success'
+                    );
                     UIModule.showLoggedIn(data.username);
                 } else {
                     this.handleFormErrors(data.errors, formType === 'login');
+                    // Mostrar mensaje de error específico
+                    if (data.errors.username) {
+                        NotificationModule.showNotification(data.errors.username[0], 'warning');
+                    } else if (data.errors.password) {
+                        NotificationModule.showNotification(data.errors.password[0], 'warning');
+                    }
                 }
             } else {
+                NotificationModule.showNotification('Server error occurred', 'danger');
                 console.error('Form submission failed:', response.status);
             }
         } catch (error) {
+            NotificationModule.showNotification('Connection error', 'danger');
             console.error('Form submission error:', error);
         }
     },
@@ -236,3 +249,33 @@ document.addEventListener('DOMContentLoaded', function() {
         UIModule.updateTabStyles(loginTab);
     }
 });
+
+// Notification Module
+const NotificationModule = {
+    showNotification(message, type = 'warning') {
+        const container = document.getElementById('notification-container');
+        if (!container) return;
+
+        const alert = document.createElement('div');
+        alert.className = `alert alert-${type} alert-dismissible fade show`;
+        alert.role = 'alert';
+        
+        alert.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+
+        container.appendChild(alert);
+
+        // Remover automáticamente después de 5 segundos
+        setTimeout(() => {
+            const bsAlert = new bootstrap.Alert(alert);
+            bsAlert.close();
+        }, 5000);
+
+        // Eliminar del DOM después de que termine la animación
+        alert.addEventListener('closed.bs.alert', () => {
+            alert.remove();
+        });
+    }
+};

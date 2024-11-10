@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% load bootstrap5 %}
+
+{% block extra_head %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<style>
+    #chat-log {
+        height: 400px;
+        overflow-y: auto;
+        margin-bottom: 20px;
+        border: 1px solid #ddd;
+        padding: 10px;
+    }
+    .message {
+        margin-bottom: 10px;
+    }
+    .username {
+        font-weight: bold;
+        color: #007bff;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Chat Room: {{ room.name }}</h2>
+    <div id="chat-log">
+        {% for message in messages %}
+            <div class="message">
+                <span class="username">{{ message.user.username }}:</span>
+                <span class="content">{{ message.content }}</span>
+            </div>
+        {% endfor %}
+    </div>
+    <div class="input-group">
+        <input type="text" id="chat-message-input" class="form-control" placeholder="Type your message...">
+        <button id="chat-message-submit" class="btn btn-primary">Send</button>
+    </div>
+</div>
+
+<script>
+    const roomName = "{{ room.name }}";
+    const chatSocket = new WebSocket(
+        'ws://' + window.location.host + '/ws/chat/' + roomName + '/'
+    );
+
+    chatSocket.onmessage = function(e) {
+        const data = JSON.parse(e.data);
+        const message = `
+            <div class="message">
+                <span class="username">${data.username}:</span>
+                <span class="content">${data.message}</span>
+            </div>
+        `;
+        $('#chat-log').append(message);
+        $('#chat-log').scrollTop($('#chat-log')[0].scrollHeight);
+    };
+
+    chatSocket.onclose = function(e) {
+        console.error('Chat socket closed unexpectedly');
+    };
+
+    $('#chat-message-input').focus();
+    $('#chat-message-input').on('keyup', function(e) {
+        if (e.keyCode === 13) {  // enter key
+            $('#chat-message-submit').click();
+        }
+    });
+
+    $('#chat-message-submit').on('click', function(e) {
+        const messageInputDom = $('#chat-message-input');
+        const message = messageInputDom.val();
+        if (message) {
+            chatSocket.send(JSON.stringify({
+                'message': message
+            }));
+            messageInputDom.val('');
+        }
+    });
+</script>
+{% endblock %}

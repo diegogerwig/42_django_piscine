@@ -26,7 +26,7 @@ full_init() {
 
     bash ./src/create_django_project.sh
     bash ./src/create_app_account.sh
-    # bash ./src/create_app_chat.sh
+    bash ./src/create_app_chat.sh
 
     run_project
 }

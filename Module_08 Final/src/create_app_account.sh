@@ -5,26 +5,19 @@ project_name="d09"
 app_name="account"
 
 
-
 # Project files paths
 settings_file="$project_name/settings.py"
 project_urls_file="$project_name/urls.py"
 app_urls_file="$app_name/urls.py"
 
 
-
-# Root level directories (en vez de app level)
-templates_dir="templates"
-scripts_dir="scripts"
-
-
-
 # App directory structure
 views_dir_app="$app_name/views"
 forms_dir_app="$app_name/forms"
 models_dir_app="$app_name/models"
+templates_dir="$app_name/templates"
+scripts_dir="$app_name/scripts"
 management_dir_app="$app_name/management/commands"
-
 
 
 # Source directories (current directory)
@@ -36,12 +29,10 @@ scripts_source_dir="scripts/account"
 management_source_dir="management"
 
 
-
 # Create Django project and app
 cd "$project_name"
 python manage.py startapp "$app_name"
 echo "✅ <$app_name> APP created."
-
 
 
 # Update INSTALLED_APPS
@@ -49,17 +40,14 @@ sed -i "/INSTALLED_APPS = \[/,/]/ s/\(]\)/    '$app_name',\n    'django_bootstra
 echo "✅ Apps added to INSTALLED_APPS."
 
 
-
 # Update ALLOWED_HOSTS
 sed -i "s/ALLOWED_HOSTS = \[.*\]/ALLOWED_HOSTS = ['localhost', '127.0.0.1']/" "$settings_file"
 echo "✅ Allowed hosts updated."
 
 
-
 # Update TEMPLATES en settings.py
 sed -i "/TEMPLATES = \[/,/]/ s/'DIRS': \[\],/'DIRS': \[BASE_DIR \/ 'templates'\],/" "$settings_file"
 echo "✅ Templates directory configured."
-
 
 
 # Create project URLs
@@ -72,14 +60,13 @@ from django.conf import settings
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('account.urls')),
     path('scripts/<path:path>', serve, {
-        'document_root': os.path.join(settings.BASE_DIR, 'scripts')
+        'document_root': os.path.join(settings.BASE_DIR, 'account', 'scripts')
     }),
+    path('', include('account.urls')),
 ]
 EOL
 echo "✅ Project URLs configured."
-
 
 
 # Create app URLs (sin la ruta de scripts, ya que está en project_urls)
@@ -95,7 +82,6 @@ urlpatterns = [
 ]
 EOL
 echo "✅ App URLs configured."
-
 
 
 # Add Bootstrap configuration
@@ -115,7 +101,6 @@ BOOTSTRAP5 = {
 }
 EOL
 echo "✅ Bootstrap configuration added."
-
 
 
 # Copy files from source to destination directory
@@ -175,11 +160,9 @@ copy_directory_contents() {
 }
 
 
-
 # Create necessary directories at root level
 mkdir -p "$templates_dir"
 mkdir -p "$scripts_dir"
-
 
 
 # Create necessary directories in the app
@@ -189,12 +172,10 @@ mkdir -p "$models_dir_app"
 mkdir -p "$management_dir_app"
 
 
-
 # Create __init__.py files
 touch "$views_dir_app/__init__.py"
 touch "$forms_dir_app/__init__.py"
 touch "$models_dir_app/__init__.py"
-
 
 
 # Copy files from source directories
@@ -206,5 +187,6 @@ copy_directory_contents "$scripts_source_dir" "$scripts_dir" "SCRIPTS"
 copy_directory_contents "$management_source_dir" "$management_dir_app" "MANAGEMENT"
 
 
-
 echo -e "\n✨ Setup complete!"
+
+echo -e "\n**********************\n"

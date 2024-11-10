@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% load bootstrap5 %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Chat Rooms</h2>
+    <div class="list-group">
+        {% for room in rooms %}
+            <a href="{% url 'chat_room' room.name %}" class="list-group-item list-group-item-action">
+                {{ room.name }}
+            </a>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

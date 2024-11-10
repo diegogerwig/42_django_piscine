@@ -1,4 +1,4 @@
 django==4.2
-django-bootstrap5==24.3
 psycopg2-binary==2.9.9
-channels
+django-environ
+django-bootstrap5
