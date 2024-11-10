@@ -42,8 +42,13 @@ case "$1" in
     *)
         echo "❌ Invalid argument: $1"
         echo "Usage: source $0 [-up]"
+<<<<<<< HEAD
         echo "  no args : Full initialization"
         echo "  -up     : Just activate venv and run project"
+=======
+        echo "  no args  : Full initialization"
+        echo "  -up      : Just activate venv and run project"
+>>>>>>> refs/remotes/origin/main
         return 1  
         ;;
 esac
