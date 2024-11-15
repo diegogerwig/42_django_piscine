@@ -90,8 +90,9 @@
 							<div id="user-info" class="text-center {% if not user.is_authenticated %}d-none{% endif %}">
 								<h4 class="mb-3 text-white">Welcome!</h4>
 								<p class="mb-3 text-white">Logged as <span id="username-display" class="text-info fw-bold">{{ user.username }}</span></p>
+								<a href="/chat/" class="btn btn-primary fw-bold mb-3 w-100">Go to Chat Rooms</a>
 								<form method="post" action="/logout/">
-									<button type="submit" id="logout-btn" class="btn btn-danger fw-bold">Logout</button>
+									<button type="submit" id="logout-btn" class="btn btn-danger fw-bold w-100">Logout</button>
 								</form>
 							</div>
 						</div>

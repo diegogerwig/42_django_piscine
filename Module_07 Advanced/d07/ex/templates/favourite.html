@@ -24,7 +24,7 @@
                 <tbody>
                     {% for favourite in object_list %}
                     <tr>
-                        <td>{{ favourite.article.title|truncatechars:50 }}</td>
+                        <td>{{ favourite.article.title|truncatechars:20 }}</td>
                         <td>{{ favourite.article.synopsis|truncatechars:100 }}</td>
                         <td>{{ favourite.article.author }}</td>
                         <td>{{ favourite.article.created|date:"d-M-Y H:i"|upper }}</td>

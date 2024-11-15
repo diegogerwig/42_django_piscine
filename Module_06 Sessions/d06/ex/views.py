@@ -1,18 +1,20 @@
 from django.shortcuts import render
 
 # Create your views here.
-from django.shortcuts import render, redirect, get_object_or_404
 from django.conf import settings
-from django.utils import timezone
 from django.contrib import auth
 from django.contrib.auth import get_user_model
-from .models import Tip
-from .forms import SignupForm, LoginForm, TipForm
-from django.forms.models import model_to_dict
-import random
 from django.contrib.auth.decorators import login_required
-from django.views.decorators.http import require_POST
 from django.db.models import Prefetch
+from django.forms.models import model_to_dict
+from django.shortcuts import render, redirect, get_object_or_404
+from django.utils import timezone
+from django.views.decorators.http import require_POST
+
+import random
+
+from .forms import SignupForm, LoginForm, TipForm
+from .models import Tip
 from .utils import update_user_reputation, toggle_vote
 
 User = get_user_model()

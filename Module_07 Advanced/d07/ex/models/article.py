@@ -2,11 +2,7 @@ from django.contrib.auth.models import User
 from django.db import models
 
 class Article(models.Model):
-    title = models.CharField(
-        "Article title", 
-        max_length=64, 
-        null=False
-    )
+    title = models.CharField("Article title", max_length=64, null=False)
     author = models.ForeignKey(
         User, 
         verbose_name="Article author", 
@@ -22,9 +18,7 @@ class Article(models.Model):
         max_length=312, 
         null=False
     )
-    content = models.TextField(
-        "Article content"
-    )
+    content = models.TextField("Article content")
 
     def __str__(self) -> str:
         return str(self.title)

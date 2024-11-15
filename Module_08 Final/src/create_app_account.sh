@@ -187,6 +187,6 @@ copy_directory_contents "$scripts_source_dir" "$scripts_dir" "SCRIPTS"
 copy_directory_contents "$management_source_dir" "$management_dir_app" "MANAGEMENT"
 
 
-echo -e "\n✨ Setup complete!"
+echo -e "\n✨ ACCOUNT aplication setup complete!"
 
 echo -e "\n**********************\n"

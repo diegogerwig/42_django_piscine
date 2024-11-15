@@ -18,7 +18,6 @@ class RedirectToArticlesMiddleware:
 
     def __call__(self, request):
         try:
-            # No redirigir si es una petición POST
             if request.method == 'POST':
                 return self.get_response(request)
             

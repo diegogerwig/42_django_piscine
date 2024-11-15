@@ -23,7 +23,7 @@
                 <tbody>
                     {% for article in object_list %}
                     <tr>
-                        <td>{{ article.title|truncatechars:50 }}</td>
+                        <td>{{ article.title|truncatechars:20 }}</td>
                         <td>{{ article.synopsis|truncatechars:100 }}</td>
                         <td>{{ article.created|date:"d-M-Y H:i"|upper }}</td>
                         <td>{{ article.created|timesince}}</td>

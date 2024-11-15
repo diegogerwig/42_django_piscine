@@ -11,14 +11,11 @@ project_urls_file="$project_name/urls.py"
 # App directory structure
 views_dir_app="$app_name/views"
 models_dir_app="$app_name/models"
-templates_dir_app="$app_name/templates"
+templates_dir_app="$app_name/templates/chat"  # Updated path
 consumers_dir_app="$app_name/consumers"
 
-# Source directories (current directory)
-views_source_dir="views/chat"
-models_source_dir="models/chat"
+# Source directories
 templates_source_dir="templates/chat"
-consumers_source_dir="consumers/chat"
 
 # Create Django app
 cd "$project_name"
@@ -37,12 +34,17 @@ touch "$models_dir_app/__init__.py"
 touch "$consumers_dir_app/__init__.py"
 
 # Add Channels and App to INSTALLED_APPS
-if ! grep -q "'channels'," "$settings_file"; then
-    sed -i "/INSTALLED_APPS = \[/,/]/ s/\(]\)/    '$app_name',\n    'channels',\n&/" "$settings_file"
+if ! grep -q "'channels'," "$settings_file" && ! grep -q "'$app_name'," "$settings_file"; then
+    # Primero verificamos si django_bootstrap5 ya está en INSTALLED_APPS
+    if ! grep -q "'django_bootstrap5'," "$settings_file"; then
+        sed -i "/INSTALLED_APPS = \[/,/]/ s/\(]\)/    '$app_name',\n    'channels',\n    'django_bootstrap5',\n&/" "$settings_file"
+    else
+        sed -i "/INSTALLED_APPS = \[/,/]/ s/\(]\)/    '$app_name',\n    'channels',\n&/" "$settings_file"
+    fi
     echo "✅ Apps added to INSTALLED_APPS."
 fi
 
-# Add Channels configuration
+# Add Channels configuration and auth settings
 if ! grep -q "ASGI_APPLICATION" "$settings_file"; then
     cat << 'EOL' >> "$settings_file"
 
@@ -53,11 +55,86 @@ CHANNEL_LAYERS = {
         'BACKEND': 'channels.layers.InMemoryChannelLayer'
     }
 }
+
+# Authentication settings
+LOGIN_URL = '/account/'
 EOL
-    echo "✅ Channels configuration added."
+    echo "✅ Channels and authentication configuration added."
 fi
 
-# Update project URLs to add chat while keeping account paths
+# Add Templates configuration
+if ! grep -q "TEMPLATES = \[" "$settings_file"; then
+    cat << 'EOL' >> "$settings_file"
+
+# Templates configuration
+TEMPLATES = [
+    {
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [
+            os.path.join(BASE_DIR, "chat/templates"),
+        ],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.debug",
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
+            ],
+        },
+    },
+]
+EOL
+    echo "✅ Templates configuration added."
+else
+    sed -i '/TEMPLATES.*=.*\[/,/\]/ {
+        /DIRS.*:.*\[/ {
+            n
+            s|]|    os.path.join(BASE_DIR, "chat/templates"),\n&|
+        }
+    }' "$settings_file"
+    echo "✅ Templates DIRS updated."
+fi
+
+# Copy files from source to destination directory function
+copy_directory_contents() {
+    local source_dir=$1
+    local dest_dir=$2
+    local dir_type=$3
+    local had_errors=false
+
+    if [ -d "../$source_dir" ]; then
+        echo -e "\n📁 Copying $dir_type files from ../$source_dir:"
+        
+        for file in "../$source_dir"/*; do
+            if [ -f "$file" ]; then
+                filename=$(basename "$file")
+                if cp "$file" "$dest_dir/"; then
+                    echo "   ✅ Copied: $filename"
+                else
+                    echo "   ❌ Failed to copy: $filename"
+                    had_errors=true
+                fi
+            fi
+        done
+        
+        if [ "$had_errors" = true ]; then
+            echo "❌ Some $dir_type files failed to copy"
+            return 1
+        else
+            echo "⭐ $dir_type copied successfully to $dest_dir/"
+            return 0
+        fi
+    else
+        echo "❗ $dir_type source directory not found: ../$source_dir"
+        return 1
+    fi
+}
+
+# Copy template files
+copy_directory_contents "$templates_source_dir" "$templates_dir_app" "TEMPLATES"
+
+# Update project URLs
 cat << 'EOL' > "$project_urls_file"
 from django.contrib import admin
 from django.urls import path, include
@@ -67,11 +144,11 @@ from django.conf import settings
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('account.urls')),  # Account debe ir primero para manejar login/registro
     path('scripts/<path:path>', serve, {
         'document_root': os.path.join(settings.BASE_DIR, 'account', 'scripts')
     }),
-    path('chat/', include('chat.urls')),  # Chat en /chat/
+    path('', include('account.urls')),  # Account maintains root
+    path('chat/', include('chat.urls')),  # Chat under /chat/
 ]
 EOL
 echo "✅ Project URLs created."
@@ -82,8 +159,9 @@ from django.urls import re_path
 from .consumers.chat_consumer import ChatConsumer
 
 websocket_urlpatterns = [
-    re_path(r'ws/chat/(?P<room_name>\w+)/$', ChatConsumer.as_accept),
+    re_path(r'ws/chat/(?P<room_name>\w+)/$', ChatConsumer.as_asgi()),
 ]
+
 EOL
 echo "✅ Chat routing created."
 
@@ -92,39 +170,65 @@ cat << 'EOL' > "$app_name/urls.py"
 from django.urls import path
 from .views.chat_views import room_list, chat_room
 
+app_name = 'chat'
+
 urlpatterns = [
     path('', room_list, name='room_list'),  # /chat/
-    path('<str:room_name>/', chat_room, name='chat_room'),  # /chat/room-name/
+    path('<str:room_name>/', chat_room, name='chat_room'),  # /chat/<room_name>/
 ]
 EOL
 echo "✅ Chat URLs created."
 
-# Update views to use account login
+# Create views
 cat << 'EOL' > "$app_name/views/chat_views.py"
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from ..models.chat_models import ChatRoom, Message
+from django.contrib.auth.models import User
+from django.contrib.sessions.models import Session
+from django.utils import timezone
 
-@login_required(login_url='login')
+def get_current_users():
+    active_sessions = Session.objects.filter(expire_date__gte=timezone.now())
+    user_ids = []
+    for session in active_sessions:
+        data = session.get_decoded()
+        user_ids.append(data.get('_auth_user_id', None))
+    return User.objects.filter(id__in=user_ids)
+
+@login_required
 def room_list(request):
     """Display list of available chat rooms."""
     rooms = ChatRoom.objects.all()
-    return render(request, 'room_list.html', {'rooms': rooms})
+    # Obtener solo usuarios con sesión activa
+    active_users = get_current_users().exclude(is_superuser=True)
+    return render(request, 'chat/room_list.html', {
+        'rooms': rooms,
+        'users': active_users
+    })
 
-@login_required(login_url='login')
+@login_required
 def chat_room(request, room_name):
     """Display chat room with message history."""
     try:
         room = ChatRoom.objects.get(name=room_name)
-        messages = Message.objects.filter(room=room)
-        return render(request, 'chat_room.html', {
+        rooms = ChatRoom.objects.all()
+        # Obtener solo usuarios con sesión activa
+        active_users = get_current_users().exclude(is_superuser=True)
+        messages = Message.objects.filter(room=room).order_by('-timestamp')[:50]
+        messages = reversed(list(messages))
+
+        return render(request, 'chat/chat_room.html', {
             'room': room,
-            'messages': messages
+            'rooms': rooms,
+            'messages': messages,
+            'users': active_users,
+            'current_user': request.user
         })
     except ChatRoom.DoesNotExist:
-        return redirect('room_list')
+        return redirect('chat:room_list')
 EOL
-echo "✅ Views updated."
+echo "✅ Views created."
 
 # Create models
 cat << 'EOL' > "$app_name/models/chat_models.py"
@@ -156,188 +260,112 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
 from django.contrib.auth.models import User
 from ..models.chat_models import ChatRoom, Message
+from django.utils import timezone
 
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.room_name = self.scope['url_route']['kwargs']['room_name']
         self.room_group_name = f'chat_{self.room_name}'
+        self.user = self.scope["user"]
 
+        # Join room group
         await self.channel_layer.group_add(
             self.room_group_name,
             self.channel_name
         )
+
         await self.accept()
         
-        if self.scope["user"].is_authenticated:
+        # Enviar mensaje de conexión
+        if self.user.is_authenticated:
             await self.channel_layer.group_send(
                 self.room_group_name,
                 {
                     'type': 'chat_message',
-                    'message': f'{self.scope["user"].username} has joined the chat',
-                    'username': 'System'
+                    'message': f'{self.user.username} has joined the chat',
+                    'username': 'System',
+                    'timestamp': timezone.now().strftime('%H:%M')
                 }
             )
 
     async def disconnect(self, close_code):
+        # Leave room group
         await self.channel_layer.group_discard(
             self.room_group_name,
             self.channel_name
         )
 
+        if self.user.is_authenticated:
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    'type': 'chat_message',
+                    'message': f'{self.user.username} has left the chat',
+                    'username': 'System',
+                    'timestamp': timezone.now().strftime('%H:%M')
+                }
+            )
+
     async def receive(self, text_data):
         text_data_json = json.loads(text_data)
         message = text_data_json['message']
         
+        # Save message to database
         await self.save_message(message)
-
+        
+        # Send message to room group
         await self.channel_layer.group_send(
             self.room_group_name,
             {
                 'type': 'chat_message',
                 'message': message,
-                'username': self.scope["user"].username
+                'username': self.user.username,
+                'timestamp': timezone.now().strftime('%H:%M')
             }
         )
 
     async def chat_message(self, event):
+        # Send message to WebSocket
         await self.send(text_data=json.dumps({
             'message': event['message'],
-            'username': event['username']
+            'username': event['username'],
+            'timestamp': event['timestamp']
         }))
 
     @database_sync_to_async
     def save_message(self, message):
-        room = ChatRoom.objects.get(name=self.room_name)
-        Message.objects.create(
-            room=room,
-            user=self.scope["user"],
-            content=message
-        )
+        try:
+            room = ChatRoom.objects.get(name=self.room_name)
+            Message.objects.create(
+                room=room,
+                user=self.user,
+                content=message
+            )
+            return True
+        except Exception as e:
+            print(f"Error saving message: {e}")
+            return False
+
 EOL
 echo "✅ Consumer created."
-
-# Create templates
-cat << 'EOL' > "$app_name/templates/room_list.html"
-{% extends 'base.html' %}
-{% load bootstrap5 %}
-
-{% block content %}
-<div class="container mt-4">
-    <h2>Chat Rooms</h2>
-    <div class="list-group">
-        {% for room in rooms %}
-            <a href="{% url 'chat_room' room.name %}" class="list-group-item list-group-item-action">
-                {{ room.name }}
-            </a>
-        {% endfor %}
-    </div>
-</div>
-{% endblock %}
-EOL
-echo "✅ Room list template created."
-
-# Create chat room template
-cat << 'EOL' > "$app_name/templates/chat_room.html"
-{% extends 'base.html' %}
-{% load bootstrap5 %}
-
-{% block extra_head %}
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<style>
-    #chat-log {
-        height: 400px;
-        overflow-y: auto;
-        margin-bottom: 20px;
-        border: 1px solid #ddd;
-        padding: 10px;
-    }
-    .message {
-        margin-bottom: 10px;
-    }
-    .username {
-        font-weight: bold;
-        color: #007bff;
-    }
-</style>
-{% endblock %}
-
-{% block content %}
-<div class="container mt-4">
-    <h2>Chat Room: {{ room.name }}</h2>
-    <div id="chat-log">
-        {% for message in messages %}
-            <div class="message">
-                <span class="username">{{ message.user.username }}:</span>
-                <span class="content">{{ message.content }}</span>
-            </div>
-        {% endfor %}
-    </div>
-    <div class="input-group">
-        <input type="text" id="chat-message-input" class="form-control" placeholder="Type your message...">
-        <button id="chat-message-submit" class="btn btn-primary">Send</button>
-    </div>
-</div>
-
-<script>
-    const roomName = "{{ room.name }}";
-    const chatSocket = new WebSocket(
-        'ws://' + window.location.host + '/ws/chat/' + roomName + '/'
-    );
-
-    chatSocket.onmessage = function(e) {
-        const data = JSON.parse(e.data);
-        const message = `
-            <div class="message">
-                <span class="username">${data.username}:</span>
-                <span class="content">${data.message}</span>
-            </div>
-        `;
-        $('#chat-log').append(message);
-        $('#chat-log').scrollTop($('#chat-log')[0].scrollHeight);
-    };
-
-    chatSocket.onclose = function(e) {
-        console.error('Chat socket closed unexpectedly');
-    };
-
-    $('#chat-message-input').focus();
-    $('#chat-message-input').on('keyup', function(e) {
-        if (e.keyCode === 13) {  // enter key
-            $('#chat-message-submit').click();
-        }
-    });
-
-    $('#chat-message-submit').on('click', function(e) {
-        const messageInputDom = $('#chat-message-input');
-        const message = messageInputDom.val();
-        if (message) {
-            chatSocket.send(JSON.stringify({
-                'message': message
-            }));
-            messageInputDom.val('');
-        }
-    });
-</script>
-{% endblock %}
-EOL
-echo "✅ Chat room template created."
 
 # Create asgi.py
 cat << 'EOL' > "$project_name/asgi.py"
 import os
+import django
 from django.core.asgi import get_asgi_application
+
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'd09.settings')
+django.setup()  # Añade esta línea
+
 from channels.routing import ProtocolTypeRouter, URLRouter
 from channels.auth import AuthMiddlewareStack
 from chat.routing import websocket_urlpatterns
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'd09.settings')
-
 application = ProtocolTypeRouter({
     "http": get_asgi_application(),
     "websocket": AuthMiddlewareStack(
-        URLRouter(
-            websocket_urlpatterns
-        )
+        URLRouter(websocket_urlpatterns)
     ),
 })
 EOL
@@ -347,20 +375,36 @@ echo "✅ ASGI configuration created."
 python manage.py makemigrations
 python manage.py migrate
 
-# Create initial chat rooms
+# Create initial chat rooms and users
 python manage.py shell << 'EOL'
 from chat.models.chat_models import ChatRoom
-if not ChatRoom.objects.filter(name='General').exists():
-    ChatRoom.objects.create(name='General')
-if not ChatRoom.objects.filter(name='Random').exists():
-    ChatRoom.objects.create(name='Random')
-if not ChatRoom.objects.filter(name='Support').exists():
-    ChatRoom.objects.create(name='Support')
-EOL
-echo "✅ Initial chat rooms created."
+from django.contrib.auth.models import User
 
-echo -e "\n✨ Chat application setup complete!"
-echo -e "\n📝 Don't forget to:"
-echo "1. Install channels: pip install channels"
-echo "2. Verify all files were created correctly"
-echo "3. Run the server: python manage.py runserver"
+# Create rooms
+rooms = ['room1', 'room2', 'room3']
+for room_name in rooms:
+    if not ChatRoom.objects.filter(name=room_name).exists():
+        ChatRoom.objects.create(name=room_name)
+
+# Create users
+for i in range(1, 6):  # Creating users 1 through 5
+    username = f'user{i}'
+    if not User.objects.filter(username=username).exists():
+        User.objects.create_user(username=username, password='urduliz')
+
+EOL
+echo "✅ Initial chat rooms and users created."
+
+echo -e "\n👤 Created users (password for all: urduliz):"
+echo "- user1"
+echo "- user2"
+echo "- user3"
+echo "- user4"
+echo "- user5"
+
+echo -e "\n🏠 Created rooms:"
+echo "- room1"
+echo "- room2"
+echo "- room3"
+
+echo -e "\n✨ CHAT application setup complete!\n"

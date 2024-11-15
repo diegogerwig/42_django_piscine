@@ -29,7 +29,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-wh4j567wr+crw#qhj*6vp3o9_c@1n2(eqoufg!sy7@di(ooam+'
+SECRET_KEY = 'django-insecure-ce=fm489hkr@dg#u=6@bs)re!#^klr4f*jeanhoz*j(@1x35q-'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -137,58 +137,17 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 BOOTSTRAP5 = {
-    # The complete URL to the Bootstrap CSS file
     "css_url": {
         "url": "https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css",
         "integrity": "sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN",
         "crossorigin": "anonymous",
     },
-
-    # The complete URL to the Bootstrap JavaScript file
     "javascript_url": {
         "url": "https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js",
         "integrity": "sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL",
         "crossorigin": "anonymous",
-    },
-
-    # The URL to the Popper JavaScript file (Bootstrap 5 uses Popper for dropdowns, tooltips, and popovers)
-    # Note: Bootstrap 5 bundles Popper with its JavaScript, so this might not be necessary
-    "popper_url": None,
-
-    # Put JavaScript in the HEAD section of the HTML document (only relevant if you use bootstrap5.html)
-    "javascript_in_head": False,
-
-    # Label class to use in horizontal forms
-    "horizontal_label_class": "col-sm-3",
-
-    # Field class to use in horizontal forms
-    "horizontal_field_class": "col-sm-9",
-
-    # Set placeholder attributes to label if no placeholder is provided
-    "set_placeholder": True,
-
-    # Class to indicate required (better to set this in your Django form)
-    "required_css_class": "",
-
-    # Class to indicate error (better to set this in your Django form)
-    "error_css_class": "is-invalid",
-
-    # Class to indicate success, meaning the field has valid input (better to set this in your Django form)
-    "success_css_class": "is-valid",
-
-    # Renderers (only set these if you have studied the source and understand the inner workings)
-    "formset_renderers":{
-        "default": "django_bootstrap5.renderers.FormsetRenderer",
-    },
-    "form_renderers": {
-        "default": "django_bootstrap5.renderers.FormRenderer",
-    },
-    "field_renderers": {
-        "default": "django_bootstrap5.renderers.FieldRenderer",
-        "inline": "django_bootstrap5.renderers.InlineFieldRenderer",
-    },
+    }
 }
-
 SESSION_COOKIE_AGE = 42
 SESSION_SAVE_EVERY_REQUEST = True 
 

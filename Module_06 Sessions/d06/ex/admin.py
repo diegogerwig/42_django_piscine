@@ -6,6 +6,7 @@ from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import Group
 from django.urls import reverse
 from django.utils.html import format_html
+
 from .models import User, Tip, CustomGroup
 
 class CustomGroupAdmin(admin.ModelAdmin):

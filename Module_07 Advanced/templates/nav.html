@@ -2,51 +2,55 @@
 {% load django_bootstrap5 %}
 
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm mb-4">
-    <div class="container-fluid">
-        <!-- Logo Home con icono Bootstrap -->
-        <a class="navbar-brand me-3" href="{% url 'articles' %}">
-            <i class="bi bi-house" style="font-size: 1.5rem; color: white;"></i>
-        </a>
-        
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent" aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
+	<div class="container-fluid">
+		<a class="navbar-brand me-3 d-flex align-items-center" href="{% url 'articles' %}">
+			<i class="bi bi-house" style="font-size: 1.5rem; color: white;"></i>
+		</a>
+		
+		<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent" aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+			<span class="navbar-toggler-icon"></span>
+		</button>
 
-        <div class="collapse navbar-collapse" id="navbarContent">
-            <div class="navbar-header">
-                <a class="navbar-brand" href="{% url 'index' %}">
-                    <span class="visually-hidden">(current)</span>
-                </a>
+		<div class="collapse navbar-collapse" id="navbarContent">
+			<div class="navbar-header d-flex align-items-center">
+				<a class="navbar-brand d-flex align-items-center" href="{% url 'index' %}">
+					<span class="visually-hidden">(current)</span>
+				</a>
 
-                {% if user.is_authenticated %}
-                    <a class="btn btn-primary px-4 me-2" href="{% url 'articles' %}">Articles</a>
-                    <a class="btn btn-primary px-4 me-2" href="{% url 'publications' %}">Publications</a>
-                    <a class="btn btn-primary px-4 me-2" href="{% url 'favourite' %}">Favourites</a>
-                    <a class="btn btn-primary px-4 me-2" href="{% url 'publish' %}">Publish</a>
-                {% endif %}
-            </div>
+				{% if user.is_authenticated %}
+					<div class="d-flex align-items-center">
+						<a class="btn btn-primary px-4 fw-bold btn-sm me-2" href="{% url 'articles' %}">ARTICLES</a>
+						<a class="btn btn-primary px-4 fw-bold btn-sm me-2" href="{% url 'publications' %}">PUBLICATIONS</a>
+						<a class="btn btn-primary px-4 fw-bold btn-sm me-2" href="{% url 'favourite' %}">FAVOURITES</a>
+						<a class="btn btn-primary px-4 fw-bold btn-sm me-2" href="{% url 'publish' %}">PUBLISH</a>
+					</div>
+				{% endif %}
+			</div>
 
-            <div class="ms-auto">
-                {% if user.is_authenticated %}
-                    <span class="badge bg-dark text-white px-3 py-2 me-3 fs-6 border border-secondary">
-                        LOGGED AS: <span class="fw-bold fs-5" style="color: #00f7ff; text-shadow: 0 0 5px #00f7ff;">{{ request.user.username }}</span>
-                    </span>
-                    <a class="btn btn-danger px-4 fw-bold" href="{% url 'logout' %}">
-                        LOG OUT
-                    </a>
-                {% else %}
-                    <form class="d-flex align-items-center" method="post" action="{% url 'login' %}">
-                        {% csrf_token %}
-                        <div class="d-flex align-items-center">
-                            {% bootstrap_form login_form %}
-                            <div class="ms-4">
-                                {% bootstrap_button "LOG IN" button_type="submit" button_class="btn btn-success px-4 fw-bold me-3" %}
-                                <a href="{% url 'register' %}" class="btn btn-warning px-4 fw-bold">SIGN UP</a>
-                            </div>
-                        </div>
-                    </form>
-                {% endif %}
-            </div>
-        </div>
-    </div>
+			<div class="ms-auto d-flex align-items-center">
+				{% if user.is_authenticated %}
+					<span class="badge bg-dark text-white px-3 py-2 me-3 border border-secondary d-flex align-items-center">
+						<span class="d-flex align-items-center">
+							<span class="fs-6">LOGGED AS:</span>
+							<span class="fw-bold fs-6 ms-2" style="color: #00f7ff; text-shadow: 0 0 5px #00f7ff;">{{ request.user.username }}</span>
+						</span>
+					</span>
+					<a class="btn btn-danger px-4 fw-bold btn-sm" href="{% url 'logout' %}">LOG OUT</a>
+				{% else %}
+					<form method="post" action="{% url 'login' %}" class="d-flex align-items-center">
+						{% csrf_token %}
+						<div class="d-flex align-items-center">
+							{% for field in login_form %}
+								<div class="me-1">
+									{{ field }}
+								</div>
+							{% endfor %}
+							{% bootstrap_button "LOG IN" button_type="submit" button_class="btn btn-success px-4 fw-bold btn-sm me-1" %}
+							<a href="{% url 'register' %}" class="btn btn-warning px-4 fw-bold btn-sm">SIGN UP</a>
+						</div>
+					</form>
+				{% endif %}
+			</div>
+		</div>
+	</div>
 </nav>

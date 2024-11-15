@@ -106,58 +106,17 @@ echo "✅ Database configuration updated in $settings_file."
 # Add BOOTSTRAP5 settings to the settings.py file of the project.
 cat << 'EOL' >> "$settings_file"
 BOOTSTRAP5 = {
-    # The complete URL to the Bootstrap CSS file
     "css_url": {
         "url": "https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css",
         "integrity": "sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN",
         "crossorigin": "anonymous",
     },
-
-    # The complete URL to the Bootstrap JavaScript file
     "javascript_url": {
         "url": "https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js",
         "integrity": "sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL",
         "crossorigin": "anonymous",
-    },
-
-    # The URL to the Popper JavaScript file (Bootstrap 5 uses Popper for dropdowns, tooltips, and popovers)
-    # Note: Bootstrap 5 bundles Popper with its JavaScript, so this might not be necessary
-    "popper_url": None,
-
-    # Put JavaScript in the HEAD section of the HTML document (only relevant if you use bootstrap5.html)
-    "javascript_in_head": False,
-
-    # Label class to use in horizontal forms
-    "horizontal_label_class": "col-sm-3",
-
-    # Field class to use in horizontal forms
-    "horizontal_field_class": "col-sm-9",
-
-    # Set placeholder attributes to label if no placeholder is provided
-    "set_placeholder": True,
-
-    # Class to indicate required (better to set this in your Django form)
-    "required_css_class": "",
-
-    # Class to indicate error (better to set this in your Django form)
-    "error_css_class": "is-invalid",
-
-    # Class to indicate success, meaning the field has valid input (better to set this in your Django form)
-    "success_css_class": "is-valid",
-
-    # Renderers (only set these if you have studied the source and understand the inner workings)
-    "formset_renderers":{
-        "default": "django_bootstrap5.renderers.FormsetRenderer",
-    },
-    "form_renderers": {
-        "default": "django_bootstrap5.renderers.FormRenderer",
-    },
-    "field_renderers": {
-        "default": "django_bootstrap5.renderers.FieldRenderer",
-        "inline": "django_bootstrap5.renderers.InlineFieldRenderer",
-    },
+    }
 }
-
 EOL
 echo "✅ BOOTSTRAP CONFIG created in $settings_file."
 
@@ -188,18 +147,20 @@ echo "✅ USER NAMES created in $settings_file."
 
 # Create a view in the views.py file of the app.
 cat << 'EOL' >> "$views_file"
-from django.shortcuts import render, redirect, get_object_or_404
 from django.conf import settings
-from django.utils import timezone
 from django.contrib import auth
 from django.contrib.auth import get_user_model
-from .models import Tip
-from .forms import SignupForm, LoginForm, TipForm
-from django.forms.models import model_to_dict
-import random
 from django.contrib.auth.decorators import login_required
-from django.views.decorators.http import require_POST
 from django.db.models import Prefetch
+from django.forms.models import model_to_dict
+from django.shortcuts import render, redirect, get_object_or_404
+from django.utils import timezone
+from django.views.decorators.http import require_POST
+
+import random
+
+from .forms import SignupForm, LoginForm, TipForm
+from .models import Tip
 from .utils import update_user_reputation, toggle_vote
 
 User = get_user_model()
@@ -344,6 +305,7 @@ echo "✅ VIEWS created in $views_file."
 # Create a URL pattern in the urls.py file of the app.
 cat << 'EOL' >> "$app_urls_file"
 from django.urls import path
+
 from . import views
 
 urlpatterns = [
@@ -362,8 +324,9 @@ echo "✅ URL pattern created in $app_urls_file."
 cat << 'EOL' >> "$app_forms_file"
 from django import forms
 from django.contrib.auth import get_user_model
-from .models import Tip
 from django.contrib.auth import authenticate
+
+from .models import Tip
 
 User = get_user_model()
 
@@ -503,6 +466,7 @@ from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import Group
 from django.urls import reverse
 from django.utils.html import format_html
+
 from .models import User, Tip, CustomGroup
 
 class CustomGroupAdmin(admin.ModelAdmin):
