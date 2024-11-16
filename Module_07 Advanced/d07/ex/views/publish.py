@@ -14,8 +14,8 @@ from django.urls import reverse_lazy
 class Publish(LoginRequiredMixin, FormView):
     template_name = "publish.html"
     form_class = PublishForm
-    success_url = reverse_lazy('index')
-    login_url = reverse_lazy('index')
+    success_url = reverse_lazy('articles')
+    login_url = reverse_lazy('articles')
 
     def form_valid(self, form: PublishForm):
         title = form.cleaned_data['title']
@@ -31,7 +31,7 @@ class Publish(LoginRequiredMixin, FormView):
         except DatabaseError as e:
             messages.success(
                 self.request, "Unsuccessful publish. DatabaseError")
-            return redirect('index')
+            return redirect('articles')
         messages.success(self.request, "Successful publish.")
         return super().form_valid(form)
 

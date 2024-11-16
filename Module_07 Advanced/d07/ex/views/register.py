@@ -12,12 +12,12 @@ from django.urls import reverse_lazy
 class Register(FormView):
     template_name = "register.html"
     form_class = RegisterForm
-    success_url = reverse_lazy('index')
+    success_url = reverse_lazy('articles')
 
     def get(self, request: HttpRequest, *args: str, **kwargs: Any) -> HttpResponse:
         if self.request.user.is_authenticated:
             messages.error(self.request, 'You already logined!')
-            return redirect('index')
+            return redirect('articles')
         return super().get(request, *args, **kwargs)
 
     def form_valid(self, form: RegisterForm):

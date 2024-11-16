@@ -1,5 +1,4 @@
 from .articles import *
-from .home import *
 from .login import *
 from .logout import *
 from .register import *

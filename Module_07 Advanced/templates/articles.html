@@ -1,41 +1,48 @@
 {% extends 'base.html' %}
 {% load django_bootstrap5 %}
+{% load i18n %}
 
-{% block title %}💫 django: Articles{% endblock title %}
+{% block title %}💫 django: {% trans "Articles" %}{% endblock title %}
 
 {% block content %}
 <div>
-	<h1 id="articles" style="display: inline-block">Articles</h1>
+    <div class="d-flex justify-content-between align-items-center">
+        <h1 id="articles" style="display: inline-block">{% trans "ARTICLES" %}</h1>
+        <div class="language-links">
+            <a href="/en/articles/" class="btn btn-link btn-sm {% if '/en/' in request.path %}fw-bold text-decoration-underline{% endif %}">EN</a>
+            <a href="/es/articles/" class="btn btn-link btn-sm {% if '/es/' in request.path %}fw-bold text-decoration-underline{% endif %}">ES</a>
+        </div>
+    </div>
 
-	{% include 'nav.html' %}
+    {% include 'nav.html' %}
 
-	<div class="table-responsive">
-		<table class="table">
-			<thead>
-				<tr>
-					<th>TITLE</th>
-					<th>AUTHOR</th>
-					<th>SYNOPSIS</th>
-					<th>CREATED</th>
-					<th>⏳</th>
-					<th>🔍</th>
-				</tr>
-			</thead>
-			<tbody>
-				{% for article in object_list %}
-				<tr>
-					<td>{{ article.title|truncatechars:20 }}</td>
-					<td>{{ article.author }}</td>
-					<td>{{ article.synopsis|truncatechars:100 }}</td>
-					<td>{{ article.created|date:"d-M-Y H:i"|upper }}</td>
-					<td>{{ article.created|timesince}}</td>
-					<td>
-						<a href="{% url 'articles_detail' article.id %}" class="btn btn-secondary btn-sm text-white small">DETAIL</a>
-					</td>
-				</tr>
-				{% endfor %}
-			</tbody>
-		</table>
-	</div>
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>{% trans "TITLE" %}</th>
+                    <th>{% trans "AUTHOR" %}</th>
+                    <th>{% trans "SYNOPSIS" %}</th>
+                    <th>{% trans "CREATED" %}</th>
+                    <th>⏳</th>
+                    <th>🔍</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for article in object_list %}
+                <tr>
+                    <td>{{ article.title|truncatechars:20 }}</td>
+                    <td>{{ article.author }}</td>
+                    <td>{{ article.synopsis|truncatechars:100 }}</td>
+                    <td>{{ article.created|date:"d-M-Y H:i"|upper }}</td>
+                    <td>{{ article.created|timesince}}</td>
+                    <td>
+                        <a href="{% url 'articles_detail' article.id %}" class="btn btn-secondary btn-sm text-white small">{% trans "DETAIL" %}</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
 {% endblock %}

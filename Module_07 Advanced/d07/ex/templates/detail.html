@@ -6,7 +6,7 @@
 
 {% block content %}
 <div>
-    <h1>Detail</h1>
+    <h1 id="detail" style="display: inline-block">DETAIL</h1>
     
     {% include 'nav.html' %}
 
@@ -14,8 +14,8 @@
         <h2 class="text-uppercase fw-bold mb-3">{{ object.title }}</h2>
         <div class="d-flex justify-content-between align-items-start">
             <div>
-                <h4 id="object.author" class="text-secondary mb-0">Author: {{ object.author }}</h4>
-                <h4 id="object.created" class="text-secondary">Created: {{ object.created|date:"d-M-Y H:i"|upper }}</h4>
+                <h5 id="object.author" class="text-secondary mb-0">Author: {{ object.author }}</h5>
+                <h5 id="object.created" class="text-secondary">Created: {{ object.created|date:"d-M-Y H:i"|upper }}</h5>
             </div>
 
             {% if user.is_authenticated %}
@@ -45,9 +45,9 @@
 
 {% block extra_js %}
 {% if user.is_authenticated %}
-<script>
+<!-- <script>
     const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
     const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
-</script>
+</script> -->
 {% endif %}
 {% endblock %}

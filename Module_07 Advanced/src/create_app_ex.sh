@@ -24,6 +24,7 @@ management_source_dir="../management"
 
 app_admin_file="$app_name/admin.py"
 app_utils_file="$app_name/utils.py"
+app_tests_file="$app_name/tests.py"
 
 
 
@@ -39,7 +40,7 @@ echo "✅ <$app_name> APP created."
 
 
 # Add the app to the INSTALLED_APPS list in the settings.py file of the project.
-sed -i "/INSTALLED_APPS = \[/,/]/ s/\(]\)/    '$app_name',\n    'django_bootstrap5',\n&/" "$settings_file"
+sed -i "/INSTALLED_APPS = \[/,/]/ s/\(]\)/    'django_bootstrap5',\n    '$app_name',\n&/" "$settings_file"
 echo "✅ <$app_name> added to INSTALLED_APPS."
 
 
@@ -53,21 +54,35 @@ echo "✅ <localhost> and <127.0.0.1> added to ALLOWED_HOSTS."
 # Create a URL pattern in the urls.py file of the project.
 sed -i '/from django.urls.conf import include/d' "$project_urls_file"
 sed -i 's/from django.urls import path/from django.urls import path, include/' "$project_urls_file"
-NEW_URL="path('', include('$app_name.urls')),"
-sed -i "/urlpatterns = \[/,/]/ s|]|    $NEW_URL\n]|" "$project_urls_file"
-echo "✅ URL pattern created in $project_urls_file."
+cat << 'EOL' > "$project_urls_file"
+from django.contrib import admin
+from django.urls import path, include
+from django.conf.urls.i18n import i18n_patterns
+from django.views.generic import RedirectView
+
+urlpatterns = [
+    path('', RedirectView.as_view(url='/articles/', permanent=False)),
+    path('i18n/', include('django.conf.urls.i18n')),
+    path('articles/', include('ex.urls')),
+]
+
+urlpatterns += i18n_patterns(
+    path('admin/', admin.site.urls),
+    path('articles/', include('ex.urls')),
+    prefix_default_language=True
+)
+EOL
+echo "✅ URL pattern created in $project_urls_file"
 
 
 
 # Create a URL pattern in the urls.py file of the app.
 cat << 'EOL' >> "$app_urls_file"
 from django.urls import path
-from django.views.generic import RedirectView
 from .views import Login, Logout, Register, ArticlesView, Detail, Publish, Publications, Favourite
 
 urlpatterns = [
-    path('', RedirectView.as_view(url='articles/', permanent=False), name='index'),
-    path('articles/', ArticlesView.as_view(), name='articles'),
+    path('', ArticlesView.as_view(), name='articles'),
     path('login/', Login.as_view(), name='login'),
     path('logout/', Logout.as_view(), name='logout'),
     path('register/', Register.as_view(), name='register'),
@@ -76,7 +91,6 @@ urlpatterns = [
     path('publications/', Publications.as_view(), name='publications'),
     path('favourite/', Favourite.as_view(), name='favourite')
 ]
-
 EOL
 echo "✅ URL pattern created in $app_urls_file."
 
@@ -119,9 +133,36 @@ echo "✅ Middleware file created with both middlewares in $middleware_file"
 
 
 # Add the middlewares to the MIDDLEWARE list in the settings.py file of the project.
-sed -i "/MIDDLEWARE = \[/a\    '$app_name.middleware.RedirectToArticlesMiddleware'," "$settings_file"
-sed -i "/django.contrib.auth.middleware.AuthenticationMiddleware/a\    '$app_name.middleware.LoginFormMiddleware'," "$settings_file"
-echo "✅ Middlewares added to MIDDLEWARE in settings.py"
+i18n_middleware=$(cat << 'EOL'
+MIDDLEWARE = [
+    'django.middleware.security.SecurityMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.locale.LocaleMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'ex.middleware.LoginFormMiddleware',
+    'ex.middleware.RedirectToArticlesMiddleware'
+]
+EOL
+)
+
+
+
+# Replace the entire MIDDLEWARE section in settings.py
+awk -v replacement="$i18n_middleware" '
+    /^MIDDLEWARE = \[/,/\]/ {
+        if (!printed) {
+            print replacement
+            printed = 1
+        }
+        next
+    }
+    { print }
+' "$settings_file" > temp_settings && mv temp_settings "$settings_file"
+echo "✅ Middlewares updated in settings.py"
 
 
 
@@ -197,8 +238,67 @@ BOOTSTRAP5 = {
     "success_css_class": "",  
 }
 
+# Internationalization settings
+LANGUAGE_CODE = 'en'
+USE_I18N = True
+USE_L10N = True
+
+LANGUAGES = [
+    ('en', 'English'),
+    ('es', 'Spanish'),
+]
+
+LOCALE_PATHS = [
+    BASE_DIR / 'locale',
+]
 EOL
-echo "✅ BOOTSTRAP CONFIG created in $settings_file."
+echo "✅ BOOTSTRAP5 and i18n CONFIG created in $settings_file."
+
+# Create locale directories
+mkdir -p "locale/es/LC_MESSAGES"
+mkdir -p "locale/en/LC_MESSAGES"
+echo "✅ Locale directories created"
+
+# Create Spanish translation file
+cat << 'EOL' > "locale/es/LC_MESSAGES/django.po"
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-03-16 12:00+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: es\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "ARTICLES"
+msgstr "ARTICULOS"
+
+msgid "TITLE"
+msgstr "TÍTULO"
+
+msgid "AUTHOR"
+msgstr "AUTOR"
+
+msgid "SYNOPSIS"
+msgstr "SINOPSIS"
+
+msgid "CREATED"
+msgstr "CREADO"
+
+msgid "DETAIL"
+msgstr "DETALLES"
+EOL
+echo "✅ Spanish translations file created"
 
 
 
@@ -208,13 +308,21 @@ copy_directory_contents() {
     local dest_dir=$2
     local dir_type=$3
     local had_errors=false
-
+    
     mkdir -p "$dest_dir"
     
     if [ -d "$source_dir" ]; then
         echo -e "\n📁 Copying $dir_type files from $source_dir:"
         
         for file in "$source_dir"/*; do
+            # Skip if file doesn't exist (in case of no matches)
+            [ -e "$file" ] || continue
+            
+            # Skip __pycache__ directories
+            if [[ $(basename "$file") == "__pycache__" ]]; then
+                continue
+            fi
+            
             if [ -f "$file" ]; then
                 filename=$(basename "$file")
                 if cp "$file" "$dest_dir/"; then
@@ -225,10 +333,16 @@ copy_directory_contents() {
                 fi
             elif [ -d "$file" ]; then
                 dirname=$(basename "$file")
-                if cp -r "$file" "$dest_dir/"; then
+                # Create destination directory without copying __pycache__
+                mkdir -p "$dest_dir/$dirname"
+                
+                # Copy directory contents excluding __pycache__
+                if rsync -a --exclude='__pycache__' "$file/" "$dest_dir/$dirname/"; then
                     echo "   📂 Copied directory: $dirname"
+                    # List copied files (excluding __pycache__)
                     for subfile in "$file"/*; do
-                        if [ -f "$subfile" ]; then
+                        [ -e "$subfile" ] || continue
+                        if [ -f "$subfile" ] && [[ $(basename "$(dirname "$subfile")") != "__pycache__" ]]; then
                             subfilename=$(basename "$subfile")
                             if [ -f "$dest_dir/$dirname/$subfilename" ]; then
                                 echo "      📄 Copied: $dirname/$subfilename"
@@ -258,6 +372,8 @@ copy_directory_contents() {
     fi
 }
 
+
+
 # Copy VIEWS
 copy_directory_contents "$views_source_dir" "$views_dir_app" "VIEWS"
 
@@ -275,19 +391,153 @@ copy_directory_contents "$management_source_dir" "$management_dir_app" "MANAGEME
 
 
 
-# # Create the admin.py file to the app.
-# cat << 'EOL' >> "$app_admin_file"
-
-# EOL
-# echo "✅ ADMIN file created in $app_admin_file."
-
+# Generate message files
+python manage.py makemessages -l es
+python manage.py makemessages -l en
+echo "✅ Language message files created"
 
 
-# # Create the utils.py file to the app.
-# cat << 'EOL' >> "$app_utils_file"
 
-# EOL
-# echo "✅ UTILS file created in $app_utils_file."
+# Compile messages
+python manage.py compilemessages
+echo "✅ Language messages compiled"
+
+
+
+# Create tests.py file
+cat << 'EOL' > "$app_tests_file"
+from django.test import TestCase, Client
+from django.urls import reverse
+from django.contrib.auth.models import User
+from .models import Article, UserFavoriteArticle
+from django.contrib.messages import get_messages
+
+class ArticleAccessTestCase(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        # Set up non-modified objects used by all test methods
+        cls.user = User.objects.create_user(
+            username='testuser',
+            password='testpass123',
+            email='test@example.com'
+        )
+        cls.user2 = User.objects.create_user(
+            username='testuser2',
+            password='testpass123',
+            email='test2@example.com'
+        )
+
+    def setUp(self):
+        self.client = Client()
+        self.article = Article.objects.create(
+            title='Test Article',
+            author=self.user,
+            synopsis='Test Synopsis',
+            content='Test Content'
+        )
+
+    def test_protected_views_redirect_anonymous_users(self):
+        """Test that anonymous users are redirected to login when accessing protected views"""
+        protected_urls = [
+            reverse('favourite'),
+            reverse('publications'),
+            reverse('publish'),
+        ]
+
+        for url in protected_urls:
+            response = self.client.get(url)
+            self.assertEqual(response.status_code, 302)
+            self.assertIn('login', response.url)
+
+    def test_protected_views_accessible_to_logged_users(self):
+        """Test that logged-in users can access protected views"""
+        self.assertTrue(
+            self.client.login(username='testuser', password='testpass123')
+        )
+        
+        protected_urls = [
+            reverse('favourite'),
+            reverse('publications'),
+            reverse('publish'),
+        ]
+
+        for url in protected_urls:
+            response = self.client.get(url)
+            self.assertEqual(response.status_code, 200)
+
+    def test_register_view_inaccessible_to_logged_users(self):
+        """Test that logged-in users cannot access the registration page"""
+        self.assertTrue(
+            self.client.login(username='testuser', password='testpass123')
+        )
+        
+        response = self.client.get(reverse('register'))
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, reverse('articles'))
+
+    def test_prevent_duplicate_favorites(self):
+        """Test that users cannot add the same article to favorites twice"""
+        self.assertTrue(
+            self.client.login(username='testuser2', password='testpass123')
+        )
+        
+        # First attempt should succeed
+        response = self.client.post(reverse('favourite'), {
+            'article_id': self.article.id
+        })
+        self.assertEqual(response.status_code, 302)
+        
+        self.assertTrue(
+            UserFavoriteArticle.objects.filter(
+                user=self.user2,
+                article=self.article
+            ).exists()
+        )
+        
+        # Second attempt should fail
+        response = self.client.post(reverse('favourite'), {
+            'article_id': self.article.id
+        })
+        self.assertEqual(response.status_code, 302)
+        
+        # Verify only one favorite entry exists
+        favorite_count = UserFavoriteArticle.objects.filter(
+            user=self.user2,
+            article=self.article
+        ).count()
+        self.assertEqual(favorite_count, 1)
+
+    def test_templates_protection(self):
+        """Test that protected templates are only accessible to logged-in users"""
+        protected_urls = {
+            'favourite': reverse('favourite'),
+            'publications': reverse('publications'),
+            'publish': reverse('publish')
+        }
+
+        # Test anonymous access
+        for name, url in protected_urls.items():
+            response = self.client.get(url)
+            self.assertEqual(
+                response.status_code, 
+                302, 
+                f"{name} should redirect anonymous users"
+            )
+            self.assertIn('login', response.url)
+
+        # Test authenticated access
+        self.assertTrue(
+            self.client.login(username='testuser', password='testpass123')
+        )
+        for name, url in protected_urls.items():
+            response = self.client.get(url)
+            self.assertEqual(
+                response.status_code, 
+                200, 
+                f"{name} should be accessible to logged users"
+            )
+EOL
+echo "✅ Tests file created in $app_tests_file"
 
 
 

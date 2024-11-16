@@ -5,7 +5,7 @@
 
 {% block content %}
 <div>
-    <h1>Publish</h1>
+    <h1>PUBLISH</h1>
 
     {% include 'nav.html' %}
 
@@ -31,11 +31,6 @@
             if (feedbackDiv && feedbackDiv.classList.contains('invalid-feedback')) {
                 feedbackDiv.textContent = '';
             }
-        });
-
-        document.querySelectorAll('textarea').forEach(textarea => {
-            textarea.classList.remove('is-valid', 'is-invalid');
-            textarea.value = '';
         });
 
         document.querySelectorAll('.alert').forEach(alert => {

@@ -29,7 +29,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-%=u562ow#l^d)t)4t=pya2i0th&o&4fyp$g87)j$$bv$52500z'
+SECRET_KEY = 'django-insecure-@8g*a=4i%yk&l8dj76*h-u4(k=pb8jnj5#6kx)7xh)w0-$yx&m'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -46,20 +46,21 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'ex',
     'django_bootstrap5',
+    'ex',
 ]
 
 MIDDLEWARE = [
-    'ex.middleware.RedirectToArticlesMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'ex.middleware.LoginFormMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'ex.middleware.LoginFormMiddleware',
+    'ex.middleware.RedirectToArticlesMiddleware'
 ]
 
 ROOT_URLCONF = 'd07.urls'
@@ -158,3 +159,16 @@ BOOTSTRAP5 = {
     "success_css_class": "",  
 }
 
+# Internationalization settings
+LANGUAGE_CODE = 'en'
+USE_I18N = True
+USE_L10N = True
+
+LANGUAGES = [
+    ('en', 'English'),
+    ('es', 'Spanish'),
+]
+
+LOCALE_PATHS = [
+    BASE_DIR / 'locale',
+]
