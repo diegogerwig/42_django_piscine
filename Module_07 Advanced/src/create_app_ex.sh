@@ -333,13 +333,10 @@ copy_directory_contents() {
                 fi
             elif [ -d "$file" ]; then
                 dirname=$(basename "$file")
-                # Create destination directory without copying __pycache__
                 mkdir -p "$dest_dir/$dirname"
                 
-                # Copy directory contents excluding __pycache__
                 if rsync -a --exclude='__pycache__' "$file/" "$dest_dir/$dirname/"; then
                     echo "   📂 Copied directory: $dirname"
-                    # List copied files (excluding __pycache__)
                     for subfile in "$file"/*; do
                         [ -e "$subfile" ] || continue
                         if [ -f "$subfile" ] && [[ $(basename "$(dirname "$subfile")") != "__pycache__" ]]; then

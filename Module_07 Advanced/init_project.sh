@@ -16,8 +16,6 @@ run_project() {
     bash ./src/run_project.sh
 }
 
-
-
 full_init() {
     bash ./src/clean_repo.sh
 
