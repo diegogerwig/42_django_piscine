@@ -29,7 +29,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-@8g*a=4i%yk&l8dj76*h-u4(k=pb8jnj5#6kx)7xh)w0-$yx&m'
+SECRET_KEY = 'django-insecure-9fba+)$l84u2bjvg)pmaw74m7#@*oyv+r$xam0sy1s6=&2!kh0'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -158,11 +158,11 @@ BOOTSTRAP5 = {
     "error_css_class": "is-invalid",
     "success_css_class": "",  
 }
-
-# Internationalization settings
+# Internationalization
 LANGUAGE_CODE = 'en'
 USE_I18N = True
 USE_L10N = True
+USE_TZ = True
 
 LANGUAGES = [
     ('en', 'English'),
@@ -170,5 +170,5 @@ LANGUAGES = [
 ]
 
 LOCALE_PATHS = [
-    BASE_DIR / 'locale',
+    os.path.join(BASE_DIR, 'locale'),
 ]

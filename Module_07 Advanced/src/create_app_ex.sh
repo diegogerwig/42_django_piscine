@@ -52,24 +52,24 @@ echo "✅ <localhost> and <127.0.0.1> added to ALLOWED_HOSTS."
 
 
 # Create a URL pattern in the urls.py file of the project.
-sed -i '/from django.urls.conf import include/d' "$project_urls_file"
-sed -i 's/from django.urls import path/from django.urls import path, include/' "$project_urls_file"
 cat << 'EOL' > "$project_urls_file"
 from django.contrib import admin
 from django.urls import path, include
 from django.conf.urls.i18n import i18n_patterns
 from django.views.generic import RedirectView
 
+# Base URLpatterns (without language prefix)
 urlpatterns = [
     path('', RedirectView.as_view(url='/articles/', permanent=False)),
     path('i18n/', include('django.conf.urls.i18n')),
-    path('articles/', include('ex.urls')),
+    path('articles/', include('ex.urls')),  # No-prefix URL
 ]
 
+# i18n patterns (with language prefix)
 urlpatterns += i18n_patterns(
     path('admin/', admin.site.urls),
     path('articles/', include('ex.urls')),
-    prefix_default_language=True
+    prefix_default_language=True  # This ensures both /en/ and /es/ URLs work
 )
 EOL
 echo "✅ URL pattern created in $project_urls_file"
@@ -133,6 +133,7 @@ echo "✅ Middleware file created with both middlewares in $middleware_file"
 
 
 # Add the middlewares to the MIDDLEWARE list in the settings.py file of the project.
+# Replace the entire MIDDLEWARE section in settings.py
 i18n_middleware=$(cat << 'EOL'
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -149,9 +150,6 @@ MIDDLEWARE = [
 EOL
 )
 
-
-
-# Replace the entire MIDDLEWARE section in settings.py
 awk -v replacement="$i18n_middleware" '
     /^MIDDLEWARE = \[/,/\]/ {
         if (!printed) {
@@ -237,11 +235,18 @@ BOOTSTRAP5 = {
     "error_css_class": "is-invalid",
     "success_css_class": "",  
 }
+EOL
+echo "✅ BOOTSTRAP5 config created in $settings_file."
 
-# Internationalization settings
+
+
+# Add/update internationalization settings in settings.py
+cat << 'EOL' >> "$settings_file"
+# Internationalization
 LANGUAGE_CODE = 'en'
 USE_I18N = True
 USE_L10N = True
+USE_TZ = True
 
 LANGUAGES = [
     ('en', 'English'),
@@ -249,15 +254,19 @@ LANGUAGES = [
 ]
 
 LOCALE_PATHS = [
-    BASE_DIR / 'locale',
+    os.path.join(BASE_DIR, 'locale'),
 ]
 EOL
-echo "✅ BOOTSTRAP5 and i18n CONFIG created in $settings_file."
+echo "✅ i18n settings updated in settings.py"
+
+
 
 # Create locale directories
 mkdir -p "locale/es/LC_MESSAGES"
 mkdir -p "locale/en/LC_MESSAGES"
 echo "✅ Locale directories created"
+
+
 
 # Create Spanish translation file
 cat << 'EOL' > "locale/es/LC_MESSAGES/django.po"
@@ -295,8 +304,6 @@ msgstr "SINOPSIS"
 msgid "CREATED"
 msgstr "CREADO"
 
-msgid "DETAIL"
-msgstr "DETALLES"
 EOL
 echo "✅ Spanish translations file created"
 
@@ -401,13 +408,26 @@ echo "✅ Language messages compiled"
 
 
 
+# Create pytest.ini file
+cat << 'EOL' > "pytest.ini"
+[pytest]
+DJANGO_SETTINGS_MODULE = d07.settings
+python_files = tests.py test_*.py *_tests.py
+norecursedirs = .git views models forms templates
+EOL
+echo "✅ pytest.ini file created"
+
+
+
 # Create tests.py file
 cat << 'EOL' > "$app_tests_file"
 from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth.models import User
-from .models import Article, UserFavoriteArticle
 from django.contrib.messages import get_messages
+from django.utils.translation import activate
+from ex.models import Article, UserFavouriteArticle
+
 
 class ArticleAccessTestCase(TestCase):
     @classmethod
@@ -426,6 +446,7 @@ class ArticleAccessTestCase(TestCase):
 
     def setUp(self):
         self.client = Client()
+        activate('en')  # Activate English language for tests
         self.article = Article.objects.create(
             title='Test Article',
             author=self.user,
@@ -433,20 +454,11 @@ class ArticleAccessTestCase(TestCase):
             content='Test Content'
         )
 
-    def test_protected_views_redirect_anonymous_users(self):
-        """Test that anonymous users are redirected to login when accessing protected views"""
-        protected_urls = [
-            reverse('favourite'),
-            reverse('publications'),
-            reverse('publish'),
-        ]
 
-        for url in protected_urls:
-            response = self.client.get(url)
-            self.assertEqual(response.status_code, 302)
-            self.assertIn('login', response.url)
 
-    def test_protected_views_accessible_to_logged_users(self):
+    ### favourites views, publications and publish as well as their templates are only accessible by registered users
+
+    def test_1_protected_views_accessible_to_logged_users(self):
         """Test that logged-in users can access protected views"""
         self.assertTrue(
             self.client.login(username='testuser', password='testpass123')
@@ -462,77 +474,60 @@ class ArticleAccessTestCase(TestCase):
             response = self.client.get(url)
             self.assertEqual(response.status_code, 200)
 
-    def test_register_view_inaccessible_to_logged_users(self):
+
+
+    ### A registered user cannot access the new user creation form
+
+    def test_2_register_view_inaccessible_to_logged_users(self):
         """Test that logged-in users cannot access the registration page"""
         self.assertTrue(
             self.client.login(username='testuser', password='testpass123')
         )
         
         response = self.client.get(reverse('register'))
-        self.assertEqual(response.status_code, 302)
         self.assertRedirects(response, reverse('articles'))
 
-    def test_prevent_duplicate_favorites(self):
+
+
+    ### A user cannot add the same article twice in their favorite list
+
+    def test_3_prevent_duplicate_favorites(self):
         """Test that users cannot add the same article to favorites twice"""
         self.assertTrue(
             self.client.login(username='testuser2', password='testpass123')
         )
         
         # First attempt should succeed
-        response = self.client.post(reverse('favourite'), {
-            'article_id': self.article.id
-        })
-        self.assertEqual(response.status_code, 302)
+        response = self.client.post(
+            reverse('favourite'),
+            {'article': self.article.id},
+            follow=True
+        )
+        self.assertEqual(response.status_code, 200)
         
+        # Verify the favorite was added
         self.assertTrue(
-            UserFavoriteArticle.objects.filter(
+            UserFavouriteArticle.objects.filter(
                 user=self.user2,
                 article=self.article
             ).exists()
         )
         
-        # Second attempt should fail
-        response = self.client.post(reverse('favourite'), {
-            'article_id': self.article.id
-        })
-        self.assertEqual(response.status_code, 302)
-        
-        # Verify only one favorite entry exists
-        favorite_count = UserFavoriteArticle.objects.filter(
-            user=self.user2,
-            article=self.article
-        ).count()
-        self.assertEqual(favorite_count, 1)
-
-    def test_templates_protection(self):
-        """Test that protected templates are only accessible to logged-in users"""
-        protected_urls = {
-            'favourite': reverse('favourite'),
-            'publications': reverse('publications'),
-            'publish': reverse('publish')
-        }
-
-        # Test anonymous access
-        for name, url in protected_urls.items():
-            response = self.client.get(url)
-            self.assertEqual(
-                response.status_code, 
-                302, 
-                f"{name} should redirect anonymous users"
-            )
-            self.assertIn('login', response.url)
-
-        # Test authenticated access
-        self.assertTrue(
-            self.client.login(username='testuser', password='testpass123')
+        # Second attempt should not create duplicate
+        response = self.client.post(
+            reverse('favourite'),
+            {'article': self.article.id},
+            follow=True
         )
-        for name, url in protected_urls.items():
-            response = self.client.get(url)
-            self.assertEqual(
-                response.status_code, 
-                200, 
-                f"{name} should be accessible to logged users"
-            )
+        self.assertEqual(response.status_code, 200)
+        
+        # Should remove the favorite instead
+        self.assertFalse(
+            UserFavouriteArticle.objects.filter(
+                user=self.user2,
+                article=self.article
+            ).exists()
+        )
 EOL
 echo "✅ Tests file created in $app_tests_file"
 

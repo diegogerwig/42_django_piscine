@@ -1,6 +1,6 @@
 from typing import Any, Dict
 from django.views.generic import ListView
-from ex.models import Article
+from ex.models import Article, UserFavouriteArticle
 from ex.forms import LoginForm
 
 class ArticlesView(ListView):

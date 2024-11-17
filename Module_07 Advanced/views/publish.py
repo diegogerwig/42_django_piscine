@@ -10,7 +10,6 @@ from django.contrib.auth import login
 from django.contrib import messages
 from django.urls import reverse_lazy
 
-
 class Publish(LoginRequiredMixin, FormView):
     template_name = "publish.html"
     form_class = PublishForm

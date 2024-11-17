@@ -9,8 +9,12 @@
     <div class="d-flex justify-content-between align-items-center">
         <h1 id="articles" style="display: inline-block">{% trans "ARTICLES" %}</h1>
         <div class="language-links">
-            <a href="/en/articles/" class="btn btn-link btn-sm {% if '/en/' in request.path %}fw-bold text-decoration-underline{% endif %}">EN</a>
-            <a href="/es/articles/" class="btn btn-link btn-sm {% if '/es/' in request.path %}fw-bold text-decoration-underline{% endif %}">ES</a>
+            <a href="/en/articles/" class="btn btn-link btn-sm border rounded p-1 mx-1 {% if '/en/' in request.path %}fw-bold text-decoration-underline{% endif %}">
+                <span class="me-1">🇬🇧</span>EN
+            </a>
+            <a href="/es/articles/" class="btn btn-link btn-sm border rounded p-1 mx-1 {% if '/es/' in request.path %}fw-bold text-decoration-underline{% endif %}">
+                <span class="me-1">🇪🇸</span>ES
+            </a>
         </div>
     </div>
 
@@ -37,7 +41,7 @@
                     <td>{{ article.created|date:"d-M-Y H:i"|upper }}</td>
                     <td>{{ article.created|timesince}}</td>
                     <td>
-                        <a href="{% url 'articles_detail' article.id %}" class="btn btn-secondary btn-sm text-white small">{% trans "DETAIL" %}</a>
+                        <a href="{% url 'articles_detail' article.id %}" class="btn btn-secondary btn-sm text-white small">DETAIL</a>
                     </td>
                 </tr>
                 {% endfor %}

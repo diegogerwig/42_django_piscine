@@ -13,7 +13,6 @@ class Command(BaseCommand):
         Article.objects.all().delete()
         User.objects.all().delete()
 
-        # Create users
         self.stdout.write('Creating users...')
         users = []
         user_data = [
@@ -30,7 +29,6 @@ class Command(BaseCommand):
             users.append(user)
             self.stdout.write(f'Created user: {user.username}')
 
-        # Article titles
         titles = [
             "The Future of Technology",
             "Understanding Machine Learning",
@@ -49,7 +47,6 @@ class Command(BaseCommand):
             "Data Science Fundamentals"
         ]
 
-        # Lorem ipsum paragraphs
         lorem_paragraphs = [
             "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
             "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.",
@@ -79,18 +76,15 @@ class Command(BaseCommand):
 
         self.stdout.write('Creating articles...')
         while True:
-            # Verificar si se cumplen ambas condiciones
             total_articles = len(created_articles)
             min_user_articles = min(articles_by_user.values())
             
             if total_articles >= min_total_articles and min_user_articles >= min_articles_per_user:
                 break
             
-            if not titles:  # Si nos quedamos sin títulos, crear uno genérico
+            if not titles:  
                 titles.append(f"Article {total_articles + 1}")
 
-            # Seleccionar autor
-            # Priorizar usuarios con menos artículos si no han alcanzado el mínimo
             potential_authors = [
                 user for user in users 
                 if articles_by_user[user.id] < min_articles_per_user
@@ -108,17 +102,14 @@ class Command(BaseCommand):
             created_articles.append(article)
             self.stdout.write(f'Created article: {article.title} by {article.author.username}')
 
-        # Crear favoritos para un usuario aleatorio
         selected_user = random.choice(users)
         self.stdout.write(f'Creating favourites for user: {selected_user.username}')
 
-        # Obtener artículos que no son del usuario seleccionado
         other_articles = [
             article for article in created_articles 
             if article.author != selected_user
         ]
 
-        # Seleccionar 2 artículos aleatorios como favoritos
         if len(other_articles) >= 2:
             favourite_articles = random.sample(other_articles, 2)
             for article in favourite_articles:
@@ -128,7 +119,6 @@ class Command(BaseCommand):
                 )
                 self.stdout.write(f'Added favourite: {article.title} for user {selected_user.username}')
 
-        # Resumen final
         self.stdout.write(self.style.SUCCESS(f'''
 Successfully populated database:
 - Created {len(users)} users

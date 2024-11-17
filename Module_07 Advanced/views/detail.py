@@ -2,7 +2,7 @@ from django.views.generic import DetailView
 from django.contrib import messages
 from django.shortcuts import redirect
 from django.db import DatabaseError
-from ex.models.article import Article, UserFavouriteArticle
+from ex.models import Article, UserFavouriteArticle
 
 class Detail(DetailView):
     model = Article

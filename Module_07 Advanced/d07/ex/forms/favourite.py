@@ -1,20 +1,7 @@
-# from django import forms
-# from django.forms.widgets import HiddenInput
-
-
-# class FavouriteForm(forms.Form):
-#     article = forms.IntegerField(widget=HiddenInput(), required=True)
-
-#     def __init__(self, article, *args, **kwargs) -> None:
-#         super().__init__(*args, **kwargs)
-#         if article is not None:
-#             self.fields['article'].initial = article
-
-
-
 from django import forms
 from django.forms.widgets import HiddenInput
-from ex.models import Article
+from ex.models import Article, UserFavouriteArticle
+
 
 class FavouriteForm(forms.Form):
     article = forms.ModelChoiceField(queryset=Article.objects.all(), widget=forms.HiddenInput())
