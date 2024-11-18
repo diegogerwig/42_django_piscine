@@ -17,3 +17,11 @@ def chat_room(request, room_name):
         'room': room,
         'messages': messages
     })
+
+# from django.contrib.auth import logout
+# from django.shortcuts import redirect
+
+# def logout_view(request):
+#     if request.method == 'POST':
+#         logout(request)
+#         return redirect('account')

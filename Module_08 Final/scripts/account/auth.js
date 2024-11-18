@@ -267,13 +267,11 @@ const NotificationModule = {
 
         container.appendChild(alert);
 
-        // Remover automáticamente después de 5 segundos
         setTimeout(() => {
             const bsAlert = new bootstrap.Alert(alert);
             bsAlert.close();
         }, 5000);
 
-        // Eliminar del DOM después de que termine la animación
         alert.addEventListener('closed.bs.alert', () => {
             alert.remove();
         });

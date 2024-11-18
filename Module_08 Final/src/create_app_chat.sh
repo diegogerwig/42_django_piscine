@@ -4,34 +4,44 @@
 project_name="d09"
 app_name="chat"
 
+
 # Project files paths
 settings_file="$project_name/settings.py"
 project_urls_file="$project_name/urls.py"
 
+
 # App directory structure
 views_dir_app="$app_name/views"
 models_dir_app="$app_name/models"
-templates_dir_app="$app_name/templates/chat"  # Updated path
+templates_dir_app="$app_name/templates/chat"  
+scripts_dir="$app_name/scripts"
 consumers_dir_app="$app_name/consumers"
+
 
 # Source directories
 templates_source_dir="templates/chat"
+scripts_source_dir="scripts/chat"
+
 
 # Create Django app
 cd "$project_name"
 python manage.py startapp "$app_name"
 echo "✅ <$app_name> APP created."
 
+
 # Create directory structure
 mkdir -p "$views_dir_app"
 mkdir -p "$models_dir_app"
 mkdir -p "$templates_dir_app"
+mkdir -p "$scripts_dir"
 mkdir -p "$consumers_dir_app"
+
 
 # Create __init__.py files
 touch "$views_dir_app/__init__.py"
 touch "$models_dir_app/__init__.py"
 touch "$consumers_dir_app/__init__.py"
+
 
 # Add Channels and App to INSTALLED_APPS
 if ! grep -q "'channels'," "$settings_file" && ! grep -q "'$app_name'," "$settings_file"; then
@@ -43,6 +53,7 @@ if ! grep -q "'channels'," "$settings_file" && ! grep -q "'$app_name'," "$settin
     fi
     echo "✅ Apps added to INSTALLED_APPS."
 fi
+
 
 # Add Channels configuration and auth settings
 if ! grep -q "ASGI_APPLICATION" "$settings_file"; then
@@ -61,6 +72,7 @@ LOGIN_URL = '/account/'
 EOL
     echo "✅ Channels and authentication configuration added."
 fi
+
 
 # Add Templates configuration
 if ! grep -q "TEMPLATES = \[" "$settings_file"; then
@@ -95,6 +107,7 @@ else
     }' "$settings_file"
     echo "✅ Templates DIRS updated."
 fi
+
 
 # Copy files from source to destination directory function
 copy_directory_contents() {
@@ -131,8 +144,11 @@ copy_directory_contents() {
     fi
 }
 
+
 # Copy template files
 copy_directory_contents "$templates_source_dir" "$templates_dir_app" "TEMPLATES"
+copy_directory_contents "$scripts_source_dir" "$scripts_dir" "SCRIPTS"
+
 
 # Update project URLs
 cat << 'EOL' > "$project_urls_file"
@@ -153,6 +169,7 @@ urlpatterns = [
 EOL
 echo "✅ Project URLs created."
 
+
 # Create routing.py in chat app
 cat << 'EOL' > "$app_name/routing.py"
 from django.urls import re_path
@@ -164,6 +181,7 @@ websocket_urlpatterns = [
 
 EOL
 echo "✅ Chat routing created."
+
 
 # Create urls.py in chat app
 cat << 'EOL' > "$app_name/urls.py"
@@ -178,6 +196,7 @@ urlpatterns = [
 ]
 EOL
 echo "✅ Chat URLs created."
+
 
 # Create views
 cat << 'EOL' > "$app_name/views/chat_views.py"
@@ -230,6 +249,7 @@ def chat_room(request, room_name):
 EOL
 echo "✅ Views created."
 
+
 # Create models
 cat << 'EOL' > "$app_name/models/chat_models.py"
 from django.db import models
@@ -252,6 +272,7 @@ class Message(models.Model):
         ordering = ['timestamp']
 EOL
 echo "✅ Models created."
+
 
 # Create consumer
 cat << 'EOL' > "$app_name/consumers/chat_consumer.py"
@@ -349,6 +370,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
 EOL
 echo "✅ Consumer created."
 
+
 # Create asgi.py
 cat << 'EOL' > "$project_name/asgi.py"
 import os
@@ -371,9 +393,11 @@ application = ProtocolTypeRouter({
 EOL
 echo "✅ ASGI configuration created."
 
+
 # Create migrations and apply them
 python manage.py makemigrations
 python manage.py migrate
+
 
 # Create initial chat rooms and users
 python manage.py shell << 'EOL'
@@ -408,3 +432,5 @@ echo "- room2"
 echo "- room3"
 
 echo -e "\n✨ CHAT application setup complete!\n"
+
+echo -e "\n**********************\n"
