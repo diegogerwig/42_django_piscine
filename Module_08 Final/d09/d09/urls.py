@@ -6,8 +6,11 @@ from django.conf import settings
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('scripts/<path:path>', serve, {
+    path('account/scripts/<path:path>', serve, {
         'document_root': os.path.join(settings.BASE_DIR, 'account', 'scripts')
+    }),
+    path('chat/scripts/<path:path>', serve, {
+        'document_root': os.path.join(settings.BASE_DIR, 'chat', 'scripts')
     }),
     path('', include('account.urls')),  # Account maintains root
     path('chat/', include('chat.urls')),  # Chat under /chat/

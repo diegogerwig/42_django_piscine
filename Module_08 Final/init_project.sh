@@ -43,7 +43,7 @@ run_project() {
     export PYTHONPATH=$(pwd):$PYTHONPATH
 
     # Intentar iniciar daphne con la configuración correcta
-    echo "🚀 Starting daphne server..."
+    echo "🚀 Starting DAPHNE server..."
     if python -m daphne -b 0.0.0.0 -p 8000 d09.asgi:application; then
         echo "✅ Daphne server running"
     else

@@ -18,7 +18,7 @@
                                     {{ chat_room.name }}
                                 </span>
                                 <span class="badge bg-primary rounded-pill">
-                                    {% with count=chat_room.message_set.count %}
+                                    {% with count=chat_room.message_set.exclude.user.username='System'.count %}
                                         {{ count }} message{{ count|pluralize }}
                                     {% endwith %}
                                 </span>

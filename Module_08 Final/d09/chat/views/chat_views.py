@@ -4,6 +4,7 @@ from ..models.chat_models import ChatRoom, Message
 from django.contrib.auth.models import User
 from django.contrib.sessions.models import Session
 from django.utils import timezone
+from django.http import JsonResponse
 
 def get_current_users():
     active_sessions = Session.objects.filter(expire_date__gte=timezone.now())
@@ -44,3 +45,21 @@ def chat_room(request, room_name):
         })
     except ChatRoom.DoesNotExist:
         return redirect('chat:room_list')
+
+@login_required
+def get_chat_messages(request, room_name):
+    """API endpoint to get historical messages for a room."""
+    try:
+        room = ChatRoom.objects.get(name=room_name)
+        messages = Message.objects.filter(room=room).order_by('-timestamp')[:50]
+        messages = reversed(list(messages))
+        
+        messages_data = [{
+            'username': message.user.username,
+            'message': message.content,
+            'timestamp': message.timestamp.strftime('%H:%M')
+        } for message in messages]
+        
+        return JsonResponse(messages_data, safe=False)
+    except ChatRoom.DoesNotExist:
+        return JsonResponse({'error': 'Room not found'}, status=404)
