@@ -2,14 +2,14 @@
 {% load django_bootstrap5 %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="row vh-100">
-        <!-- Left Sidebar - Room List -->
-        <div class="col-md-2 border-end border-secondary bg-secondary p-0 vh-100 overflow-auto">
-            <div class="p-2 bg-dark sticky-top">
+<div class="h-100">
+    <div class="row h-100">
+        <!-- Left Sidebar -->
+        <div class="col-md-2 border-end border-secondary bg-secondary p-0" style="height: calc(100vh - 136px);">
+            <div class="p-2 bg-dark">
                 <h6 class="mb-0 text-white">Chat Rooms</h6>
             </div>
-            <div class="list-group list-group-flush">
+            <div class="list-group list-group-flush overflow-auto" style="max-height: calc(100% - 40px);">
                 {% for chat_room in rooms %}
                     <a href="{% url 'chat:chat_room' chat_room.name %}" 
                        class="list-group-item list-group-item-action bg-secondary text-light border-secondary 
@@ -17,9 +17,7 @@
                         <div class="d-flex justify-content-between align-items-center">
                             {{ chat_room.name }}
                             <span class="badge bg-dark rounded-pill" id="message-count-{{ chat_room.name }}">
-                                {% with count=chat_room.message_set.exclude.user.username='System'.count %}
-                                    {{ count }} message{{ count|pluralize }}
-                                {% endwith %}
+                                {{ chat_room.user_message_count }} message{{ chat_room.user_message_count|pluralize }}
                             </span>
                         </div>
                     </a>
@@ -28,13 +26,13 @@
         </div>
 
         <!-- Main Chat Area -->
-        <div class="col-md-8 p-0 d-flex flex-column vh-100">
-            <!-- Chat Header - Fixed -->
-            <div class="p-3 border-bottom border-secondary bg-dark">
-                <h4 class="mb-0 text-white fw-bold">{{ room.name }}</h4>
+        <div class="col-md-8 p-0 d-flex flex-column" style="height: calc(100vh - 136px);">
+            <!-- Fixed Header -->
+            <div class="p-2 border-bottom border-secondary bg-dark">
+                <h4 class="mb-0 text-white">{{ room.name }}</h4>
             </div>
 
-            <!-- Messages Area - Scrollable -->
+            <!-- Scrollable Messages -->
             <div id="chat-messages-container" class="flex-grow-1 overflow-auto" style="background-color: #2b3035;">
                 <div id="chat-log" class="p-3">
                     {% for message in messages %}
@@ -62,7 +60,7 @@
                 </div>
             </div>
 
-            <!-- Message Input - Fixed at bottom -->
+            <!-- Fixed Input Area -->
             <div class="p-2 border-top border-secondary bg-dark">
                 <div class="input-group">
                     <input type="text" id="chat-message-input" class="form-control bg-secondary text-light border-secondary" 
@@ -72,12 +70,12 @@
             </div>
         </div>
 
-        <!-- Right Sidebar - Users List -->
-        <div class="col-md-2 border-start border-secondary bg-secondary p-0 vh-100 overflow-auto">
-            <div class="p-2 bg-dark sticky-top">
+        <!-- Right Sidebar -->
+        <div class="col-md-2 border-start border-secondary bg-secondary p-0" style="height: calc(100vh - 136px);">
+            <div class="p-2 bg-dark">
                 <h6 class="mb-0 text-white">Online Users</h6>
             </div>
-            <div class="list-group list-group-flush" id="users-list">
+            <div class="list-group list-group-flush overflow-auto" style="max-height: calc(100% - 40px);" id="users-list">
                 {% for user in users %}
                     <div class="list-group-item bg-secondary text-light border-secondary">
                         <span class="text-success me-2">●</span>
@@ -93,98 +91,26 @@
 <script>
     const roomName = "{{ room.name }}";
     const username = "{{ user.username }}";
-    let chatSocket;
-    let messageCount = {% with count=room.message_set.exclude.user.username='System'.count %}{{ count }}{% endwith %};
-    let isReconnecting = false;
+    let chatSocket = null;
+    let messageCount = "{{ room.user_message_count }}" || 0; 
     let userScrolled = false;
+    let initialLoadComplete = false;
 
-    // Update message counter
-    function updateMessageCount() {
+    // Functions
+    function updateMessageCount(count) {
         const countElement = document.getElementById(`message-count-${roomName}`);
         if (countElement) {
-            countElement.textContent = `${messageCount} message${messageCount !== 1 ? 's' : ''}`;
+            countElement.textContent = `${count} message${count !== 1 ? 's' : ''}`;
         }
     }
 
-    // Load historical messages
-    async function loadHistoricalMessages() {
-        if (isReconnecting) return;
-        
-        try {
-            const response = await fetch(`/chat/api/${roomName}/messages/`);
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            const messages = await response.json();
-            const chatLog = document.querySelector('#chat-log');
-            chatLog.innerHTML = '';
-            
-            // Reiniciar el contador de mensajes
-            messageCount = 0;
-            
-            messages.forEach(data => {
-                handleMessage(data, false);
-                // Solo incrementar el contador para mensajes que no son del sistema
-                if (data.username !== 'System') {
-                    messageCount++;
-                }
-            });
-            
-            updateMessageCount();
-            
-            if (!userScrolled) {
-                chatLog.scrollTop = chatLog.scrollHeight;
-            }
-        } catch (error) {
-            console.error('Error loading messages:', error);
-        }
-    }
-
-    // Track user scroll
-    document.querySelector('#chat-messages-container').addEventListener('scroll', function() {
-        const container = this;
-        const isScrolledToBottom = container.scrollHeight - container.clientHeight <= container.scrollTop + 1;
-        userScrolled = !isScrolledToBottom;
-    });
-
-    // WebSocket connection
-    function connectWebSocket() {
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const wsUrl = protocol + '//' + window.location.host + '/ws/chat/' + roomName + '/';
-        
-        chatSocket = new WebSocket(wsUrl);
-
-        chatSocket.onopen = function(e) {
-            if (!isReconnecting) {
-                loadHistoricalMessages();
-            }
-            isReconnecting = true;
-        };
-
-        chatSocket.onmessage = function(e) {
-            const data = JSON.parse(e.data);
-            handleMessage(data, !userScrolled);
-            // Solo incrementar el contador para mensajes que no son del sistema
-            if (data.username !== 'System') {
-                messageCount++;
-                updateMessageCount();
-            }
-        };
-
-        chatSocket.onclose = function(e) {
-            setTimeout(connectWebSocket, 3000);
-        };
-
-        chatSocket.onerror = function(e) {
-            console.error('WebSocket error:', e);
-        };
-    }
-
-    // Handle incoming messages
-    function handleMessage(data, shouldScroll = true) {
-        const messageElement = document.createElement('div');
-        const isCurrentUser = data.username === username;
+    function displayMessage(data) {
+        console.log('Displaying message:', data);
+        const chatLog = document.querySelector('#chat-log');
         const isSystem = data.username === 'System';
+        const isCurrentUser = data.username === username;
+        
+        const messageElement = document.createElement('div');
         
         if (isSystem) {
             messageElement.className = 'message mb-2 text-center';
@@ -207,37 +133,106 @@
             `;
         }
         
-        const chatLog = document.querySelector('#chat-log');
         chatLog.appendChild(messageElement);
         
-        if (shouldScroll) {
+        if (!userScrolled) {
             chatLog.scrollTop = chatLog.scrollHeight;
         }
     }
 
-    // Initialize chat
-    connectWebSocket();
-
-    // Input focus and Enter key handling
-    document.querySelector('#chat-message-input').focus();
-    document.querySelector('#chat-message-input').onkeyup = function(e) {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            document.querySelector('#chat-message-submit').click();
-            e.preventDefault();
+    async function loadHistoricalMessages() {
+        if (initialLoadComplete) return;
+        
+        try {
+            console.log('Loading historical messages...');
+            const response = await fetch(`/chat/api/${roomName}/messages/`);
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            
+            const messages = await response.json();
+            console.log('Historical messages received:', messages);
+            const chatLog = document.querySelector('#chat-log');
+            chatLog.innerHTML = '';
+            
+            let userMessageCount = 0;
+            
+            messages.forEach(data => {
+                displayMessage(data);
+                if (data.username !== 'System') {
+                    userMessageCount++;
+                }
+            });
+            
+            messageCount = userMessageCount;
+            updateMessageCount(messageCount);
+            
+            initialLoadComplete = true;
+        } catch (error) {
+            console.error('Error loading messages:', error);
         }
-    };
+    }
 
-    // Send message handling
-    document.querySelector('#chat-message-submit').onclick = function(e) {
-        const messageInputDom = document.querySelector('#chat-message-input');
-        const message = messageInputDom.value.trim();
-        if (message && chatSocket.readyState === WebSocket.OPEN) {
+    function connectWebSocket() {
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        chatSocket = new WebSocket(`${protocol}//${window.location.host}/ws/chat/${roomName}/`);
+
+        chatSocket.onopen = function() {
+            console.log('WebSocket connected');
+            if (!initialLoadComplete) {
+                loadHistoricalMessages();
+            }
+        }
+
+        chatSocket.onmessage = function(e) {
+            console.log('Message received:', e.data);
+            const data = JSON.parse(e.data);
+            displayMessage(data);
+            
+            if (data.username !== 'System') {
+                messageCount++;
+                updateMessageCount(messageCount);
+            }
+        }
+
+        chatSocket.onclose = function() {
+            console.log('WebSocket disconnected, attempting to reconnect...');
+            setTimeout(connectWebSocket, 3000);
+        }
+
+        chatSocket.onerror = function(error) {
+            console.error('WebSocket error:', error);
+        }
+    }
+
+    // Event Listeners
+    document.querySelector('#chat-messages-container').addEventListener('scroll', function() {
+        const container = this;
+        userScrolled = container.scrollHeight - container.clientHeight > container.scrollTop + 1;
+    });
+
+    document.getElementById('chat-message-submit').addEventListener('click', function() {
+        const messageInput = document.getElementById('chat-message-input');
+        const message = messageInput.value.trim();
+        
+        if (message && chatSocket && chatSocket.readyState === WebSocket.OPEN) {
+            console.log('Sending message:', message);
             chatSocket.send(JSON.stringify({
                 'message': message
             }));
-            messageInputDom.value = '';
+            messageInput.value = '';
             userScrolled = false;
         }
-    };
+    });
+
+    document.getElementById('chat-message-input').addEventListener('keyup', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            document.getElementById('chat-message-submit').click();
+        }
+    });
+
+    // Initialize
+    window.addEventListener('load', function() {
+        connectWebSocket();
+        document.getElementById('chat-message-input').focus();
+    });
 </script>
 {% endblock %}

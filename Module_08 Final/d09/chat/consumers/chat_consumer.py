@@ -11,24 +11,20 @@ class ChatConsumer(AsyncWebsocketConsumer):
         self.room_group_name = f'chat_{self.room_name}'
         self.user = self.scope["user"]
 
-        # Join room group
         await self.channel_layer.group_add(
             self.room_group_name,
             self.channel_name
         )
-
         await self.accept()
-        
-        # Enviar y guardar mensaje de conexión
+
         if self.user.is_authenticated:
             system_message = f'{self.user.username} has joined the chat'
             await self.save_system_message(system_message)
             await self.channel_layer.group_send(
                 self.room_group_name,
                 {
-                    'type': 'chat_message',
+                    'type': 'system_message',
                     'message': system_message,
-                    'username': 'System',
                     'timestamp': timezone.now().strftime('%H:%M')
                 }
             )
@@ -40,42 +36,46 @@ class ChatConsumer(AsyncWebsocketConsumer):
             await self.channel_layer.group_send(
                 self.room_group_name,
                 {
-                    'type': 'chat_message',
+                    'type': 'system_message',
                     'message': system_message,
-                    'username': 'System',
                     'timestamp': timezone.now().strftime('%H:%M')
                 }
             )
 
-        # Leave room group
         await self.channel_layer.group_discard(
             self.room_group_name,
             self.channel_name
         )
 
     async def receive(self, text_data):
-        text_data_json = json.loads(text_data)
-        message = text_data_json['message']
-        
-        # Save message to database
-        await self.save_message(message)
-        
-        # Send message to room group
-        await self.channel_layer.group_send(
-            self.room_group_name,
-            {
-                'type': 'chat_message',
-                'message': message,
-                'username': self.user.username,
-                'timestamp': timezone.now().strftime('%H:%M')
-            }
-        )
+        try:
+            text_data_json = json.loads(text_data)
+            message = text_data_json['message']
+            
+            if await self.save_message(message):
+                await self.channel_layer.group_send(
+                    self.room_group_name,
+                    {
+                        'type': 'chat_message',
+                        'message': message,
+                        'username': self.user.username,
+                        'timestamp': timezone.now().strftime('%H:%M')
+                    }
+                )
+        except Exception as e:
+            print(f"Error in receive: {e}")
+
+    async def system_message(self, event):
+        await self.send(text_data=json.dumps({
+            'username': 'System',
+            'message': event['message'],
+            'timestamp': event['timestamp']
+        }))
 
     async def chat_message(self, event):
-        # Send message to WebSocket
         await self.send(text_data=json.dumps({
-            'message': event['message'],
             'username': event['username'],
+            'message': event['message'],
             'timestamp': event['timestamp']
         }))
 
@@ -99,10 +99,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             room = ChatRoom.objects.get(name=self.room_name)
             system_user, _ = User.objects.get_or_create(
                 username='System',
-                defaults={
-                    'is_active': False,
-                    'password': 'unusable_password'
-                }
+                defaults={'is_active': False}
             )
             Message.objects.create(
                 room=room,
@@ -113,4 +110,3 @@ class ChatConsumer(AsyncWebsocketConsumer):
         except Exception as e:
             print(f"Error saving system message: {e}")
             return False
-

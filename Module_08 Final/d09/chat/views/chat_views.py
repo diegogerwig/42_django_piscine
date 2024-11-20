@@ -1,10 +1,10 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
-from ..models.chat_models import ChatRoom, Message
 from django.contrib.auth.models import User
 from django.contrib.sessions.models import Session
 from django.utils import timezone
 from django.http import JsonResponse
+from ..models.chat_models import ChatRoom, Message
 
 def get_current_users():
     active_sessions = Session.objects.filter(expire_date__gte=timezone.now())
@@ -14,24 +14,27 @@ def get_current_users():
         user_ids.append(data.get('_auth_user_id', None))
     return User.objects.filter(id__in=user_ids)
 
-@login_required
+@login_required(login_url='account')
 def room_list(request):
     """Display list of available chat rooms."""
-    rooms = ChatRoom.objects.all()
-    # Obtener solo usuarios con sesión activa
-    active_users = get_current_users().exclude(is_superuser=True)
-    return render(request, 'chat/room_list.html', {
-        'rooms': rooms,
-        'users': active_users
-    })
+    rooms = ChatRoom.objects.all().prefetch_related('message_set')
+    for room in rooms:
+        room.user_message_count = room.message_set.exclude(user__username='System').count()
+    context = {
+        'rooms': rooms
+    }
+    return render(request, 'chat/room_list.html', context)
 
 @login_required
 def chat_room(request, room_name):
     """Display chat room with message history."""
     try:
         room = ChatRoom.objects.get(name=room_name)
-        rooms = ChatRoom.objects.all()
-        # Obtener solo usuarios con sesión activa
+        rooms = ChatRoom.objects.all().prefetch_related('message_set')
+        
+        for r in rooms:
+            r.user_message_count = r.message_set.exclude(user__username='System').count()
+            
         active_users = get_current_users().exclude(is_superuser=True)
         messages = Message.objects.filter(room=room).order_by('-timestamp')[:50]
         messages = reversed(list(messages))
@@ -51,8 +54,7 @@ def get_chat_messages(request, room_name):
     """API endpoint to get historical messages for a room."""
     try:
         room = ChatRoom.objects.get(name=room_name)
-        messages = Message.objects.filter(room=room).order_by('-timestamp')[:50]
-        messages = reversed(list(messages))
+        messages = Message.objects.filter(room=room).order_by('timestamp')
         
         messages_data = [{
             'username': message.user.username,

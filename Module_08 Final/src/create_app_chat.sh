@@ -19,8 +19,11 @@ consumers_dir_app="$app_name/consumers"
 
 
 # Source directories
+views_source_dir="views/chat"
+models_source_dir="models/chat"
 templates_source_dir="templates/chat"
 scripts_source_dir="scripts/chat"
+consumers_source_dir="consumers/chat"
 
 
 # Create Django app
@@ -146,8 +149,11 @@ copy_directory_contents() {
 
 
 # Copy template files
-copy_directory_contents "$templates_source_dir" "$templates_dir_app" "TEMPLATES"
-copy_directory_contents "$scripts_source_dir" "$scripts_dir" "SCRIPTS"
+copy_directory_contents "$views_source_dir"         "$views_dir_app"        "VIEWS"
+copy_directory_contents "$models_source_dir"        "$models_dir_app"       "MODELS"
+copy_directory_contents "$templates_source_dir"     "$templates_dir_app"    "TEMPLATES"
+copy_directory_contents "$scripts_source_dir"       "$scripts_dir"          "SCRIPTS"
+copy_directory_contents "$consumers_source_dir"     "$consumers_dir_app"    "CONSUMERS"
 
 
 # Update project URLs
@@ -196,246 +202,31 @@ app_name = 'chat'
 urlpatterns = [
     path('', room_list, name='room_list'),  # /chat/
     path('api/<str:room_name>/messages/', get_chat_messages, name='chat_messages'),  # /chat/api/<room_name>/messages/
-    path('<str:room_name>/', chat_room, name='chat_room'),  # /chat/<room_name>/
+    path('room/<str:room_name>/', chat_room, name='chat_room'),  # /chat/room/<room_name>/
 ]
 EOL
 echo "✅ Chat URLs created."
 
 
-# Create views
-cat << 'EOL' > "$app_name/views/chat_views.py"
-from django.shortcuts import render, redirect
-from django.contrib.auth.decorators import login_required
-from ..models.chat_models import ChatRoom, Message
-from django.contrib.auth.models import User
-from django.contrib.sessions.models import Session
-from django.utils import timezone
-from django.http import JsonResponse
-
-def get_current_users():
-    active_sessions = Session.objects.filter(expire_date__gte=timezone.now())
-    user_ids = []
-    for session in active_sessions:
-        data = session.get_decoded()
-        user_ids.append(data.get('_auth_user_id', None))
-    return User.objects.filter(id__in=user_ids)
-
-@login_required
-def room_list(request):
-    """Display list of available chat rooms."""
-    rooms = ChatRoom.objects.all()
-    # Obtener solo usuarios con sesión activa
-    active_users = get_current_users().exclude(is_superuser=True)
-    return render(request, 'chat/room_list.html', {
-        'rooms': rooms,
-        'users': active_users
-    })
-
-@login_required
-def chat_room(request, room_name):
-    """Display chat room with message history."""
-    try:
-        room = ChatRoom.objects.get(name=room_name)
-        rooms = ChatRoom.objects.all()
-        # Obtener solo usuarios con sesión activa
-        active_users = get_current_users().exclude(is_superuser=True)
-        messages = Message.objects.filter(room=room).order_by('-timestamp')[:50]
-        messages = reversed(list(messages))
-
-        return render(request, 'chat/chat_room.html', {
-            'room': room,
-            'rooms': rooms,
-            'messages': messages,
-            'users': active_users,
-            'current_user': request.user
-        })
-    except ChatRoom.DoesNotExist:
-        return redirect('chat:room_list')
-
-@login_required
-def get_chat_messages(request, room_name):
-    """API endpoint to get historical messages for a room."""
-    try:
-        room = ChatRoom.objects.get(name=room_name)
-        messages = Message.objects.filter(room=room).order_by('-timestamp')[:50]
-        messages = reversed(list(messages))
-        
-        messages_data = [{
-            'username': message.user.username,
-            'message': message.content,
-            'timestamp': message.timestamp.strftime('%H:%M')
-        } for message in messages]
-        
-        return JsonResponse(messages_data, safe=False)
-    except ChatRoom.DoesNotExist:
-        return JsonResponse({'error': 'Room not found'}, status=404)
-EOL
-echo "✅ Views created."
-
-
-# Create models
-cat << 'EOL' > "$app_name/models/chat_models.py"
-from django.db import models
-from django.contrib.auth.models import User
-
-class ChatRoom(models.Model):
-    name = models.CharField(max_length=100, unique=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return self.name
-
-class Message(models.Model):
-    room = models.ForeignKey(ChatRoom, on_delete=models.CASCADE)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    content = models.TextField()
-    timestamp = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        ordering = ['timestamp']
-EOL
-echo "✅ Models created."
-
-
-# Create consumer
-cat << 'EOL' > "$app_name/consumers/chat_consumer.py"
-import json
-from channels.generic.websocket import AsyncWebsocketConsumer
-from channels.db import database_sync_to_async
-from django.contrib.auth.models import User
-from ..models.chat_models import ChatRoom, Message
-from django.utils import timezone
-
-class ChatConsumer(AsyncWebsocketConsumer):
-    async def connect(self):
-        self.room_name = self.scope['url_route']['kwargs']['room_name']
-        self.room_group_name = f'chat_{self.room_name}'
-        self.user = self.scope["user"]
-
-        # Join room group
-        await self.channel_layer.group_add(
-            self.room_group_name,
-            self.channel_name
-        )
-
-        await self.accept()
-        
-        # Enviar y guardar mensaje de conexión
-        if self.user.is_authenticated:
-            system_message = f'{self.user.username} has joined the chat'
-            await self.save_system_message(system_message)
-            await self.channel_layer.group_send(
-                self.room_group_name,
-                {
-                    'type': 'chat_message',
-                    'message': system_message,
-                    'username': 'System',
-                    'timestamp': timezone.now().strftime('%H:%M')
-                }
-            )
-
-    async def disconnect(self, close_code):
-        if self.user.is_authenticated:
-            system_message = f'{self.user.username} has left the chat'
-            await self.save_system_message(system_message)
-            await self.channel_layer.group_send(
-                self.room_group_name,
-                {
-                    'type': 'chat_message',
-                    'message': system_message,
-                    'username': 'System',
-                    'timestamp': timezone.now().strftime('%H:%M')
-                }
-            )
-
-        # Leave room group
-        await self.channel_layer.group_discard(
-            self.room_group_name,
-            self.channel_name
-        )
-
-    async def receive(self, text_data):
-        text_data_json = json.loads(text_data)
-        message = text_data_json['message']
-        
-        # Save message to database
-        await self.save_message(message)
-        
-        # Send message to room group
-        await self.channel_layer.group_send(
-            self.room_group_name,
-            {
-                'type': 'chat_message',
-                'message': message,
-                'username': self.user.username,
-                'timestamp': timezone.now().strftime('%H:%M')
-            }
-        )
-
-    async def chat_message(self, event):
-        # Send message to WebSocket
-        await self.send(text_data=json.dumps({
-            'message': event['message'],
-            'username': event['username'],
-            'timestamp': event['timestamp']
-        }))
-
-    @database_sync_to_async
-    def save_message(self, message):
-        try:
-            room = ChatRoom.objects.get(name=self.room_name)
-            Message.objects.create(
-                room=room,
-                user=self.user,
-                content=message
-            )
-            return True
-        except Exception as e:
-            print(f"Error saving message: {e}")
-            return False
-
-    @database_sync_to_async
-    def save_system_message(self, message):
-        try:
-            room = ChatRoom.objects.get(name=self.room_name)
-            system_user, _ = User.objects.get_or_create(
-                username='System',
-                defaults={
-                    'is_active': False,
-                    'password': 'unusable_password'
-                }
-            )
-            Message.objects.create(
-                room=room,
-                user=system_user,
-                content=message
-            )
-            return True
-        except Exception as e:
-            print(f"Error saving system message: {e}")
-            return False
-
-EOL
-echo "✅ Consumer created."
-
-
 # Create asgi.py
 cat << 'EOL' > "$project_name/asgi.py"
 import os
-import django
 from django.core.asgi import get_asgi_application
-
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'd09.settings')
-django.setup()  # Añade esta línea
-
 from channels.routing import ProtocolTypeRouter, URLRouter
 from channels.auth import AuthMiddlewareStack
+from django.apps import apps
+
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'd09.settings')
+django_asgi_app = get_asgi_application()
+
 from chat.routing import websocket_urlpatterns
 
 application = ProtocolTypeRouter({
-    "http": get_asgi_application(),
+    "http": django_asgi_app,
     "websocket": AuthMiddlewareStack(
-        URLRouter(websocket_urlpatterns)
+        URLRouter(
+            websocket_urlpatterns
+        )
     ),
 })
 EOL
