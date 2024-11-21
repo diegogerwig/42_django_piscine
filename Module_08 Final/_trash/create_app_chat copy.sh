@@ -1,5 +1,6 @@
 #!/bin/sh
 
+
 # Directory names
 project_name="d09"
 app_name="chat"
