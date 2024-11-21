@@ -4,6 +4,9 @@ let chatSocket;
 
 
 
+
+
+
 function connectWebSocket() {
 	// Usar el protocolo correcto (ws o wss)
 	const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
