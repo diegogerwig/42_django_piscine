@@ -46,6 +46,11 @@ touch "$models_dir_app/__init__.py"
 touch "$consumers_dir_app/__init__.py"
 
 
+# Update ALLOWED_HOSTS to allow all IPs
+sed -i "s/ALLOWED_HOSTS = .*/ALLOWED_HOSTS = ['*']/" "$settings_file"
+echo "✅ Allowed hosts updated to accept all IPs."
+
+
 # Add Channels and App to INSTALLED_APPS
 if ! grep -q "'channels'," "$settings_file" && ! grep -q "'$app_name'," "$settings_file"; then
     # Primero verificamos si django_bootstrap5 ya está en INSTALLED_APPS

@@ -2,6 +2,7 @@ const initChat = (roomName, username, initialMessageCount) => {
     let chatSocket = null;
     let messageCount = initialMessageCount || 0;
     let initialLoadComplete = false;
+    const INITIAL_MESSAGES_TO_SHOW = 3;
 
     // Function to ensure no alerts exist
     function removeAllAlerts() {
@@ -57,6 +58,19 @@ const initChat = (roomName, username, initialMessageCount) => {
         document.addEventListener('readystatechange', removeAllAlerts);
     }
 
+    // Clear chat log with loading message
+    function clearChatLog() {
+        const chatLog = document.querySelector('#chat-log');
+        if (chatLog) {
+            chatLog.innerHTML = '<div class="text-center text-muted mt-3">Loading messages...</div>';
+        }
+    }
+
+    // Execute clearChatLog before anything else
+    document.addEventListener('DOMContentLoaded', clearChatLog);
+    // Also clear immediately in case the script loads after DOMContentLoaded
+    clearChatLog();
+
     function updateMessageCount(count) {
         const countElement = document.getElementById(`message-count-${roomName}`);
         if (countElement) {
@@ -98,38 +112,69 @@ const initChat = (roomName, username, initialMessageCount) => {
         }
         
         chatLog.appendChild(messageElement);
-        scrollToBottom();
     }
 
-    async function loadHistoricalMessages() {
-        if (initialLoadComplete) return;
+    async function loadHistoricalMessages(loadAll = false) {
+        if (initialLoadComplete && !loadAll) return;
         
         removeAllAlerts();
         
         try {
+            // Show loading message
+            clearChatLog();
+            
             const response = await fetch(`/chat/api/${roomName}/messages/`);
             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
             
             const messages = await response.json();
+            
+            // Filter user and system messages
+            const userMessages = messages.filter(msg => msg.username !== 'System');
+            const systemMessages = messages.filter(msg => msg.username === 'System');
+            
+            // Update total message count
+            messageCount = userMessages.length;
+            updateMessageCount(messageCount);
+
+            // Add artificial delay of 1 second
+            await new Promise(resolve => setTimeout(resolve, 1000));
+
+            // Clear the chat log before adding new messages
             const chatLog = document.querySelector('#chat-log');
             chatLog.innerHTML = '';
-            
-            let userMessageCount = 0;
-            
-            messages.forEach(data => {
-                displayMessage(data);
-                if (data.username !== 'System') {
-                    userMessageCount++;
+
+            if (loadAll) {
+                // Display all messages in chronological order
+                messages.forEach(data => {
+                    displayMessage(data);
+                });
+            } else {
+                // Display only the last 3 user messages
+                const lastUserMessages = userMessages.slice(-INITIAL_MESSAGES_TO_SHOW);
+                lastUserMessages.forEach(data => {
+                    displayMessage(data);
+                });
+
+                // Display the latest system message if it exists
+                const lastSystemMessage = systemMessages[systemMessages.length - 1];
+                if (lastSystemMessage) {
+                    displayMessage(lastSystemMessage);
                 }
-            });
+            }
             
-            messageCount = userMessageCount;
-            updateMessageCount(messageCount);
             scrollToBottom();
             initialLoadComplete = true;
             removeAllAlerts();
+            
+            // Update load history button state
+            const loadHistoryBtn = document.getElementById('load-history-btn');
+            if (loadHistoryBtn) {
+                loadHistoryBtn.style.display = loadAll ? 'none' : 'inline-block';
+            }
         } catch (error) {
             console.error('Error loading messages:', error);
+            const chatLog = document.querySelector('#chat-log');
+            chatLog.innerHTML = '<div class="text-center text-danger mt-3">Error loading messages. Please try again.</div>';
         }
     }
 
@@ -139,7 +184,7 @@ const initChat = (roomName, username, initialMessageCount) => {
 
         chatSocket.onopen = function() {
             if (!initialLoadComplete) {
-                loadHistoricalMessages();
+                loadHistoricalMessages(false);
             }
         }
 
@@ -151,6 +196,7 @@ const initChat = (roomName, username, initialMessageCount) => {
                 messageCount++;
                 updateMessageCount(messageCount);
             }
+            scrollToBottom();
         }
 
         chatSocket.onclose = function() {
@@ -178,6 +224,11 @@ const initChat = (roomName, username, initialMessageCount) => {
     function setupEventListeners() {
         const submitButton = document.getElementById('chat-message-submit');
         const messageInput = document.getElementById('chat-message-input');
+        const loadHistoryBtn = document.getElementById('load-history-btn');
+
+        if (loadHistoryBtn) {
+            loadHistoryBtn.addEventListener('click', () => loadHistoricalMessages(true));
+        }
 
         if (submitButton) {
             submitButton.addEventListener('click', handleMessageSubmit);

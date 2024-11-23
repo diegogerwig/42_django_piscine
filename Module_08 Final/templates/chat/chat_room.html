@@ -10,7 +10,9 @@
         <!-- Left Sidebar -->
         <div class="col-md-2 border-end border-secondary bg-secondary p-0" style="height: calc(100vh - 136px);">
             <div class="p-2 bg-dark">
-                <h6 class="mb-0 text-white">Chat Rooms</h6>
+                <h6 class="mb-0 text-white px-2 py-1" style="border: 1px solid #4a4a4a; border-radius: 4px; background-color: #2c1a2c;">
+                    Chat Rooms
+                </h6>
             </div>
             <div class="list-group list-group-flush overflow-auto" style="max-height: calc(100% - 40px);">
                 {% for chat_room in rooms %}
@@ -32,34 +34,20 @@
         <div class="col-md-8 p-0 d-flex flex-column" style="height: calc(100vh - 136px);">
             <!-- Fixed Header -->
             <div class="p-2 border-bottom border-secondary bg-dark">
-                <h4 class="mb-0 text-white">{{ room.name }}</h4>
+                <div class="d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0 text-white px-3 py-2" style="background-color: #3d1f3d; border: 2px solid #6c3483; border-radius: 8px;">
+                        {{ room.name }}
+                    </h4>
+                    <button id="load-history-btn" class="btn btn-warning">
+                        Load Full History
+                    </button>
+                </div>
             </div>
 
             <!-- Scrollable Messages -->
-            <div id="chat-messages-container" class="flex-grow-1 overflow-auto" style="background-color: #2b3035;">
-                <div id="chat-log" class="p-3">
-                    {% for message in messages %}
-                        {% if message.user.username == 'System' %}
-                            <div class="message mb-2 text-center">
-                                <div class="text-muted">
-                                    {{ message.content }}
-                                    <small>{{ message.timestamp|time:"H:i" }}</small>
-                                </div>
-                            </div>
-                        {% else %}
-                            <div class="message mb-2 {% if message.user == current_user %}text-end{% endif %}">
-                                <div class="d-flex align-items-baseline {% if message.user == current_user %}justify-content-end{% endif %}">
-                                    <strong class="me-2 {% if message.user == current_user %}text-success{% else %}text-info{% endif %}">
-                                        {{ message.user.username }}
-                                    </strong>
-                                    <small class="text-muted">{{ message.timestamp|time:"H:i" }}</small>
-                                </div>
-                                <div class="message-content text-light">
-                                    {{ message.content }}
-                                </div>
-                            </div>
-                        {% endif %}
-                    {% endfor %}
+            <div id="chat-messages-container" class="flex-grow-1 overflow-auto bg-dark" style="background-color: #2b3035 !important;">
+                <div id="chat-log" class="p-3" style="background-color: #2b3035;">
+                    <div class="text-center text-muted mt-3">Loading messages...</div>
                 </div>
             </div>
 
@@ -76,7 +64,9 @@
         <!-- Right Sidebar -->
         <div class="col-md-2 border-start border-secondary bg-secondary p-0" style="height: calc(100vh - 136px);">
             <div class="p-2 bg-dark">
-                <h6 class="mb-0 text-white">Online Users</h6>
+                <h6 class="mb-0 text-white px-2 py-1" style="border: 1px solid #4a4a4a; border-radius: 4px; background-color: #2c1a2c;">
+                    Online Users
+                </h6>
             </div>
             <div class="list-group list-group-flush overflow-auto" style="max-height: calc(100% - 40px);" id="users-list">
                 {% for user in users %}
