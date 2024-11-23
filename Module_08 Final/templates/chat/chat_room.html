@@ -1,5 +1,8 @@
 {% extends 'chat/base.html' %}
 {% load django_bootstrap5 %}
+{% load static %}
+
+{% block bootstrap_messages %}{% endblock bootstrap_messages %}
 
 {% block content %}
 <div class="h-100">
@@ -88,151 +91,11 @@
     </div>
 </div>
 
+{% load static %}
+<script src="/chat/scripts/chat.js"></script>
 <script>
-    const roomName = "{{ room.name }}";
-    const username = "{{ user.username }}";
-    let chatSocket = null;
-    let messageCount = "{{ room.user_message_count }}" || 0; 
-    let userScrolled = false;
-    let initialLoadComplete = false;
-
-    // Functions
-    function updateMessageCount(count) {
-        const countElement = document.getElementById(`message-count-${roomName}`);
-        if (countElement) {
-            countElement.textContent = `${count} message${count !== 1 ? 's' : ''}`;
-        }
-    }
-
-    function displayMessage(data) {
-        console.log('Displaying message:', data);
-        const chatLog = document.querySelector('#chat-log');
-        const isSystem = data.username === 'System';
-        const isCurrentUser = data.username === username;
-        
-        const messageElement = document.createElement('div');
-        
-        if (isSystem) {
-            messageElement.className = 'message mb-2 text-center';
-            messageElement.innerHTML = `
-                <div class="text-muted">
-                    ${data.message}
-                    <small>${data.timestamp}</small>
-                </div>
-            `;
-        } else {
-            messageElement.className = `message mb-2 ${isCurrentUser ? 'text-end' : ''}`;
-            messageElement.innerHTML = `
-                <div class="d-flex align-items-baseline ${isCurrentUser ? 'justify-content-end' : ''}">
-                    <strong class="me-2 ${isCurrentUser ? 'text-success' : 'text-info'}">${data.username}</strong>
-                    <small class="text-muted">${data.timestamp}</small>
-                </div>
-                <div class="message-content text-light">
-                    ${data.message}
-                </div>
-            `;
-        }
-        
-        chatLog.appendChild(messageElement);
-        
-        if (!userScrolled) {
-            chatLog.scrollTop = chatLog.scrollHeight;
-        }
-    }
-
-    async function loadHistoricalMessages() {
-        if (initialLoadComplete) return;
-        
-        try {
-            console.log('Loading historical messages...');
-            const response = await fetch(`/chat/api/${roomName}/messages/`);
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-            
-            const messages = await response.json();
-            console.log('Historical messages received:', messages);
-            const chatLog = document.querySelector('#chat-log');
-            chatLog.innerHTML = '';
-            
-            let userMessageCount = 0;
-            
-            messages.forEach(data => {
-                displayMessage(data);
-                if (data.username !== 'System') {
-                    userMessageCount++;
-                }
-            });
-            
-            messageCount = userMessageCount;
-            updateMessageCount(messageCount);
-            
-            initialLoadComplete = true;
-        } catch (error) {
-            console.error('Error loading messages:', error);
-        }
-    }
-
-    function connectWebSocket() {
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        chatSocket = new WebSocket(`${protocol}//${window.location.host}/ws/chat/${roomName}/`);
-
-        chatSocket.onopen = function() {
-            console.log('WebSocket connected');
-            if (!initialLoadComplete) {
-                loadHistoricalMessages();
-            }
-        }
-
-        chatSocket.onmessage = function(e) {
-            console.log('Message received:', e.data);
-            const data = JSON.parse(e.data);
-            displayMessage(data);
-            
-            if (data.username !== 'System') {
-                messageCount++;
-                updateMessageCount(messageCount);
-            }
-        }
-
-        chatSocket.onclose = function() {
-            console.log('WebSocket disconnected, attempting to reconnect...');
-            setTimeout(connectWebSocket, 3000);
-        }
-
-        chatSocket.onerror = function(error) {
-            console.error('WebSocket error:', error);
-        }
-    }
-
-    // Event Listeners
-    document.querySelector('#chat-messages-container').addEventListener('scroll', function() {
-        const container = this;
-        userScrolled = container.scrollHeight - container.clientHeight > container.scrollTop + 1;
-    });
-
-    document.getElementById('chat-message-submit').addEventListener('click', function() {
-        const messageInput = document.getElementById('chat-message-input');
-        const message = messageInput.value.trim();
-        
-        if (message && chatSocket && chatSocket.readyState === WebSocket.OPEN) {
-            console.log('Sending message:', message);
-            chatSocket.send(JSON.stringify({
-                'message': message
-            }));
-            messageInput.value = '';
-            userScrolled = false;
-        }
-    });
-
-    document.getElementById('chat-message-input').addEventListener('keyup', function(e) {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            document.getElementById('chat-message-submit').click();
-        }
-    });
-
-    // Initialize
-    window.addEventListener('load', function() {
-        connectWebSocket();
-        document.getElementById('chat-message-input').focus();
+    document.addEventListener('DOMContentLoaded', function() {
+        initChat("{{ room.name }}", "{{ user.username }}", "{{ room.user_message_count }}");
     });
 </script>
-{% endblock %}
+{% endblock content %}

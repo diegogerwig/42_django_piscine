@@ -77,6 +77,20 @@ EOL
 fi
 
 
+# Add Static Files configuration
+if ! grep -q "STATIC_URL" "$settings_file"; then
+    cat << 'EOL' >> "$settings_file"
+
+# Static files configuration
+STATIC_URL = 'static/'
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, "chat/scripts"),
+]
+EOL
+    echo "✅ Static files configuration added."
+fi
+
+
 # Add Templates configuration
 if ! grep -q "TEMPLATES = \[" "$settings_file"; then
     cat << 'EOL' >> "$settings_file"
