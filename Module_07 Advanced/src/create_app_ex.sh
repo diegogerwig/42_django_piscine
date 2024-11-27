@@ -304,6 +304,15 @@ msgstr "SINOPSIS"
 msgid "CREATED"
 msgstr "CREADO"
 
+msgid "PUBLICATIONS"
+msgstr "PUBLICACIONES"
+
+msgid "FAVOURITES"
+msgstr "FAVORITOS"
+
+msgid "PUBLISH"
+msgstr "PUBLICAR"
+
 EOL
 echo "✅ Spanish translations file created"
 

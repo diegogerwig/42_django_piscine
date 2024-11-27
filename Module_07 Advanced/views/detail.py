@@ -15,7 +15,6 @@ class Detail(DetailView):
                 article=self.object,
                 user=self.request.user
             ).exists()
-        # Añadir el formulario de login del request al contexto
         if hasattr(self.request, 'login_form'):
             context['login_form'] = self.request.login_form
         return context

@@ -1,5 +1,6 @@
 {% load static %}
 {% load django_bootstrap5 %}
+{% load i18n %}
 
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
     <div class="container">
@@ -16,10 +17,10 @@
             <div class="navbar-header d-flex align-items-center">
                 {% if user.is_authenticated %}
                     <div class="d-flex align-items-center">
-                        <a class="btn btn-primary px-4 fw-bold btn-sm me-2" href="{% url 'articles' %}">ARTICLES</a>
-                        <a class="btn btn-primary px-4 fw-bold btn-sm me-2" href="{% url 'publications' %}">PUBLICATIONS</a>
-                        <a class="btn btn-primary px-4 fw-bold btn-sm me-2" href="{% url 'favourite' %}">FAVOURITES</a>
-                        <a class="btn btn-primary px-4 fw-bold btn-sm me-2" href="{% url 'publish' %}">PUBLISH</a>
+                        <a class="btn btn-primary px-4 fw-bold btn-sm me-2" href="{% url 'articles' %}">{% trans "ARTICLES" %}</a>
+                        <a class="btn btn-primary px-4 fw-bold btn-sm me-2" href="{% url 'publications' %}">{% trans "PUBLICATIONS" %}</a>
+                        <a class="btn btn-primary px-4 fw-bold btn-sm me-2" href="{% url 'favourite' %}">{% trans "FAVOURITES" %}</a>
+                        <a class="btn btn-primary px-4 fw-bold btn-sm me-2" href="{% url 'publish' %}">{% trans "PUBLISH" %}</a>
                     </div>
                 {% endif %}
             </div>

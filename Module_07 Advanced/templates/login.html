@@ -10,7 +10,7 @@
                     <h2 class="text-light mb-4">Login</h2>
                 </div>
                 <div class="card-body">
-                    <form method="post" id="loginForm">
+                    <form method="post" id="loginForm" novalidate>
                         {% csrf_token %}
                         {% bootstrap_form form %}
                         <div class="d-flex gap-2">
@@ -28,42 +28,44 @@
 <script>
 function clearForm() {
     const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-    
     const form = document.getElementById('loginForm');
     
-    form.querySelectorAll('input').forEach(input => {
-        if (input.type !== 'hidden') {  
-            input.value = '';
-        }
-    });
-
-    const usernameInput = form.querySelector('input[name="username"]');
-    if (usernameInput) {
-        usernameInput.value = '';
-    }
-
-    const passwordInput = form.querySelector('input[name="password"]');
-    if (passwordInput) {
-        passwordInput.value = '';
-    }
+    form.reset();
     
     document.querySelector('[name=csrfmiddlewaretoken]').value = csrfToken;
     
-    form.querySelectorAll('.form-control').forEach(input => {
+    form.querySelectorAll('input[type="text"], input[type="password"]').forEach(input => {
+        input.value = '';
         input.classList.remove('is-valid', 'is-invalid');
+        
+        const feedbackDiv = input.nextElementSibling;
+        if (feedbackDiv && (feedbackDiv.classList.contains('invalid-feedback') || 
+                          feedbackDiv.classList.contains('valid-feedback'))) {
+            feedbackDiv.textContent = '';
+            feedbackDiv.style.display = 'none';
+        }
     });
     
-    form.querySelectorAll('.invalid-feedback').forEach(feedback => {
-        feedback.remove();
-    });
+    const usernameField = document.getElementById('id_username');
+    const passwordField = document.getElementById('id_password');
+
+    if (usernameField) usernameField.value = '';
+    if (passwordField) passwordField.value = '';
     
     document.querySelectorAll('.alert').forEach(alert => {
         alert.remove();
     });
 
-    form.querySelectorAll('.help-text, .error-text').forEach(text => {
-        text.textContent = '';
+    document.querySelectorAll('.invalid-feedback, .valid-feedback, .form-text').forEach(element => {
+        element.style.display = 'none';
     });
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('loginForm');
+    form.querySelectorAll('.form-control').forEach(input => {
+        input.classList.remove('is-valid', 'is-invalid');
+    });
+});
 </script>
 {% endblock %}

@@ -119,11 +119,11 @@ class Command(BaseCommand):
                 )
                 self.stdout.write(f'Added favourite: {article.title} for user {selected_user.username}')
 
-        self.stdout.write(self.style.SUCCESS(f'''
-Successfully populated database:
+        summary = f"""Successfully populated database:
 - Created {len(users)} users
 - Created {len(created_articles)} articles in total
 - Articles per user:
-  {"\n  ".join(f"* {user.username}: {articles_by_user[user.id]} articles" for user in users)}
-- User {selected_user.username} has 2 favourite articles
-'''))
+  {chr(10).join(f'* {user.username}: {articles_by_user[user.id]} articles' for user in users)}
+- User {selected_user.username} has 2 favourite articles"""
+        
+        self.stdout.write(self.style.SUCCESS(summary))
