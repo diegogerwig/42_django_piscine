@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% load django_bootstrap5 %}
+
+{% block title %}💫 django: Detail >> {{ object.title }}{% endblock title %}
+
+{% block content %}
+<div>
+    <h1 id="detail" style="display: inline-block">DETAIL</h1>
+    
+    {% include 'nav.html' %}
+
+    <div>
+        <h2 class="text-uppercase fw-bold mb-3">{{ object.title }}</h2>
+        <div class="d-flex justify-content-between align-items-start">
+            <div>
+                <h5 id="object.author" class="text-secondary mb-0">Author: {{ object.author }}</h5>
+                <h5 id="object.created" class="text-secondary">Created: {{ object.created|date:"d-M-Y H:i"|upper }}</h5>
+            </div>
+
+            {% if user.is_authenticated %}
+            <form method="post">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline-warning btn-lg" data-bs-toggle="tooltip" 
+                        data-bs-title="{% if is_favourite %}Remove from{% else %}Add to{% endif %} favourites">
+                    <span class="fs-4">{% if is_favourite %}⭐{% else %}☆{% endif %}</span>
+                </button>
+            </form>
+            {% endif %}
+        </div>
+
+        <hr>
+
+        <div class="lead">
+            <h5 class="text-uppercase fw-bold mb-3">SYNOPSIS</h5>
+            <blockquote>{{ object.synopsis }}</blockquote>
+            <h5 class="text-uppercase fw-bold mb-3">CONTENT</h5>
+            <div>
+                {{ object.content }}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
