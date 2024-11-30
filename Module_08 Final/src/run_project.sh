@@ -16,9 +16,9 @@ python manage.py migrate
 echo "✅ Changes migrated."
 
 
-# # Populate the database
-# python manage.py populate_db
-# echo "✅ Database populated."
+# Management the database
+python manage.py create_user_statuses
+echo "✅ Management running."
 
 
 # Run the server

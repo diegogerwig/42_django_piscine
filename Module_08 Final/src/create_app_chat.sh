@@ -214,17 +214,49 @@ echo "✅ Chat routing created."
 # Create urls.py in chat app
 cat << 'EOL' > "$app_name/urls.py"
 from django.urls import path
-from .views.chat_views import room_list, chat_room, get_chat_messages
+from .views.chat_views import room_list, chat_room, get_chat_messages, get_room_users
 
 app_name = 'chat'
 
 urlpatterns = [
-    path('', room_list, name='room_list'),  # /chat/
-    path('api/<str:room_name>/messages/', get_chat_messages, name='chat_messages'),  # /chat/api/<room_name>/messages/
-    path('room/<str:room_name>/', chat_room, name='chat_room'),  # /chat/room/<room_name>/
+    path('', room_list, name='room_list'),
+    path('room/<str:room_name>/', chat_room, name='chat_room'),
+    path('api/<str:room_name>/messages/', get_chat_messages, name='chat_messages'),
+    path('api/<str:room_name>/users/', get_room_users, name='room_users'),
 ]
 EOL
 echo "✅ Chat URLs created."
+
+
+# Create middleware directory and file
+mkdir -p "$app_name/middleware"
+touch "$app_name/middleware/__init__.py"
+
+# Create middleware.py
+cat << 'EOL' > "$app_name/middleware/middleware.py"
+from django.contrib.sessions.models import Session
+from django.utils import timezone
+
+class SessionUpdateMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        if request.user.is_authenticated:
+            # Update user's session reference
+            try:
+                session = Session.objects.get(session_key=request.session.session_key)
+                request.user.session = session
+            except Session.DoesNotExist:
+                pass
+        
+        response = self.get_response(request)
+        return response
+EOL
+
+# Add middleware to settings.py
+sed -i "/MIDDLEWARE = \[/a\    'chat.middleware.middleware.SessionUpdateMiddleware'," "$settings_file"
+echo "✅ Session middleware created and added to settings."
 
 
 # Create asgi.py

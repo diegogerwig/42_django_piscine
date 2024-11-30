@@ -1,0 +1,91 @@
+{% extends 'chat/base.html' %}
+{% load django_bootstrap5 %}
+{% load static %}
+
+{% block bootstrap_messages %}{% endblock bootstrap_messages %}
+
+{% block content %}
+<div class="h-100">
+    <div class="row h-100">
+        <!-- Left Sidebar -->
+        <div class="col-md-2 border-end border-secondary bg-secondary p-0" style="height: calc(100vh - 136px);">
+            <div class="p-2 bg-dark">
+                <h6 class="mb-0 text-white px-2 py-1" style="border: 1px solid #4a4a4a; border-radius: 4px; background-color: #2c1a2c;">
+                    Chat Rooms
+                </h6>
+            </div>
+            <div class="list-group list-group-flush overflow-auto" style="max-height: calc(100% - 40px);">
+                {% for chat_room in rooms %}
+                    <a href="{% url 'chat:chat_room' chat_room.name %}" 
+                       class="list-group-item list-group-item-action bg-secondary text-light border-secondary 
+                       {% if chat_room.name == room.name %}active{% endif %}">
+                        <div class="d-flex justify-content-between align-items-center">
+                            {{ chat_room.name }}
+                            <span class="badge bg-dark rounded-pill" id="message-count-{{ chat_room.name }}">
+                                {{ chat_room.user_message_count }} message{{ chat_room.user_message_count|pluralize }}
+                            </span>
+                        </div>
+                    </a>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Main Chat Area -->
+        <div class="col-md-8 p-0 d-flex flex-column" style="height: calc(100vh - 136px);">
+            <!-- Fixed Header -->
+            <div class="p-2 border-bottom border-secondary bg-dark">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0 text-white px-3 py-2" style="background-color: #3d1f3d; border: 2px solid #6c3483; border-radius: 8px;">
+                        {{ room.name }}
+                    </h4>
+                    <button id="load-history-btn" class="btn btn-warning">
+                        Load Full History
+                    </button>
+                </div>
+            </div>
+
+            <!-- Scrollable Messages -->
+            <div id="chat-messages-container" class="flex-grow-1 overflow-auto bg-dark" style="background-color: #2b3035 !important;">
+                <div id="chat-log" class="p-3" style="background-color: #2b3035;">
+                    <div class="text-center text-muted mt-3">Loading messages...</div>
+                </div>
+            </div>
+
+            <!-- Fixed Input Area -->
+            <div class="p-2 border-top border-secondary bg-dark">
+                <div class="input-group">
+                    <input type="text" id="chat-message-input" class="form-control bg-secondary text-light border-secondary" 
+                           placeholder="Type your message...">
+                    <button id="chat-message-submit" class="btn btn-success">Send</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Sidebar -->
+        <div class="col-md-2 border-start border-secondary bg-secondary p-0" style="height: calc(100vh - 136px);">
+            <div class="p-2 bg-dark">
+                <h6 class="mb-0 text-white px-2 py-1" style="border: 1px solid #4a4a4a; border-radius: 4px; background-color: #2c1a2c;">
+                    Online Users
+                </h6>
+            </div>
+            <div class="list-group list-group-flush overflow-auto" style="max-height: calc(100% - 40px);" id="users-list">
+                {% for user in users %}
+                    <div class="list-group-item bg-secondary text-light border-secondary">
+                        <span class="text-success me-2">●</span>
+                        {{ user.username }}
+                        {% if user == current_user %}(you){% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% load static %}
+<script src="/chat/scripts/chat.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        initChat("{{ room.name }}", "{{ user.username }}", "{{ room.user_message_count }}");
+    });
+</script>
+{% endblock content %}

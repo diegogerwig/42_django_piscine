@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% load django_bootstrap5 %}
+{% load i18n %}
+
+{% block title %}💫 django: {% trans "Articles" %}{% endblock title %}
+
+{% block content %}
+<div>
+    <div class="d-flex justify-content-between align-items-center">
+        <h1 id="articles" style="display: inline-block">{% trans "ARTICLES" %}</h1>
+        <div class="language-links">
+            <a href="/en/articles/" class="btn btn-link btn-sm border rounded p-1 mx-1 {% if '/en/' in request.path %}fw-bold text-decoration-underline{% endif %}">
+                <span class="me-1">🇬🇧</span>EN
+            </a>
+            <a href="/es/articles/" class="btn btn-link btn-sm border rounded p-1 mx-1 {% if '/es/' in request.path %}fw-bold text-decoration-underline{% endif %}">
+                <span class="me-1">🇪🇸</span>ES
+            </a>
+        </div>
+    </div>
+
+    {% include 'nav.html' %}
+
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>{% trans "TITLE" %}</th>
+                    <th>{% trans "AUTHOR" %}</th>
+                    <th>{% trans "SYNOPSIS" %}</th>
+                    <th>{% trans "CREATED" %}</th>
+                    <th>⏳</th>
+                    <th>🔍</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for article in object_list %}
+                <tr>
+                    <td>{{ article.title|truncatechars:20 }}</td>
+                    <td>{{ article.author }}</td>
+                    <td>{{ article.synopsis|truncatechars:100 }}</td>
+                    <td>{{ article.created|date:"d-M-Y H:i"|upper }}</td>
+                    <td>{{ article.created|timesince}}</td>
+                    <td>
+                        <a href="{% url 'articles_detail' article.id %}" class="btn btn-secondary btn-sm text-white small">DETAIL</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

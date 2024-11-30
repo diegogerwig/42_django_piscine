@@ -13,14 +13,11 @@ activate_venv() {
 }
 
 run_project() {
-    # Instalar daphne si no está instalado
     pip install daphne >/dev/null 2>&1
 
-    # Obtener el PID de cualquier proceso existente
     DAPHNE_PID=$(pgrep -f "daphne.*d09.asgi:application" || echo "")
     DJANGO_PID=$(pgrep -f "python.*manage.py.*runserver" || echo "")
 
-    # Matar procesos existentes si existen
     if [ ! -z "$DAPHNE_PID" ]; then
         echo "🔄 Stopping existing daphne server (PID: $DAPHNE_PID)..."
         kill -9 $DAPHNE_PID
@@ -30,19 +27,15 @@ run_project() {
         kill -9 $DJANGO_PID
     fi
 
-    # Ir al directorio del proyecto
     cd d09
 
-    # Aplicar migraciones
     echo "🔄 Applying migrations..."
     python manage.py makemigrations >/dev/null 2>&1
     python manage.py migrate >/dev/null 2>&1
 
-    # Configurar la variable de entorno DJANGO_SETTINGS_MODULE
     export DJANGO_SETTINGS_MODULE=d09.settings
     export PYTHONPATH=$(pwd):$PYTHONPATH
 
-    # Intentar iniciar daphne con la configuración correcta
     echo "🚀 Starting DAPHNE server..."
     if python -m daphne -b 0.0.0.0 -p 8000 d09.asgi:application; then
         echo "✅ Daphne server running"
@@ -58,7 +51,6 @@ full_init() {
     python3 -m venv ~/sgoinfre/django_venv
     activate_venv
     
-    # Asegurarse de que daphne está en requirements.txt si no está
     if ! grep -q "daphne==4.0.0" requirements.txt; then
         echo "daphne==4.0.0" >> requirements.txt
     fi
