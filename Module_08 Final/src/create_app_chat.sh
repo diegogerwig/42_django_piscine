@@ -4,11 +4,9 @@
 project_name="d09"
 app_name="chat"
 
-
 # Project files paths
 settings_file="$project_name/settings.py"
 project_urls_file="$project_name/urls.py"
-
 
 # App directory structure
 views_dir_app="$app_name/views"
@@ -17,7 +15,6 @@ templates_dir_app="$app_name/templates/chat"
 scripts_dir="$app_name/scripts"
 consumers_dir_app="$app_name/consumers"
 
-
 # Source directories
 views_source_dir="views/chat"
 models_source_dir="models/chat"
@@ -25,12 +22,10 @@ templates_source_dir="templates/chat"
 scripts_source_dir="scripts/chat"
 consumers_source_dir="consumers/chat"
 
-
 # Create Django app
 cd "$project_name"
 python manage.py startapp "$app_name"
 echo "✅ <$app_name> APP created."
-
 
 # Create directory structure
 mkdir -p "$views_dir_app"
@@ -39,17 +34,14 @@ mkdir -p "$templates_dir_app"
 mkdir -p "$scripts_dir"
 mkdir -p "$consumers_dir_app"
 
-
 # Create __init__.py files
 touch "$views_dir_app/__init__.py"
 touch "$models_dir_app/__init__.py"
 touch "$consumers_dir_app/__init__.py"
 
-
 # Update ALLOWED_HOSTS to allow all IPs
 sed -i "s/ALLOWED_HOSTS = .*/ALLOWED_HOSTS = ['*']/" "$settings_file"
 echo "✅ Allowed hosts updated to accept all IPs."
-
 
 # Add Channels and App to INSTALLED_APPS
 if ! grep -q "'channels'," "$settings_file" && ! grep -q "'$app_name'," "$settings_file"; then
@@ -61,7 +53,6 @@ if ! grep -q "'channels'," "$settings_file" && ! grep -q "'$app_name'," "$settin
     fi
     echo "✅ Apps added to INSTALLED_APPS."
 fi
-
 
 # Add Channels configuration and auth settings
 if ! grep -q "ASGI_APPLICATION" "$settings_file"; then
@@ -81,7 +72,6 @@ EOL
     echo "✅ Channels and authentication configuration added."
 fi
 
-
 # Add Static Files configuration
 if ! grep -q "STATIC_URL" "$settings_file"; then
     cat << 'EOL' >> "$settings_file"
@@ -94,7 +84,6 @@ STATICFILES_DIRS = [
 EOL
     echo "✅ Static files configuration added."
 fi
-
 
 # Add Templates configuration
 if ! grep -q "TEMPLATES = \[" "$settings_file"; then
@@ -129,7 +118,6 @@ else
     }' "$settings_file"
     echo "✅ Templates DIRS updated."
 fi
-
 
 # Copy files from source to destination directory function
 copy_directory_contents() {
@@ -166,14 +154,12 @@ copy_directory_contents() {
     fi
 }
 
-
 # Copy template files
 copy_directory_contents "$views_source_dir"         "$views_dir_app"        "VIEWS"
 copy_directory_contents "$models_source_dir"        "$models_dir_app"       "MODELS"
 copy_directory_contents "$templates_source_dir"     "$templates_dir_app"    "TEMPLATES"
 copy_directory_contents "$scripts_source_dir"       "$scripts_dir"          "SCRIPTS"
 copy_directory_contents "$consumers_source_dir"     "$consumers_dir_app"    "CONSUMERS"
-
 
 # Update project URLs
 cat << 'EOL' > "$project_urls_file"
@@ -197,7 +183,6 @@ urlpatterns = [
 EOL
 echo "✅ Project URLs created."
 
-
 # Create routing.py in chat app
 cat << 'EOL' > "$app_name/routing.py"
 from django.urls import re_path
@@ -206,13 +191,23 @@ from .consumers.chat_consumer import ChatConsumer
 websocket_urlpatterns = [
     re_path(r'ws/chat/(?P<room_name>\w+)/$', ChatConsumer.as_asgi()),
 ]
-
 EOL
 echo "✅ Chat routing created."
 
-
 # Create urls.py in chat app
 cat << 'EOL' > "$app_name/urls.py"
+# from django.urls import path
+# from .views.chat_views import room_list, chat_room, get_chat_messages, get_room_users
+
+# app_name = 'chat'
+
+# urlpatterns = [
+#     path('', room_list, name='room_list'),
+#     path('room/<str:room_name>/', chat_room, name='chat_room'),
+#     path('api/<str:room_name>/messages/', get_chat_messages, name='chat_messages'),
+#     path('api/<str:room_name>/users/', get_room_users, name='room_users'),
+# ]
+
 from django.urls import path
 from .views.chat_views import room_list, chat_room, get_chat_messages, get_room_users
 
@@ -227,25 +222,39 @@ urlpatterns = [
 EOL
 echo "✅ Chat URLs created."
 
-
 # Create middleware directory and file
 mkdir -p "$app_name/middleware"
 touch "$app_name/middleware/__init__.py"
 
-# Create middleware.py
+# Create middleware.py with updated code
 cat << 'EOL' > "$app_name/middleware/middleware.py"
 from django.contrib.sessions.models import Session
 from django.utils import timezone
+from django.contrib.auth.middleware import AuthenticationMiddleware
+from django.contrib.sessions.middleware import SessionMiddleware
 
 class SessionUpdateMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
+        # Initialize the required middleware
+        self.session_middleware = SessionMiddleware(self.get_response)
+        self.auth_middleware = AuthenticationMiddleware(self.get_response)
 
     def __call__(self, request):
-        if request.user.is_authenticated:
-            # Update user's session reference
+        # Ensure session is available
+        if not hasattr(request, 'session'):
+            self.session_middleware(request)
+        
+        # Ensure user is available
+        if not hasattr(request, 'user'):
+            self.auth_middleware(request)
+
+        # Now we can safely check authentication
+        if hasattr(request, 'user') and request.user.is_authenticated:
             try:
-                session = Session.objects.get(session_key=request.session.session_key)
+                session = Session.objects.get(
+                    session_key=request.session.session_key
+                )
                 request.user.session = session
             except Session.DoesNotExist:
                 pass
@@ -254,10 +263,11 @@ class SessionUpdateMiddleware:
         return response
 EOL
 
-# Add middleware to settings.py
-sed -i "/MIDDLEWARE = \[/a\    'chat.middleware.middleware.SessionUpdateMiddleware'," "$settings_file"
-echo "✅ Session middleware created and added to settings."
-
+# Update middleware in settings.py
+if ! grep -q "SessionUpdateMiddleware" "$settings_file"; then
+    sed -i "/MIDDLEWARE = \[/a\    'chat.middleware.middleware.SessionUpdateMiddleware'," "$settings_file"
+    echo "✅ Session middleware created and added to settings."
+fi
 
 # Create asgi.py
 cat << 'EOL' > "$project_name/asgi.py"
@@ -283,11 +293,9 @@ application = ProtocolTypeRouter({
 EOL
 echo "✅ ASGI configuration created."
 
-
 # Create migrations and apply them
 python manage.py makemigrations
 python manage.py migrate
-
 
 # Create initial chat rooms and users
 python manage.py shell << 'EOL'
@@ -305,7 +313,6 @@ for i in range(1, 6):  # Creating users 1 through 5
     username = f'user{i}'
     if not User.objects.filter(username=username).exists():
         User.objects.create_user(username=username, password='urduliz')
-
 EOL
 echo "✅ Initial chat rooms and users created."
 

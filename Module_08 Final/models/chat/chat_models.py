@@ -25,16 +25,33 @@ class Message(models.Model):
         ordering = ['timestamp']
 
 class UserStatus(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='status')
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name='status',
+        primary_key=True
+    )
     is_online = models.BooleanField(default=False)
+    session_key = models.CharField(max_length=100, null=True, blank=True)
     last_activity = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        db_table = 'chat_userstatus'
 
     def __str__(self):
         return f"{self.user.username}'s status"
 
     @classmethod
     def get_or_create_status(cls, user):
-        status, created = cls.objects.get_or_create(user=user)
+        """Get or create a UserStatus for the given user."""
+        status, created = cls.objects.get_or_create(
+            user=user,
+            defaults={
+                'is_online': False,
+                'session_key': None,
+                'last_activity': timezone.now()
+            }
+        )
         return status
 
 @receiver(post_save, sender=User)

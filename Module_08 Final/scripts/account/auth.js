@@ -119,11 +119,17 @@ const UIModule = {
                 tab.classList.remove('bg-primary');
             }
         });
+    },
+
+    disableForm(form) {
+        form.querySelectorAll('input, button').forEach(el => el.disabled = true);
     }
 };
 
 // Form Module
 const FormModule = {
+    isSubmitting: false,
+
     clearForm(formId) {
         const form = document.getElementById(formId);
         const isLoginForm = formId === 'login-form';
@@ -132,6 +138,11 @@ const FormModule = {
         form.reset();
         form.querySelectorAll('input').forEach(input => {
             input.classList.remove('is-valid', 'is-invalid', 'border-success', 'border-danger');
+            input.disabled = false;
+        });
+        
+        form.querySelectorAll('button').forEach(button => {
+            button.disabled = false;
         });
         
         ['username', 'password', 'confirm_password'].forEach(field => {
@@ -145,9 +156,21 @@ const FormModule = {
     },
 
     async handleFormSubmit(formType, form) {
+        if (this.isSubmitting) {
+            console.log('Form submission in progress');
+            return;
+        }
+
         if (!form.checkValidity() || form.querySelectorAll('.is-invalid').length > 0) {
             NotificationModule.showNotification('Please check the form for errors', 'danger');
             return;
+        }
+
+        this.isSubmitting = true;
+        const submitButton = form.querySelector('button[type="submit"]');
+        if (submitButton) {
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...';
         }
 
         try {
@@ -161,30 +184,46 @@ const FormModule = {
                 credentials: 'same-origin'
             });
             
+            const data = await response.json();
+            
             if (response.ok) {
-                const data = await response.json();
-                if (data.status === 'success') {
-                    NotificationModule.showNotification(
-                        formType === 'login' ? 'Welcome back!' : 'Registration successful!', 
-                        'success'
-                    );
-                    UIModule.showLoggedIn(data.username);
-                } else {
+                UIModule.disableForm(form);
+                NotificationModule.showNotification(
+                    formType === 'login' ? 'Welcome back!' : 'Registration successful!', 
+                    'success'
+                );
+                
+                if (data.redirect) {
+                    setTimeout(() => {
+                        window.location.href = data.redirect;
+                    }, 500);
+                    return;
+                }
+                
+                UIModule.showLoggedIn(data.username);
+            } else {
+                if (data.errors) {
                     this.handleFormErrors(data.errors, formType === 'login');
-                    // Mostrar mensaje de error específico
                     if (data.errors.username) {
                         NotificationModule.showNotification(data.errors.username[0], 'warning');
                     } else if (data.errors.password) {
                         NotificationModule.showNotification(data.errors.password[0], 'warning');
+                    } else if (data.errors.__all__) {
+                        NotificationModule.showNotification(data.errors.__all__[0], 'warning');
                     }
                 }
-            } else {
-                NotificationModule.showNotification('Server error occurred', 'danger');
-                console.error('Form submission failed:', response.status);
             }
         } catch (error) {
-            NotificationModule.showNotification('Connection error', 'danger');
             console.error('Form submission error:', error);
+            NotificationModule.showNotification('Connection error', 'danger');
+        } finally {
+            if (!response?.ok) {
+                this.isSubmitting = false;
+                if (submitButton) {
+                    submitButton.disabled = false;
+                    submitButton.textContent = formType === 'login' ? 'LOGIN' : 'REGISTER';
+                }
+            }
         }
     },
 
@@ -200,6 +239,34 @@ const FormModule = {
                 status.classList.remove('text-light');
                 status.classList.add('text-danger');
             }
+        });
+    }
+};
+
+// Notification Module
+const NotificationModule = {
+    showNotification(message, type = 'warning') {
+        const container = document.getElementById('notification-container');
+        if (!container) return;
+
+        const alert = document.createElement('div');
+        alert.className = `alert alert-${type} alert-dismissible fade show`;
+        alert.role = 'alert';
+        
+        alert.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+
+        container.appendChild(alert);
+
+        setTimeout(() => {
+            const bsAlert = new bootstrap.Alert(alert);
+            bsAlert.close();
+        }, 5000);
+
+        alert.addEventListener('closed.bs.alert', () => {
+            alert.remove();
         });
     }
 };
@@ -249,31 +316,3 @@ document.addEventListener('DOMContentLoaded', function() {
         UIModule.updateTabStyles(loginTab);
     }
 });
-
-// Notification Module
-const NotificationModule = {
-    showNotification(message, type = 'warning') {
-        const container = document.getElementById('notification-container');
-        if (!container) return;
-
-        const alert = document.createElement('div');
-        alert.className = `alert alert-${type} alert-dismissible fade show`;
-        alert.role = 'alert';
-        
-        alert.innerHTML = `
-            ${message}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        `;
-
-        container.appendChild(alert);
-
-        setTimeout(() => {
-            const bsAlert = new bootstrap.Alert(alert);
-            bsAlert.close();
-        }, 5000);
-
-        alert.addEventListener('closed.bs.alert', () => {
-            alert.remove();
-        });
-    }
-};

@@ -6,14 +6,14 @@ from django.utils import timezone
 from django.contrib.sessions.models import Session
 from ..models.chat_models import ChatRoom, Message, UserStatus
 
-@login_required(login_url='account')
+@login_required
 def room_list(request):
     """Display list of available chat rooms."""
     rooms = ChatRoom.objects.all().prefetch_related('message_set')
     for room in rooms:
         room.user_message_count = room.message_set.exclude(user__username='System').count()
     
-    # Ensure user has a status and is marked as online
+    # Get or create user status
     status = UserStatus.get_or_create_status(request.user)
     status.is_online = True
     status.session_key = request.session.session_key
@@ -21,7 +21,8 @@ def room_list(request):
     status.save()
     
     context = {
-        'rooms': rooms
+        'rooms': rooms,
+        'current_user': request.user
     }
     return render(request, 'chat/room_list.html', context)
 
@@ -43,18 +44,17 @@ def chat_room(request, room_name):
         # Get active users
         users = []
         for user in room.users.all():
-            if user.is_authenticated:
-                status = UserStatus.objects.get_or_create(user=user)[0]
-                if (status.is_online and status.session_key and 
-                    status.session_key in valid_session_keys):
-                    users.append({
-                        'username': user.username,
-                        'is_online': True
-                    })
-                else:
-                    status.is_online = False
-                    status.session_key = None
-                    status.save()
+            status = UserStatus.get_or_create_status(user)
+            if (status.is_online and status.session_key and 
+                status.session_key in valid_session_keys):
+                users.append({
+                    'username': user.username,
+                    'is_online': True
+                })
+            else:
+                status.is_online = False
+                status.session_key = None
+                status.save()
         
         # Update current user's status
         status = UserStatus.get_or_create_status(request.user)
@@ -65,14 +65,16 @@ def chat_room(request, room_name):
         
         messages = Message.objects.filter(room=room).order_by('-timestamp')[:50]
         messages = reversed(list(messages))
-
-        return render(request, 'chat/chat_room.html', {
+        
+        context = {
             'room': room,
             'rooms': rooms,
             'messages': messages,
             'users': users,
             'current_user': request.user
-        })
+        }
+        return render(request, 'chat/chat_room.html', context)
+        
     except ChatRoom.DoesNotExist:
         return redirect('chat:room_list')
 
