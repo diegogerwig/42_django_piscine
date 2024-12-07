@@ -16,7 +16,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
             await self.close()
             return
 
-        # Clean up inactive users and check current user
         await self.cleanup_inactive_users()
         if await self.is_user_online():
             await self.close(code=4000)
@@ -28,37 +27,34 @@ class ChatConsumer(AsyncWebsocketConsumer):
         )
         await self.accept()
 
-        # Set user as online and add to room
         await self.set_user_online(True)
         await self.add_user_to_room()
         
-        # Send initial system message and update user list
         system_message = f'{self.user.username} has joined the chat'
         await self.save_system_message(system_message)
+        server_time = timezone.localtime(timezone.now())
         await self.channel_layer.group_send(
             self.room_group_name,
             {
                 'type': 'system_message',
                 'message': system_message,
-                'timestamp': timezone.now().strftime('%H:%M')
+                'timestamp': server_time.strftime('%H:%M')
             }
         )
         await self.broadcast_user_list()
 
     async def disconnect(self, close_code):
         if self.user.is_authenticated:
-            # Set user as offline
             await self.set_user_online(False)
-            
-            # Send system message
             system_message = f'{self.user.username} has left the chat'
             await self.save_system_message(system_message)
+            server_time = timezone.localtime(timezone.now())
             await self.channel_layer.group_send(
                 self.room_group_name,
                 {
                     'type': 'system_message',
                     'message': system_message,
-                    'timestamp': timezone.now().strftime('%H:%M')
+                    'timestamp': server_time.strftime('%H:%M')
                 }
             )
             await self.broadcast_user_list()
@@ -78,17 +74,17 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 return
 
             message = text_data_json.get('message')
-            if message and await self.save_message(message):
-                await self.channel_layer.group_send(
-                    self.room_group_name,
-                    {
-                        'type': 'chat_message',
-                        'message': message,
-                        'username': self.user.username,
-                        'timestamp': timezone.now().strftime('%H:%M')
-                    }
-                )
-                await self.broadcast_user_list()
+            if message:
+                if await self.save_message(message):
+                    await self.channel_layer.group_send(
+                        self.room_group_name,
+                        {
+                            'type': 'chat_message',
+                            'username': self.user.username,
+                            'message': message,
+                            'timestamp': timezone.localtime(timezone.now()).strftime('%H:%M')
+                        }
+                    )
         except Exception as e:
             print(f"Error in receive: {e}")
 
@@ -119,7 +115,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
             Message.objects.create(
                 room=room,
                 user=self.user,
-                content=message
+                content=message,
+                timestamp=timezone.now()
             )
             return True
         except Exception as e:
@@ -137,7 +134,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
             Message.objects.create(
                 room=room,
                 user=system_user,
-                content=message
+                content=message,
+                timestamp=timezone.now()
             )
             return True
         except Exception as e:
@@ -145,13 +143,23 @@ class ChatConsumer(AsyncWebsocketConsumer):
             return False
 
     @database_sync_to_async
+    def get_messages(self):
+        room = ChatRoom.objects.get(name=self.room_name)
+        messages = Message.objects.filter(room=room).order_by('timestamp')
+        return [{
+            'username': msg.user.username,
+            'message': msg.content,
+            'timestamp': timezone.localtime(msg.timestamp).strftime('%H:%M')
+        } for msg in messages]
+
+    @database_sync_to_async
     def is_user_online(self):
-        status = UserStatus.get_or_create_status(self.user)
+        status, _ = UserStatus.objects.get_or_create(user=self.user)
         return status.is_online and self.user.is_authenticated
 
     @database_sync_to_async
     def set_user_online(self, status):
-        user_status = UserStatus.get_or_create_status(self.user)
+        user_status, _ = UserStatus.objects.get_or_create(user=self.user)
         user_status.is_online = status
         user_status.last_activity = timezone.now()
         if hasattr(self.scope, "session") and self.scope.session:
@@ -167,17 +175,15 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     @database_sync_to_async
     def get_active_users(self):
-        """Get only currently logged-in users in the room"""
         room = ChatRoom.objects.get(name=self.room_name)
         active_users = []
         
-        # Get valid sessions
         valid_sessions = Session.objects.filter(expire_date__gt=timezone.now())
         valid_session_keys = [s.session_key for s in valid_sessions]
         
         for user in room.users.all():
             if user.is_authenticated:
-                status = UserStatus.objects.get_or_create(user=user)[0]
+                status, _ = UserStatus.objects.get_or_create(user=user)
                 if (status.is_online and status.session_key and 
                     status.session_key in valid_session_keys):
                     active_users.append({
@@ -189,18 +195,15 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     @database_sync_to_async
     def cleanup_inactive_users(self):
-        """Clean up all users that are not currently logged in"""
         valid_sessions = Session.objects.filter(expire_date__gt=timezone.now())
         valid_session_keys = set(s.session_key for s in valid_sessions)
         
-        # Update status for users with invalid sessions
         UserStatus.objects.exclude(session_key__in=valid_session_keys).update(
             is_online=False,
             session_key=None
         )
 
     async def broadcast_user_list(self):
-        """Send updated active user list to all clients"""
         active_users = await self.get_active_users()
         await self.channel_layer.group_send(
             self.room_group_name,

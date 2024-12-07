@@ -2,9 +2,18 @@ const initChat = (roomName, username, initialMessageCount) => {
     let chatSocket = null;
     let messageCount = initialMessageCount || 0;
     let initialLoadComplete = false;
+    let userListInterval = null;
     const INITIAL_MESSAGES_TO_SHOW = 3;
+    const WEBSOCKET_RECONNECT_BASE_DELAY = 1000;
+    const MAX_RECONNECT_DELAY = 30000;
+    const MAX_RETRIES = 5;
+    const HEARTBEAT_INTERVAL = 30000;
+    const PONG_TIMEOUT = 10000;
+    let heartbeatTimer = null;
+    let lastPongReceived = Date.now();
+    let reconnectCount = 0;
+    window.isExplicitExit = false;
 
-    // Function to ensure no alerts exist
     function removeAllAlerts() {
         const alerts = document.querySelectorAll('.alert, .alert-info, .alert-dismissible, div[role="alert"], .toast');
         alerts.forEach(alert => {
@@ -13,15 +22,12 @@ const initChat = (roomName, username, initialMessageCount) => {
         });
     }
 
-    // Remove alerts aggressively
     function setupAlertPrevention() {
-        // Override Bootstrap's alert creation
         if (window.bootstrap) {
             bootstrap.Alert = function() { return null; };
             if (bootstrap.alert) bootstrap.alert = function() { return null; };
         }
 
-        // Set up observer for dynamic content
         const observer = new MutationObserver((mutations) => {
             mutations.forEach((mutation) => {
                 if (mutation.addedNodes && mutation.addedNodes.length > 0) {
@@ -49,16 +55,12 @@ const initChat = (roomName, username, initialMessageCount) => {
             attributeFilter: ['class', 'role']
         });
 
-        // Set interval for continuous checking
         setInterval(removeAllAlerts, 50);
-
-        // Remove alerts on any dynamic content changes
         document.addEventListener('DOMContentLoaded', removeAllAlerts);
         window.addEventListener('load', removeAllAlerts);
         document.addEventListener('readystatechange', removeAllAlerts);
     }
 
-    // Clear chat log with loading message
     function clearChatLog() {
         const chatLog = document.querySelector('#chat-log');
         if (chatLog) {
@@ -66,20 +68,10 @@ const initChat = (roomName, username, initialMessageCount) => {
         }
     }
 
-    // Execute clearChatLog before anything else
-    document.addEventListener('DOMContentLoaded', clearChatLog);
-    // Also clear immediately in case the script loads after DOMContentLoaded
-    clearChatLog();
-
-    // Enhanced user list update function with online status check
     function updateUserList(users) {
-        const userListElement = document.getElementById('user-list');
+        const userListElement = document.getElementById('users-list');
         if (!userListElement) return;
 
-        // Clear current list
-        userListElement.innerHTML = '';
-
-        // Sort users: online first, then alphabetically
         const sortedUsers = users.sort((a, b) => {
             if (a.is_online !== b.is_online) {
                 return b.is_online - a.is_online;
@@ -87,36 +79,39 @@ const initChat = (roomName, username, initialMessageCount) => {
             return a.username.localeCompare(b.username);
         });
 
+        userListElement.innerHTML = '';
         sortedUsers.forEach(user => {
-            const userItem = document.createElement('li');
-            userItem.className = 'list-group-item d-flex justify-content-between align-items-center';
-            
-            // Highlight current user
+            const userItem = document.createElement('div');
+            userItem.className = 'list-group-item bg-secondary text-light border-secondary';
             const isCurrentUser = user.username === username;
-            const userNameClass = isCurrentUser ? 'font-weight-bold text-success' : '';
             
             userItem.innerHTML = `
-                <span class="${userNameClass}">
-                    ${isCurrentUser ? `${user.username} (you)` : user.username}
-                </span>
-                <span class="badge ${user.is_online ? 'bg-success' : 'bg-secondary'} rounded-pill">
-                    ${user.is_online ? 'online' : 'offline'}
-                </span>
+                <span class="text-${user.is_online ? 'success' : 'secondary'} me-2">●</span>
+                ${user.username}
+                ${isCurrentUser ? '(you)' : ''}
             `;
             userListElement.appendChild(userItem);
         });
     }
 
-    // Function to fetch and update user list
-    async function fetchAndUpdateUserList() {
-        try {
-            const response = await fetch(`/chat/api/${roomName}/users/`);
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-            
-            const users = await response.json();
-            updateUserList(users);
-        } catch (error) {
-            console.error('Error fetching user list:', error);
+    function startHeartbeat() {
+        stopHeartbeat();
+        heartbeatTimer = setInterval(() => {
+            if (chatSocket?.readyState === WebSocket.OPEN) {
+                chatSocket.send(JSON.stringify({ type: 'ping' }));
+                
+                if (Date.now() - lastPongReceived > PONG_TIMEOUT) {
+                    console.log('Pong timeout - reconnecting WebSocket');
+                    reconnectWebSocket();
+                }
+            }
+        }, HEARTBEAT_INTERVAL);
+    }
+
+    function stopHeartbeat() {
+        if (heartbeatTimer) {
+            clearInterval(heartbeatTimer);
+            heartbeatTimer = null;
         }
     }
 
@@ -129,7 +124,9 @@ const initChat = (roomName, username, initialMessageCount) => {
 
     function scrollToBottom() {
         const container = document.querySelector('#chat-messages-container');
-        container.scrollTop = container.scrollHeight;
+        if (container) {
+            container.scrollTop = container.scrollHeight;
+        }
     }
 
     function displayMessage(data) {
@@ -161,6 +158,7 @@ const initChat = (roomName, username, initialMessageCount) => {
         }
         
         chatLog.appendChild(messageElement);
+        scrollToBottom();
     }
 
     async function loadHistoricalMessages(loadAll = false) {
@@ -169,7 +167,6 @@ const initChat = (roomName, username, initialMessageCount) => {
         removeAllAlerts();
         
         try {
-            // Show loading message
             clearChatLog();
             
             const response = await fetch(`/chat/api/${roomName}/messages/`);
@@ -177,34 +174,27 @@ const initChat = (roomName, username, initialMessageCount) => {
             
             const messages = await response.json();
             
-            // Filter user and system messages
             const userMessages = messages.filter(msg => msg.username !== 'System');
             const systemMessages = messages.filter(msg => msg.username === 'System');
             
-            // Update total message count
             messageCount = userMessages.length;
             updateMessageCount(messageCount);
 
-            // Add artificial delay of 1 second
             await new Promise(resolve => setTimeout(resolve, 1000));
 
-            // Clear the chat log before adding new messages
             const chatLog = document.querySelector('#chat-log');
             chatLog.innerHTML = '';
 
             if (loadAll) {
-                // Display all messages in chronological order
                 messages.forEach(data => {
                     displayMessage(data);
                 });
             } else {
-                // Display only the last 3 user messages
                 const lastUserMessages = userMessages.slice(-INITIAL_MESSAGES_TO_SHOW);
                 lastUserMessages.forEach(data => {
                     displayMessage(data);
                 });
 
-                // Display the latest system message if it exists
                 const lastSystemMessage = systemMessages[systemMessages.length - 1];
                 if (lastSystemMessage) {
                     displayMessage(lastSystemMessage);
@@ -215,7 +205,6 @@ const initChat = (roomName, username, initialMessageCount) => {
             initialLoadComplete = true;
             removeAllAlerts();
             
-            // Update load history button state
             const loadHistoryBtn = document.getElementById('load-history-btn');
             if (loadHistoryBtn) {
                 loadHistoryBtn.style.display = loadAll ? 'none' : 'inline-block';
@@ -227,63 +216,92 @@ const initChat = (roomName, username, initialMessageCount) => {
         }
     }
 
-    function connectWebSocket() {
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        chatSocket = new WebSocket(`${protocol}//${window.location.host}/ws/chat/${roomName}/`);
-
-        chatSocket.onopen = function() {
-            if (!initialLoadComplete) {
-                loadHistoricalMessages(false);
-            }
-            fetchAndUpdateUserList();
+    function reconnectWebSocket() {
+        if (chatSocket) {
+            chatSocket.close();
         }
-
-        chatSocket.onmessage = function(e) {
-            const data = JSON.parse(e.data);
-            
-            if (data.type === 'user_list_update') {
-                updateUserList(data.users);
-            } else if (data.type === 'connection_error') {
-                alert('No puedes conectarte porque ya tienes una sesión activa en otro navegador/pestaña.');
-                window.location.href = '/logout/';
-            } else if (data.type === 'user_join' || data.type === 'user_leave') {
-                fetchAndUpdateUserList();
-            } else {
-                displayMessage(data);
-                if (data.username !== 'System') {
-                    messageCount++;
-                    updateMessageCount(messageCount);
-                }
-                scrollToBottom();
-            }
-        }
-
-        chatSocket.onclose = function(e) {
-            if (e.code === 4000) {
-                alert('No puedes conectarte porque ya tienes una sesión activa en otro navegador/pestaña.');
-                window.location.href = '/logout/';
-            } else {
-                setTimeout(connectWebSocket, 3000);
-            }
-        }
-
-        chatSocket.onerror = function(error) {
-            console.error('WebSocket error:', error);
-        }
-
-        // Set up periodic user list updates as backup
-        const userListInterval = setInterval(() => {
-            if (chatSocket && chatSocket.readyState === WebSocket.OPEN) {
-                fetchAndUpdateUserList();
-            }
-        }, 10000); // Update every 10 seconds as backup
-
-        // Clean up interval on socket close
-        chatSocket.addEventListener('close', () => {
-            clearInterval(userListInterval);
-        });
+        connectWebSocket();
     }
 
+    function getReconnectDelay() {
+        const baseDelay = WEBSOCKET_RECONNECT_BASE_DELAY * Math.pow(2, reconnectCount);
+        const jitter = Math.random() * 1000;
+        return Math.min(baseDelay + jitter, MAX_RECONNECT_DELAY);
+    }
+
+    function connectWebSocket() {
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+
+        try {
+            if (chatSocket && chatSocket.readyState !== WebSocket.CLOSED) {
+                chatSocket.close();
+            }
+
+            chatSocket = new WebSocket(`${protocol}//${window.location.host}/ws/chat/${roomName}/`);
+
+            chatSocket.onopen = function() {
+                console.log("WebSocket connected successfully");
+                reconnectCount = 0;
+                lastPongReceived = Date.now();
+                startHeartbeat();
+                if (!initialLoadComplete) {
+                    loadHistoricalMessages(false);
+                }
+            };
+
+            chatSocket.onmessage = function(e) {
+                const data = JSON.parse(e.data);
+                
+                if (data.type === 'pong') {
+                    lastPongReceived = Date.now();
+                    return;
+                }
+
+                if (data.type === 'user_list_update') {
+                    updateUserList(data.users);
+                } else {
+                    displayMessage(data);
+                    if (data.username !== 'System') {
+                        messageCount++;
+                        updateMessageCount(messageCount);
+                    }
+                }
+            };
+
+            chatSocket.onclose = function(e) {
+                stopHeartbeat();
+                
+                if (e.code === 4000) {
+                    window.isExplicitExit = true;
+                    alert('You cannot connect because you already have an active session in another browser/tab.');
+                    window.location.href = '/logout/';
+                    return;
+                }
+
+                if (!window.isExplicitExit && reconnectCount < MAX_RETRIES && e.code !== 1000) {
+                    reconnectCount++;
+                    const delay = getReconnectDelay();
+                    console.log(`Attempting reconnect ${reconnectCount}/${MAX_RETRIES} in ${delay}ms`);
+                    setTimeout(connectWebSocket, delay);
+                }
+            };
+
+            chatSocket.onerror = function(error) {
+                console.error('WebSocket error details:', {
+                    readyState: chatSocket.readyState,
+                    error: error
+                });
+            };
+
+        } catch (error) {
+            console.error('Error creating WebSocket:', error);
+            if (!window.isExplicitExit && reconnectCount < MAX_RETRIES) {
+                reconnectCount++;
+                setTimeout(connectWebSocket, getReconnectDelay());
+            }
+        }
+    }
+    
     function handleMessageSubmit() {
         const messageInput = document.getElementById('chat-message-input');
         const message = messageInput.value.trim();
@@ -298,6 +316,7 @@ const initChat = (roomName, username, initialMessageCount) => {
     }
 
     function setupEventListeners() {
+        // Setup chat controls
         const submitButton = document.getElementById('chat-message-submit');
         const messageInput = document.getElementById('chat-message-input');
         const loadHistoryBtn = document.getElementById('load-history-btn');
@@ -318,22 +337,37 @@ const initChat = (roomName, username, initialMessageCount) => {
             });
             messageInput.focus();
         }
+
+        // Setup exit handling
+        const logoutBtn = document.querySelector('button[type="submit"][class*="btn-danger"]');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', () => {
+                window.isExplicitExit = true;
+            });
+        }
+
+        const roomLinks = document.querySelectorAll('a[href^="/chat/room/"]');
+        roomLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                if (link.getAttribute('href') !== `/chat/room/${roomName}/`) {
+                    window.isExplicitExit = true;
+                }
+            });
+        });
     }
 
-    // Handle page unload
     window.addEventListener('beforeunload', () => {
-        if (chatSocket && chatSocket.readyState === WebSocket.OPEN) {
+        stopHeartbeat();
+        if (window.isExplicitExit && chatSocket?.readyState === WebSocket.OPEN) {
             chatSocket.send(JSON.stringify({
                 'type': 'user_offline'
             }));
         }
     });
 
-    // Initialize immediately instead of waiting for window.load
     setupAlertPrevention();
     connectWebSocket();
     setupEventListeners();
 };
 
-// Make sure initChat is available globally
 window.initChat = initChat;

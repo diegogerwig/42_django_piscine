@@ -38,7 +38,7 @@ run_project() {
 
     echo "🚀 Starting DAPHNE server..."
     if python -m daphne -b 0.0.0.0 -p 8000 d09.asgi:application; then
-        echo "✅ Daphne server running"
+        # echo "✅ Daphne server running"
     else
         echo " Daphne failed to start, falling back to Django development server..."
         python manage.py runserver

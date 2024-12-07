@@ -14,7 +14,7 @@ def room_list(request):
         room.user_message_count = room.message_set.exclude(user__username='System').count()
     
     # Get or create user status
-    status = UserStatus.get_or_create_status(request.user)
+    status, _ = UserStatus.objects.get_or_create(user=request.user)
     status.is_online = True
     status.session_key = request.session.session_key
     status.last_activity = timezone.now()
@@ -44,7 +44,7 @@ def chat_room(request, room_name):
         # Get active users
         users = []
         for user in room.users.all():
-            status = UserStatus.get_or_create_status(user)
+            status, _ = UserStatus.objects.get_or_create(user=user)
             if (status.is_online and status.session_key and 
                 status.session_key in valid_session_keys):
                 users.append({
@@ -57,7 +57,7 @@ def chat_room(request, room_name):
                 status.save()
         
         # Update current user's status
-        status = UserStatus.get_or_create_status(request.user)
+        status, _ = UserStatus.objects.get_or_create(user=request.user)
         status.is_online = True
         status.session_key = request.session.session_key
         status.last_activity = timezone.now()
@@ -80,7 +80,6 @@ def chat_room(request, room_name):
 
 @login_required
 def get_chat_messages(request, room_name):
-    """API endpoint to get historical messages for a room."""
     try:
         room = ChatRoom.objects.get(name=room_name)
         messages = Message.objects.filter(room=room).order_by('timestamp')
@@ -88,7 +87,7 @@ def get_chat_messages(request, room_name):
         messages_data = [{
             'username': message.user.username,
             'message': message.content,
-            'timestamp': message.timestamp.strftime('%H:%M')
+            'timestamp': timezone.localtime(message.timestamp).strftime('%H:%M')
         } for message in messages]
         
         return JsonResponse(messages_data, safe=False)
@@ -108,7 +107,7 @@ def get_room_users(request, room_name):
         users = []
         for user in room.users.all():
             if user.is_authenticated:
-                status = UserStatus.objects.get_or_create(user=user)[0]
+                status, _ = UserStatus.objects.get_or_create(user=user)
                 if (status.is_online and status.session_key and 
                     status.session_key in valid_session_keys):
                     users.append({

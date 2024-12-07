@@ -41,22 +41,10 @@ class UserStatus(models.Model):
     def __str__(self):
         return f"{self.user.username}'s status"
 
-    @classmethod
-    def get_or_create_status(cls, user):
-        """Get or create a UserStatus for the given user."""
-        status, created = cls.objects.get_or_create(
-            user=user,
-            defaults={
-                'is_online': False,
-                'session_key': None,
-                'last_activity': timezone.now()
-            }
-        )
-        return status
-
 @receiver(post_save, sender=User)
 def create_user_status(sender, instance, created, **kwargs):
-    if created:
+    """Create UserStatus for new users only"""
+    if created and not hasattr(instance, 'status'):
         UserStatus.objects.create(user=instance)
 
 @receiver(post_save, sender=User)
