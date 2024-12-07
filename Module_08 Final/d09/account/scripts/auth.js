@@ -157,12 +157,16 @@ const ValidationModule = {
 // Form Module
 const FormModule = {
     setupFormSubmit(formType, form) {
-        if (!form) return;
+        if (!form || form.dataset.initialized) return;
+
+        form.dataset.initialized = true;
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             
             const submitButton = form.querySelector('button[type="submit"]');
+            if (submitButton.disabled) return; 
+
             submitButton.disabled = true;
             submitButton.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
 
@@ -176,8 +180,14 @@ const FormModule = {
                     }
                 });
 
-                const data = await response.json();
-                
+                // Verificar si la respuesta es JSON
+                let data;
+                try {
+                    data = await response.json();
+                } catch (err) {
+                    throw new Error('Invalid server response');
+                }
+
                 if (response.ok) {
                     NotificationModule.showNotification(
                         'Welcome!', 
@@ -187,21 +197,14 @@ const FormModule = {
                     setTimeout(() => {
                         window.location.href = data.redirect || '/chat/';
                     }, 1000);
-                    return;
+                } else {
+                    // Mostrar el mensaje del servidor si está presente
+                    throw new Error(data.message || 'Invalid data');
                 }
-
-                if (response.status === 400 || response.status === 401) {
-                    NotificationModule.showNotification(
-                        data.message || 'Invalid username or password',
-                        'error',
-                        5000
-                    );
-                }
-
             } catch (error) {
                 console.error('Error during form submission:', error);
                 NotificationModule.showNotification(
-                    'Connection error. Please try again.',
+                    error.message || 'An unknown error occurred. Please try again.',
                     'error',
                     5000
                 );
