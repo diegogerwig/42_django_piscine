@@ -158,70 +158,59 @@ const ValidationModule = {
 const FormModule = {
     setupFormSubmit(formType, form) {
         if (!form) return;
+        
+        let isSubmitting = false;
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
-
+            
+            if (isSubmitting) return;
+            
             const submitButton = form.querySelector('button[type="submit"]');
             submitButton.disabled = true;
+            isSubmitting = true;
             submitButton.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
 
             try {
+                const formData = new FormData(form);
                 const response = await fetch(`/${formType}/`, {
                     method: 'POST',
-                    body: new FormData(form),
+                    body: formData,
                     headers: {
                         'X-CSRFToken': form.querySelector('[name=csrfmiddlewaretoken]').value,
                         'X-Requested-With': 'XMLHttpRequest'
-                    }
+                    },
+                    cache: 'no-store'
                 });
 
                 const data = await response.json();
 
-                if (response.ok) {
-                    if (formType === 'register') {
-                        // Realiza el inicio de sesión automáticamente
-                        const loginResponse = await fetch('/login/', {
-                            method: 'POST',
-                            body: new URLSearchParams({
-                                username: form.querySelector('[name="username"]').value,
-                                password: form.querySelector('[name="password"]').value
-                            }),
-                            headers: {
-                                'X-CSRFToken': form.querySelector('[name=csrfmiddlewaretoken]').value,
-                                'X-Requested-With': 'XMLHttpRequest'
-                            }
-                        });
-
-                        if (loginResponse.ok) {
-                            const loginData = await loginResponse.json();
-                            window.location.href = loginData.redirect || '/chat/';
-                            return;
-                        } else {
-                            NotificationModule.showNotification(
-                                'Login failed after registration. Please log in manually.',
-                                'error',
-                                5000
-                            );
-                            return;
-                        }
-                    }
-
-                    // Para login directo
+                if (response.ok && data.status === 'success') {
                     window.location.href = data.redirect || '/chat/';
-                } else {
-                    NotificationModule.showNotification(data.message || 'Invalid form submission', 'error', 5000);
+                    return;
                 }
+
+                NotificationModule.showNotification(
+                    data.message || 'An error occurred',
+                    'error',
+                    5000
+                );
+                
             } catch (error) {
-                console.error('Error during form submission:', error);
-                NotificationModule.showNotification('Connection error. Please try again.', 'error', 5000);
+                console.error('Form submission error:', error);
+                NotificationModule.showNotification(
+                    'Connection error. Please try again.',
+                    'error',
+                    5000
+                );
             } finally {
                 submitButton.disabled = false;
                 submitButton.textContent = formType.toUpperCase();
+                isSubmitting = false;
             }
         });
     },
-    
+        
     clearForm(formId) {
         const form = document.getElementById(formId);
         if (!form) return;

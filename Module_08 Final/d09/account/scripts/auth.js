@@ -157,64 +157,60 @@ const ValidationModule = {
 // Form Module
 const FormModule = {
     setupFormSubmit(formType, form) {
-        if (!form || form.dataset.initialized) return;
-
-        form.dataset.initialized = true;
+        if (!form) return;
+        
+        let isSubmitting = false;
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             
+            if (isSubmitting) return;
+            
             const submitButton = form.querySelector('button[type="submit"]');
-            if (submitButton.disabled) return; 
-
             submitButton.disabled = true;
+            isSubmitting = true;
             submitButton.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
 
             try {
+                const formData = new FormData(form);
                 const response = await fetch(`/${formType}/`, {
                     method: 'POST',
-                    body: new FormData(form),
+                    body: formData,
                     headers: {
                         'X-CSRFToken': form.querySelector('[name=csrfmiddlewaretoken]').value,
                         'X-Requested-With': 'XMLHttpRequest'
-                    }
+                    },
+                    cache: 'no-store'
                 });
 
-                // Verificar si la respuesta es JSON
-                let data;
-                try {
-                    data = await response.json();
-                } catch (err) {
-                    throw new Error('Invalid server response');
+                const data = await response.json();
+
+                if (response.ok && data.status === 'success') {
+                    window.location.href = data.redirect || '/chat/';
+                    return;
                 }
 
-                if (response.ok) {
-                    NotificationModule.showNotification(
-                        'Welcome!', 
-                        'success',
-                        1500
-                    );
-                    setTimeout(() => {
-                        window.location.href = data.redirect || '/chat/';
-                    }, 1000);
-                } else {
-                    // Mostrar el mensaje del servidor si está presente
-                    throw new Error(data.message || 'Invalid data');
-                }
-            } catch (error) {
-                console.error('Error during form submission:', error);
                 NotificationModule.showNotification(
-                    error.message || 'An unknown error occurred. Please try again.',
+                    data.message || 'An error occurred',
+                    'error',
+                    5000
+                );
+                
+            } catch (error) {
+                console.error('Form submission error:', error);
+                NotificationModule.showNotification(
+                    'Connection error. Please try again.',
                     'error',
                     5000
                 );
             } finally {
                 submitButton.disabled = false;
                 submitButton.textContent = formType.toUpperCase();
+                isSubmitting = false;
             }
         });
     },
-
+        
     clearForm(formId) {
         const form = document.getElementById(formId);
         if (!form) return;

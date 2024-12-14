@@ -14,11 +14,83 @@ const initChat = (roomName, username, initialMessageCount) => {
     let reconnectCount = 0;
     window.isExplicitExit = false;
 
+    function createLoadingOverlay() {
+        const overlay = document.createElement('div');
+        overlay.id = 'websocket-loading-overlay';
+        overlay.innerHTML = `
+            <div class="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" 
+                 style="background: rgba(0,0,0,0.7); z-index: 9999;">
+                <div class="card bg-dark text-white" style="max-width: 400px;">
+                    <div class="card-body">
+                        <div class="connecting-state mb-3">
+                            <div class="d-flex align-items-center">
+                                <div class="spinner-border text-primary me-2" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <div class="alert alert-primary mb-0 flex-grow-1">
+                                    WebSocket connection in progress...
+                                </div>
+                            </div>
+                        </div>
+                        <div class="connected-state mb-3 d-none">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-check-circle-fill text-success me-2" style="font-size: 1.5rem;"></i>
+                                <div class="alert alert-success mb-0 flex-grow-1">
+                                    WebSocket connected successfully!
+                                </div>
+                            </div>
+                        </div>
+                        <div class="error-state mb-3 d-none">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-exclamation-circle-fill text-danger me-2" style="font-size: 1.5rem;"></i>
+                                <div class="alert alert-danger mb-0 flex-grow-1">
+                                    Connection failed. Please refresh the page.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+        return overlay;
+    }
+
+    function updateLoadingState(state) {
+        const overlay = document.getElementById('websocket-loading-overlay');
+        if (!overlay) return;
+
+        const connectingState = overlay.querySelector('.connecting-state');
+        const connectedState = overlay.querySelector('.connected-state');
+        const errorState = overlay.querySelector('.error-state');
+
+        connectingState.classList.add('d-none');
+        connectedState.classList.add('d-none');
+        errorState.classList.add('d-none');
+
+        switch(state) {
+            case 'connecting':
+                connectingState.classList.remove('d-none');
+                break;
+            case 'connected':
+                connectedState.classList.remove('d-none');
+                setTimeout(() => {
+                    overlay.remove();
+                }, 1500);
+                break;
+            case 'error':
+                errorState.classList.remove('d-none');
+                break;
+        }
+    }
+
     function removeAllAlerts() {
-        const alerts = document.querySelectorAll('.alert, .alert-info, .alert-dismissible, div[role="alert"], .toast');
+        const alerts = document.querySelectorAll('.alert:not(#websocket-loading-overlay .alert), .alert-info, .alert-dismissible, div[role="alert"], .toast');
         alerts.forEach(alert => {
-            alert.style.display = 'none';
-            alert.remove();
+            if (!alert.closest('#websocket-loading-overlay')) {
+                alert.style.display = 'none';
+                alert.remove();
+            }
         });
     }
 
@@ -33,7 +105,8 @@ const initChat = (roomName, username, initialMessageCount) => {
                 if (mutation.addedNodes && mutation.addedNodes.length > 0) {
                     mutation.addedNodes.forEach((node) => {
                         if (node.nodeType === 1 && node.tagName === 'DIV') {
-                            if (node.classList && 
+                            if (!node.closest('#websocket-loading-overlay') && 
+                                node.classList && 
                                 (node.classList.contains('alert') || 
                                  node.classList.contains('alert-info') ||
                                  node.classList.contains('alert-dismissible') ||
@@ -189,7 +262,8 @@ const initChat = (roomName, username, initialMessageCount) => {
                 messages.forEach(data => {
                     displayMessage(data);
                 });
-            } else {
+            }
+            else {
                 const lastUserMessages = userMessages.slice(-INITIAL_MESSAGES_TO_SHOW);
                 lastUserMessages.forEach(data => {
                     displayMessage(data);
@@ -216,6 +290,12 @@ const initChat = (roomName, username, initialMessageCount) => {
         }
     }
 
+    function getReconnectDelay() {
+        const baseDelay = WEBSOCKET_RECONNECT_BASE_DELAY * Math.pow(2, reconnectCount);
+        const jitter = Math.random() * 1000;
+        return Math.min(baseDelay + jitter, MAX_RECONNECT_DELAY);
+    }
+
     function reconnectWebSocket() {
         if (chatSocket) {
             chatSocket.close();
@@ -223,83 +303,72 @@ const initChat = (roomName, username, initialMessageCount) => {
         connectWebSocket();
     }
 
-    function getReconnectDelay() {
-        const baseDelay = WEBSOCKET_RECONNECT_BASE_DELAY * Math.pow(2, reconnectCount);
-        const jitter = Math.random() * 1000;
-        return Math.min(baseDelay + jitter, MAX_RECONNECT_DELAY);
-    }
-
     function connectWebSocket() {
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        return new Promise((resolve, reject) => {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
 
-        try {
-            if (chatSocket && chatSocket.readyState !== WebSocket.CLOSED) {
-                chatSocket.close();
-            }
-
-            chatSocket = new WebSocket(`${protocol}//${window.location.host}/ws/chat/${roomName}/`);
-
-            chatSocket.onopen = function() {
-                console.log("WebSocket connected successfully");
-                reconnectCount = 0;
-                lastPongReceived = Date.now();
-                startHeartbeat();
-                if (!initialLoadComplete) {
-                    loadHistoricalMessages(false);
+            try {
+                if (chatSocket && chatSocket.readyState !== WebSocket.CLOSED) {
+                    chatSocket.close();
                 }
-            };
 
-            chatSocket.onmessage = function(e) {
-                const data = JSON.parse(e.data);
-                
-                if (data.type === 'pong') {
+                chatSocket = new WebSocket(`${protocol}//${window.location.host}/ws/chat/${roomName}/`);
+
+                chatSocket.onopen = function() {
+                    console.log("WebSocket connected successfully");
+                    reconnectCount = 0;
                     lastPongReceived = Date.now();
-                    return;
-                }
+                    startHeartbeat();
+                    resolve(chatSocket);
+                };
 
-                if (data.type === 'user_list_update') {
-                    updateUserList(data.users);
-                } else {
-                    displayMessage(data);
-                    if (data.username !== 'System') {
-                        messageCount++;
-                        updateMessageCount(messageCount);
+                chatSocket.onmessage = function(e) {
+                    const data = JSON.parse(e.data);
+                    
+                    if (data.type === 'pong') {
+                        lastPongReceived = Date.now();
+                        return;
                     }
-                }
-            };
 
-            chatSocket.onclose = function(e) {
-                stopHeartbeat();
-                
-                if (e.code === 4000) {
-                    window.isExplicitExit = true;
-                    alert('You cannot connect because you already have an active session in another browser/tab.');
-                    window.location.href = '/logout/';
-                    return;
-                }
+                    if (data.type === 'user_list_update') {
+                        updateUserList(data.users);
+                    } else {
+                        displayMessage(data);
+                        if (data.username !== 'System') {
+                            messageCount++;
+                            updateMessageCount(messageCount);
+                        }
+                    }
+                };
 
-                if (!window.isExplicitExit && reconnectCount < MAX_RETRIES && e.code !== 1000) {
-                    reconnectCount++;
-                    const delay = getReconnectDelay();
-                    console.log(`Attempting reconnect ${reconnectCount}/${MAX_RETRIES} in ${delay}ms`);
-                    setTimeout(connectWebSocket, delay);
-                }
-            };
+                chatSocket.onclose = function(e) {
+                    stopHeartbeat();
+                    
+                    if (e.code === 4000) {
+                        window.isExplicitExit = true;
+                        alert('You cannot connect because you already have an active session in another browser/tab.');
+                        window.location.href = '/logout/';
+                        return;
+                    }
 
-            chatSocket.onerror = function(error) {
-                console.error('WebSocket error details:', {
-                    readyState: chatSocket.readyState,
-                    error: error
-                });
-            };
+                    if (!window.isExplicitExit && reconnectCount < MAX_RETRIES && e.code !== 1000) {
+                        reconnectCount++;
+                        const delay = getReconnectDelay();
+                        console.log(`Attempting reconnect ${reconnectCount}/${MAX_RETRIES} in ${delay}ms`);
+                        setTimeout(() => connectWebSocket(), delay);
+                    }
+                };
 
-        } catch (error) {
-            console.error('Error creating WebSocket:', error);
-            if (!window.isExplicitExit && reconnectCount < MAX_RETRIES) {
-                reconnectCount++;
-                setTimeout(connectWebSocket, getReconnectDelay());
+                chatSocket.onerror = function(error) {
+                    console.error('WebSocket error:', error);
+                    reject(error);
+                };
+
+            } catch (error) {
+                console.error('Error creating WebSocket:', error);
+                reject(error);
             }
-        }
+        });
     }
     
     function handleMessageSubmit() {
@@ -365,9 +434,20 @@ const initChat = (roomName, username, initialMessageCount) => {
         }
     });
 
+    createLoadingOverlay();
+    updateLoadingState('connecting');
+
+    connectWebSocket()
+        .then(() => {
+            updateLoadingState('connected');
+            loadHistoricalMessages(false);
+            setupEventListeners();
+        })
+        .catch((error) => {
+            updateLoadingState('error');
+        });
+    
     setupAlertPrevention();
-    connectWebSocket();
-    setupEventListeners();
 };
 
 window.initChat = initChat;

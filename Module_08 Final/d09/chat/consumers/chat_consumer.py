@@ -66,8 +66,16 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     async def receive(self, text_data):
         try:
+            print(f"Raw received data: {text_data}")
             text_data_json = json.loads(text_data)
+            print(f"Parsed JSON data: {text_data_json}")
             
+            if text_data_json.get('type') == 'ping':
+                await self.send(text_data=json.dumps({
+                    'type': 'pong'
+                }))
+                return
+
             if text_data_json.get('type') == 'user_offline':
                 await self.set_user_online(False)
                 await self.broadcast_user_list()
@@ -75,18 +83,25 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
             message = text_data_json.get('message')
             if message:
+                print(f"Processing message: {message}")
                 if await self.save_message(message):
+                    server_time = timezone.localtime(timezone.now()).strftime('%H:%M')
                     await self.channel_layer.group_send(
                         self.room_group_name,
                         {
                             'type': 'chat_message',
                             'username': self.user.username,
                             'message': message,
-                            'timestamp': timezone.localtime(timezone.now()).strftime('%H:%M')
+                            'timestamp': server_time
                         }
                     )
+                    print(f"Message sent to group successfully")
+                else:
+                    print("Failed to save message")
         except Exception as e:
-            print(f"Error in receive: {e}")
+            print(f"Error in receive: {str(e)}")
+            import traceback
+            print(traceback.format_exc())
 
     async def system_message(self, event):
         await self.send(text_data=json.dumps({

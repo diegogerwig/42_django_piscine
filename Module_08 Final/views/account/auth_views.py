@@ -28,79 +28,39 @@ def login_view(request):
         })
     return JsonResponse({'status': 'error', 'errors': form.errors}, status=400)
 
-# import logging
 
-# logger = logging.getLogger(__name__)
-
-# @csrf_protect
-# @require_http_methods(["POST"])
-# def register_view(request):
-#     logger.debug(f"Received data: {request.POST}")
-
-#     if request.user.is_authenticated:
-#         # Redirect logged-in users to another page
-#         logger.info(f"User {request.user.username} is already logged in. Redirecting to /chat/")
-#         return redirect('/chat/') 
-
-#     form = RegisterForm(request.POST)
-
-#     # Validate the form first
-#     if form.is_valid():
-#         username = form.cleaned_data['username']
-#         password = form.cleaned_data['password']
-        
-#         # Now check if username is already taken (form should already have validated the data)
-#         if User.objects.filter(username=username).exists():
-#             logger.warning(f"Username {username} already taken.")
-#             return JsonResponse({
-#                 'status': 'error',
-#                 'errors': {'username': ['Username already taken']}
-#             }, status=400)
-
-#         try:
-#             with transaction.atomic():
-#                 # Create user if no error
-#                 user = User.objects.create_user(username=username, password=password)
-#                 login(request, user)  # Log in the user after registration
-#                 logger.info(f"User {user.username} created and logged in successfully.")
-#                 return redirect('/chat/')
-#         except IntegrityError as e:
-#             logger.error(f"Database error: {e}")
-#             return JsonResponse({
-#                 'status': 'error',
-#                 'errors': {'username': ['Database error, please try again.']}
-#             }, status=400)
-    
-#     # If the form is not valid, log the errors and return them
-#     logger.error(f"Form errors: {form.errors}")
-#     return JsonResponse({
-#         'status': 'error',
-#         'errors': form.errors
-#     }, status=400)
-
-
-@csrf_exempt
+@csrf_protect
+@require_http_methods(["POST"])
 def register_view(request):
-    if request.method == 'POST':
-        username = request.POST.get('username', '').strip()
-        password = request.POST.get('password', '').strip()
+    username = request.POST.get('username', '').strip()
+    password = request.POST.get('password', '').strip()
 
-        if not username or not password:
-            return JsonResponse({'message': 'Username and password are required'}, status=400)
+    if not username or not password:
+        return JsonResponse({
+            'status': 'error',
+            'message': 'Username and password are required'
+        }, status=400)
 
+    with transaction.atomic():
         if User.objects.filter(username=username).exists():
-            return JsonResponse({'message': 'Username already taken'}, status=400)
-
+            return JsonResponse({
+                'status': 'error',
+                'message': 'Username already taken'
+            }, status=400)
+        
         try:
             user = User.objects.create_user(username=username, password=password)
-
             login(request, user)
-            return JsonResponse({'redirect': '/chat/'}, status=200)
-
+            return JsonResponse({
+                'status': 'success',
+                'message': 'Registration successful',
+                'redirect': '/chat/'
+            })
         except Exception as e:
-            return JsonResponse({'message': f'Error: {str(e)}'}, status=500)
-
-    return JsonResponse({'message': 'Invalid method'}, status=405)
+            return JsonResponse({
+                'status': 'error',
+                'message': str(e)
+            }, status=500)
 
 
 @csrf_exempt
