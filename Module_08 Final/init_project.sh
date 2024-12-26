@@ -50,14 +50,7 @@ full_init() {
 
     python3 -m venv ~/sgoinfre/django_venv
     activate_venv
-    
-    if ! grep -q "daphne==4.0.0" requirements.txt; then
-        echo "daphne==4.0.0" >> requirements.txt
-    fi
-    if ! grep -q "channels==4.0.0" requirements.txt; then
-        echo "channels==4.0.0" >> requirements.txt
-    fi
-    
+   
     pip install -r requirements.txt
 
     bash ./src/create_django_project.sh
