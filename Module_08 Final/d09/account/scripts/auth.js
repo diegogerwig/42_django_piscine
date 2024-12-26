@@ -64,6 +64,7 @@ const NotificationModule = {
     }
 };
 
+
 // UI Module
 const UIModule = {
     showLoggedIn(username) {
@@ -83,6 +84,7 @@ const UIModule = {
         });
     }
 };
+
 
 // Validation Module
 const ValidationModule = {
@@ -154,21 +156,22 @@ const ValidationModule = {
     }
 };
 
+
 // Form Module
 const FormModule = {
     setupFormSubmit(formType, form) {
         if (!form) return;
         
-        let isSubmitting = false;
+        let submitted = false;
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            
-            if (isSubmitting) return;
-            
+
+            if (submitted) return;
+            submitted = true;
+
             const submitButton = form.querySelector('button[type="submit"]');
             submitButton.disabled = true;
-            isSubmitting = true;
             submitButton.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
 
             try {
@@ -177,44 +180,40 @@ const FormModule = {
                     method: 'POST',
                     body: formData,
                     headers: {
-                        'X-CSRFToken': form.querySelector('[name=csrfmiddlewaretoken]').value,
-                        'X-Requested-With': 'XMLHttpRequest'
-                    },
-                    cache: 'no-store'
+                        'X-CSRFToken': form.querySelector('[name=csrfmiddlewaretoken]').value
+                    }
                 });
 
                 const data = await response.json();
 
-                if (response.ok && data.status === 'success') {
-                    window.location.href = data.redirect || '/chat/';
-                    return;
+                if (data.status === 'success') {
+                    if (formType === 'register') {
+                        NotificationModule.showNotification('Registration successful! Please login.', 'success', 3000);
+                        form.reset();
+                        const loginTab = document.getElementById('login-tab');
+                        if (loginTab) loginTab.click();
+                    } else {
+                        window.location.href = data.redirect;
+                    }
+                } else {
+                    NotificationModule.showNotification(data.message || 'An error occurred', 'error', 5000);
+                    submitted = false;
+                    submitButton.disabled = false;
+                    submitButton.textContent = formType.toUpperCase();
                 }
-
-                NotificationModule.showNotification(
-                    data.message || 'An error occurred',
-                    'error',
-                    5000
-                );
-                
             } catch (error) {
-                console.error('Form submission error:', error);
-                NotificationModule.showNotification(
-                    'Connection error. Please try again.',
-                    'error',
-                    5000
-                );
-            } finally {
+                NotificationModule.showNotification('Connection error. Please try again.', 'error', 5000);
+                submitted = false;
                 submitButton.disabled = false;
                 submitButton.textContent = formType.toUpperCase();
-                isSubmitting = false;
             }
         });
     },
-        
+
     clearForm(formId) {
         const form = document.getElementById(formId);
         if (!form) return;
-
+        
         form.reset();
         const isLoginForm = formId === 'login-form';
         const prefix = isLoginForm ? '' : 'reg-';
@@ -232,6 +231,7 @@ const FormModule = {
         });
     }
 };
+
 
 // Initialize everything
 document.addEventListener('DOMContentLoaded', () => {

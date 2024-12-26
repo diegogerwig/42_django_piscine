@@ -101,45 +101,42 @@ const initChatCore = (roomName, username) => {
         scrollToBottom();
     }
 
+
     async function loadHistoricalMessages(loadAll = false) {
         try {
             clearChatLog();
             
-            const response = await fetch(`/chat/api/${roomName}/messages/`);
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-            
-            const messages = await response.json();
-            const userMessages = messages.filter(msg => msg.username !== 'System');
-            
-            const chatLog = document.querySelector('#chat-log');
-            chatLog.innerHTML = '';
+            $.getJSON(`/chat/api/${roomName}/messages/`, function(messages) {
+                const userMessages = messages.filter(msg => msg.username !== 'System');
+                
+                const chatLog = document.querySelector('#chat-log');
+                chatLog.innerHTML = '';
 
-            if (loadAll) {
-                messages.forEach(data => displayMessage(data));
-            } else {
-                // Show only last 3 user messages
-                const lastUserMessages = userMessages.slice(-INITIAL_MESSAGES_TO_SHOW);
-                lastUserMessages.forEach(data => displayMessage(data));
-            }
-            
-            // Update message count only with user messages
-            updateMessageCount(roomName, userMessages.length);
-            
-            scrollToBottom();
-            initialLoadComplete = true;
-            
-            const loadHistoryBtn = document.getElementById('load-history-btn');
-            if (loadHistoryBtn) {
-                loadHistoryBtn.style.display = loadAll ? 'none' : 'inline-block';
-            }
+                if (loadAll) {
+                    messages.forEach(data => displayMessage(data));
+                } else {
+                    const lastUserMessages = userMessages.slice(-INITIAL_MESSAGES_TO_SHOW);
+                    lastUserMessages.forEach(data => displayMessage(data));
+                }
+                
+                updateMessageCount(roomName, userMessages.length);
+                scrollToBottom();
+                initialLoadComplete = true;
+                
+                const loadHistoryBtn = $('#load-history-btn');
+                if (loadHistoryBtn.length) {
+                    loadHistoryBtn.css('display', loadAll ? 'none' : 'inline-block');
+                }
+            }).fail(function(jqXHR, textStatus, errorThrown) {
+                throw new Error(`HTTP error! status: ${textStatus}`);
+            });
         } catch (error) {
             console.error('Error loading messages:', error);
-            const chatLog = document.querySelector('#chat-log');
-            chatLog.innerHTML = `
+            $('#chat-log').html(`
                 <div class="text-center text-danger mt-3">
                     <i class="bi bi-exclamation-circle me-2"></i>
                     Error loading messages. Please try again.
-                </div>`;
+                </div>`);
         }
     }
 

@@ -103,6 +103,18 @@ EOL
 echo "✅ Bootstrap configuration added."
 
 
+# Add Session configuration
+cat << 'EOL' >> "$settings_file"
+
+# Session configuration
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+SESSION_COOKIE_AGE = 1209600  # 2 weeks in seconds
+SESSION_COOKIE_NAME = 'sessionid'
+SESSION_SAVE_EVERY_REQUEST = True
+EOL
+echo "✅ Session configuration added."
+
+
 # Copy files from source to destination directory
 copy_directory_contents() {
     local source_dir=$1

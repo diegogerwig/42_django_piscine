@@ -129,8 +129,14 @@ const initChatWebSocket = (roomName, username, chatCore) => {
             
             // Add character counter
             const counterDiv = document.createElement('div');
-            counterDiv.className = 'text-muted mt-1';
+            counterDiv.className = 'text-muted text-center mt-1';
             counterDiv.id = 'message-length-counter';
+
+            // Initialize counter with 500
+            counterDiv.innerHTML = `
+                <span class="fs-5 fw-bold">500</span><br>
+                <span class="small">characters<br>remaining</span>
+            `;
             counterContainer.appendChild(counterDiv);
 
             // Update counter on input
@@ -180,6 +186,14 @@ const initChatWebSocket = (roomName, username, chatCore) => {
             }));
             
             messageInput.value = '';
+            const counterDiv = document.getElementById('message-length-counter');
+            if (counterDiv) {
+                counterDiv.innerHTML = `
+                    <span class="fs-5 fw-bold">500</span><br>
+                    <span class="small">characters<br>remaining</span>
+                `;
+                counterDiv.className = 'text-muted text-center mt-1';
+            }
             chatCore.scrollToBottom();
         } catch (error) {
             console.error('Error sending message:', error);

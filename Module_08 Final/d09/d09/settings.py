@@ -20,7 +20,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-+f%1oo3c1x&kjjm!6it(zf7%^+!96rb86j*j&=it8i)3h7q(v('
+SECRET_KEY = 'django-insecure-^c$%i^tkwmq!l5b*%*svq*3*_och9x-)6sg@5@4vt03m(7-b^m'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -139,6 +139,12 @@ BOOTSTRAP5 = {
         "crossorigin": "anonymous",
     },
 }
+
+# Session configuration
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+SESSION_COOKIE_AGE = 1209600  # 2 weeks in seconds
+SESSION_COOKIE_NAME = 'sessionid'
+SESSION_SAVE_EVERY_REQUEST = True
 
 # Channels configuration
 ASGI_APPLICATION = 'd09.asgi.application'

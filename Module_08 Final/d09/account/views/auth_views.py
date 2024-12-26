@@ -9,6 +9,8 @@ from chat.models.chat_models import UserStatus
 from account.forms.auth_forms import LoginForm, RegisterForm
 from django.utils import timezone
 from ..forms.auth_forms import RegisterForm
+from django.conf import settings  
+
 
 @ensure_csrf_cookie
 def account_view(request):
@@ -41,26 +43,40 @@ def register_view(request):
             'message': 'Username and password are required'
         }, status=400)
 
-    with transaction.atomic():
+    try:
         if User.objects.filter(username=username).exists():
             return JsonResponse({
                 'status': 'error',
                 'message': 'Username already taken'
             }, status=400)
-        
-        try:
+
+        with transaction.atomic():
             user = User.objects.create_user(username=username, password=password)
-            login(request, user)
-            return JsonResponse({
-                'status': 'success',
-                'message': 'Registration successful',
-                'redirect': '/chat/'
-            })
-        except Exception as e:
-            return JsonResponse({
-                'status': 'error',
-                'message': str(e)
-            }, status=500)
+            
+            UserStatus.objects.get_or_create(
+                user=user,
+                defaults={
+                    'is_online': False,
+                    'last_activity': timezone.now()
+                }
+            )
+
+        return JsonResponse({
+            'status': 'success',
+            'message': 'Registration successful! Please login.'
+        })
+
+    except Exception as e:
+        print(f"Registration error: {str(e)}")
+        if 'user' in locals():
+            try:
+                user.delete()
+            except:
+                pass
+        return JsonResponse({
+            'status': 'error',
+            'message': 'Registration failed'
+        }, status=500)
 
 
 @csrf_exempt
