@@ -122,6 +122,7 @@ const initChatWebSocket = (roomName, username, chatCore) => {
             // Create send button wrapper
             const buttonWrapper = document.createElement('div');
             buttonWrapper.className = 'me-3';
+            
             // Move submit button to wrapper
             submitButton.parentNode.removeChild(submitButton);
             buttonWrapper.appendChild(submitButton);
